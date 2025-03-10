@@ -1,0 +1,43 @@
+name: tic_tac_zwo
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  device_info_plus: ^11.3.0
+  device_scan_animation: ^0.0.6
+  flutter:
+    sdk: flutter
+  flutter_nearby_connections: ^1.1.2
+  flutter_riverpod: ^2.6.1
+  flutter_svg: ^2.0.16
+  permission_handler: ^11.3.1
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/words/testnouns.json
+
+  fonts:
+    - family: Onest
+      fonts:
+        - asset: assets/fonts/onest.extralight.ttf
+        - asset: assets/fonts/onest.light.ttf
+        - asset: assets/fonts/onest.thin.ttf
+        - asset: assets/fonts/onest.regular.ttf
+
+    - family: Sniglet
+      fonts: 
+        - asset: assets/fonts/sniglet.regular.ttf
+        - asset: assets/fonts/sniglet.extrabold.ttf
