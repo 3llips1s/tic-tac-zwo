@@ -1,14 +1,13 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:device_scan_animation/device_scan_animation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:tic_tac_zwo/config/constants.dart';
-import 'package:tic_tac_zwo/features/game/pair/logic/pair_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/config.dart';
-import '../../../../routes/route_names.dart';
+import '../../../../../config/config.dart';
+import '../../../../../routes/route_names.dart';
 
 class DeviceScanScreen extends ConsumerStatefulWidget {
   const DeviceScanScreen({super.key});
@@ -19,8 +18,6 @@ class DeviceScanScreen extends ConsumerStatefulWidget {
 
 class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
     with SingleTickerProviderStateMixin {
-  late PairService _pairService;
-  List<Device> _devices = [];
   bool _isScanning = true;
   Timer? _scanTimer;
 
@@ -30,76 +27,7 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
   @override
   void initState() {
     super.initState();
-    _pairService = ref.read(pairServiceProvider);
-
-    _pairService.onDeviceConnected = (connectedDevice) {
-      print('device connected callback: ${connectedDevice.deviceName}');
-      if (mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          RouteNames.pairTurnSelection,
-          arguments: {
-            'gameMode': GameMode.pair,
-            'pairService': _pairService,
-          },
-        );
-      }
-    };
-
-    _pairService.initNearbyService().then(
-      (_) {
-        Future.delayed(
-          Duration(milliseconds: 500),
-          () {
-            if (mounted) {
-              _startDiscovery();
-            }
-          },
-        );
-      },
-    );
-
-    _pairService.getDiscoveredDevicesStream().listen(
-      (devices) {
-        if (mounted) {
-          setState(() {
-            _devices = devices;
-            print('updated device list: ${_devices.map(
-              (e) => e.deviceName,
-            )}');
-          });
-          if (_devices.isNotEmpty) {
-            _scanTimer?.cancel();
-            _scanTimer = Timer(
-              const Duration(seconds: 2),
-              () {
-                if (mounted) {
-                  setState(() => _isScanning = false);
-                }
-              },
-            );
-          }
-        }
-      },
-    );
     _initHoverAnimation();
-  }
-
-  void _startDiscovery() {
-    setState(() => _isScanning = true);
-    _scanTimer?.cancel();
-
-    _pairService.startDiscovery();
-
-    // scan timeout
-    _scanTimer = Timer(
-      const Duration(seconds: 30),
-      () {
-        if (mounted) {
-          setState(() => _isScanning = false);
-        }
-      },
-    );
   }
 
   void _initHoverAnimation() {
@@ -168,6 +96,9 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    // buffer var
+    final devices = [];
+
     return Scaffold(
       backgroundColor: colorGrey300,
       body: Padding(
@@ -213,7 +144,7 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
             SizedBox(height: kToolbarHeight * 2),
 
             Expanded(
-              child: _devices.isEmpty
+              child: Random().nextBool() // change this boolean
                   ? Padding(
                       padding: _isScanning
                           ? EdgeInsets.zero
@@ -241,9 +172,9 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
                       ),
                     )
                   : ListView.builder(
-                      itemCount: _devices.length,
+                      itemCount: devices.length,
                       itemBuilder: (context, index) {
-                        final device = _devices[index];
+                        final device = devices[index];
                         return ListTile(
                           title: Text(
                               device.deviceName.isNotEmpty
@@ -253,8 +184,6 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
                           onTap: () async {
                             _showSnackBar('Verbindung wird hergestellt...');
 
-                            await _pairService.connectToDevice(device);
-
                             print('waiting for connection confirmation');
                           },
                         );
@@ -262,11 +191,12 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
                     ),
             ),
 
-            if (!_isScanning && _devices.isEmpty)
+            if (!_isScanning && devices.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: OutlinedButton(
-                  onPressed: _startDiscovery,
+                  onPressed:
+                      _initHoverAnimation, // change this on pressed function
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(9),

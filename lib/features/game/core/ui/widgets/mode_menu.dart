@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
-
 import '../../../../../config/config.dart';
 import '../../../../../config/constants.dart';
 import '../../../../../routes/route_names.dart';
@@ -16,7 +14,6 @@ class ModeMenu extends StatefulWidget {
 
 class _ModeMenuState extends State<ModeMenu> {
   bool _isMenuVisible = false;
-  final NearbyService _nearbyService = NearbyService();
 
   @override
   void initState() {

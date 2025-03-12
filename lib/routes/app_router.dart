@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
-import 'package:tic_tac_zwo/features/game/pair/ui/device_scan_screen.dart';
-import 'package:tic_tac_zwo/features/game/pair/ui/pair_turn_selection_screen.dart';
+import 'package:tic_tac_zwo/features/game/online/ui/screens/device_scan_screen.dart';
 
 import '../config/config.dart';
 import '../features/game/core/ui/screens/game_screen.dart';
 import '../features/game/core/ui/screens/home_screen.dart';
 import '../features/game/core/ui/screens/turn_selection_screen.dart';
-import '../features/game/pair/logic/pair_service.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -69,46 +67,6 @@ class AppRouter {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               TurnSelectionScreen(gameMode: gameMode),
-          transitionDuration: const Duration(milliseconds: 600),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeInOut,
-              ),
-              child: child,
-            );
-          },
-        );
-      // turn selection
-      case RouteNames.pairTurnSelection:
-        final arguments = settings.arguments as Map<String, dynamic>?;
-        final gameMode = arguments?['gameMode'] as GameMode?;
-        final pairService = arguments?['pairService'] as PairService;
-
-        // check
-        if (gameMode == null) {
-          return PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const HomeScreen(),
-            transitionDuration: const Duration(milliseconds: 600),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-          );
-        }
-
-        return PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              PairTurnSelectionScreen(
-            gameMode: gameMode,
-            pairService: pairService,
-          ),
           transitionDuration: const Duration(milliseconds: 600),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
