@@ -41,8 +41,9 @@ class _ModeMenuState extends State<ModeMenu> {
 
       await Future.delayed(const Duration(milliseconds: 200));
 
+      // change this navigation to wordle not device scan
       if (mounted) {
-        if (gameModeIcons[index]['gameMode'] == GameMode.pair) {
+        if (gameModeIcons[index]['gameMode'] == GameMode.wordle) {
           /*  // check BT before navigating
           final bluetoothState = await  ;
           if (bluetoothState == off) {
@@ -157,8 +158,8 @@ final gameModeIcons = <Map<String, dynamic>>[
     'gameMode': GameMode.offline,
   },
   {
-    'imagePath': 'assets/images/pair.svg',
-    'gameMode': GameMode.pair,
+    'imagePath': 'assets/images/grid.svg',
+    'gameMode': GameMode.wordle,
   },
   {
     'imagePath': 'assets/images/online.svg',

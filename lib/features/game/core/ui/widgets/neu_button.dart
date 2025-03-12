@@ -24,23 +24,43 @@ class NeuButton extends StatelessWidget {
     const double shadowBlurRadius = 10;
     const double shadowSpreadRadius = 1;
 
+    final bool isWordleMode = gameMode == GameMode.wordle;
+
+    final Color wordlePressedColor = Colors.grey[800]!;
+
+    final Color neuButtonColor = isWordleMode
+        ? (isNeuButtonPressed ? wordlePressedColor : Colors.black87)
+        : colorGrey300;
+
+    final Color textColor = isWordleMode
+        ? colorWhite
+        : (isNeuButtonPressed ? colorGrey500 : Colors.black87);
+
+    final Color iconColor = isWordleMode
+        ? colorWhite
+        : (isNeuButtonPressed ? colorGrey500 : colorBlack);
+
+    final Color borderColor = isWordleMode
+        ? (isNeuButtonPressed ? Colors.black87 : Colors.black54)
+        : (isNeuButtonPressed ? colorGrey100 : colorGrey300);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: colorGrey300,
+          color: neuButtonColor,
           borderRadius: BorderRadius.circular(9),
           border: Border.all(
-            color: isNeuButtonPressed ? colorGrey100 : colorGrey300,
+            color: borderColor,
           ),
           boxShadow: isNeuButtonPressed
               ? []
               : [
                   // bottom right shadow
                   BoxShadow(
-                    color: colorGrey500,
+                    color: isWordleMode ? colorGrey600 : colorGrey500,
                     offset: shadowOffset,
                     blurRadius: shadowBlurRadius,
                     spreadRadius: shadowSpreadRadius / 10,
@@ -48,7 +68,7 @@ class NeuButton extends StatelessWidget {
 
                   // top left shadow
                   BoxShadow(
-                      color: colorGrey200,
+                      color: isWordleMode ? colorGrey300 : colorGrey200,
                       offset: -shadowOffset,
                       blurRadius: shadowBlurRadius,
                       spreadRadius: shadowSpreadRadius),
@@ -63,16 +83,14 @@ class NeuButton extends StatelessWidget {
               height: 40,
               width: 40,
               iconPath,
-              colorFilter: ColorFilter.mode(
-                  isNeuButtonPressed ? colorGrey500 : colorBlack,
-                  BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
             ),
             SizedBox(height: 10),
             Text(
               gameMode.string,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 14,
-                    color: isNeuButtonPressed ? colorGrey500 : Colors.black87,
+                    color: textColor,
                   ),
             )
           ],

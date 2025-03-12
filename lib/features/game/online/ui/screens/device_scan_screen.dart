@@ -96,7 +96,7 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    // buffer var
+    // devices is temp var before full implementation
     final devices = [];
 
     return Scaffold(
@@ -114,7 +114,8 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
                 child: Align(
                   alignment: Alignment.center,
                   child: Text(
-                    GameMode.pair.string,
+                    // might need to change this down the line
+                    GameMode.wordle.string,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,

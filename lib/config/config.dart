@@ -1,4 +1,4 @@
-enum GameMode { pass, offline, pair, online }
+enum GameMode { pass, offline, wordle, online }
 
 enum PlayerSymbol { X, O }
 
@@ -9,8 +9,8 @@ extension GameModeExtension on GameMode {
         return 'pass + play';
       case GameMode.offline:
         return 'offline';
-      case GameMode.pair:
-        return 'pair + play';
+      case GameMode.wordle:
+        return 'wördle';
       case GameMode.online:
         return 'online';
     }
