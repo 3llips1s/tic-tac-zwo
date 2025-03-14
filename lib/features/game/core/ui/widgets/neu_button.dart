@@ -89,7 +89,7 @@ class NeuButton extends StatelessWidget {
             Text(
               gameMode.string,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: textColor,
                   ),
             )
