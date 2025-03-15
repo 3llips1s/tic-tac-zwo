@@ -1,4 +1,8 @@
-import 'package:tic_tac_zwo/features/game/wordle/data/models/letter_match.dart';
+enum LetterMatch {
+  correct,
+  present,
+  absent,
+}
 
 class WordGuess {
   final String word;

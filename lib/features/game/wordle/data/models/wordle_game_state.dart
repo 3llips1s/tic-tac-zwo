@@ -1,4 +1,4 @@
-import 'package:tic_tac_zwo/features/game/wordle/data/models/word_guess.dart';
+import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 
 enum GameStatus {
   playing,

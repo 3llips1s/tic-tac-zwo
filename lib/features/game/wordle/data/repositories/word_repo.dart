@@ -44,7 +44,7 @@ class WordRepo {
 
     final filteredWords = fiveLetterWords;
     if (filteredWords.isEmpty) {
-      return {'word': 'KATZE', 'article': 'die', 'english': 'cat'};
+      return {'word': 'BINGO', 'article': 'das', 'english': 'bingo'};
     }
 
     final random = Random();
@@ -87,7 +87,7 @@ class WordRepo {
       {
         'word': 'BLATT',
         'article': 'das',
-        'translation': 'leaf/sheet',
+        'translation': 'leaf',
         'plural': 'Blätter'
       },
       {
