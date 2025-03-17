@@ -41,17 +41,9 @@ class _ModeMenuState extends State<ModeMenu> {
 
       await Future.delayed(const Duration(milliseconds: 200));
 
-      // change this navigation to wordle not device scan
       if (mounted) {
         if (gameModeIcons[index]['gameMode'] == GameMode.wordle) {
-          /*  // check BT before navigating
-          final bluetoothState = await  ;
-          if (bluetoothState == off) {
-            _showSnackBar('Bluetooth aus. Bitte einschalten.');
-            setState(() => _pressedNeuButtonIndex = null);
-            return;
-          } */
-          await Navigator.pushNamed(context, RouteNames.deviceScan);
+          await Navigator.pushNamed(context, RouteNames.wordle);
         } else {
           await Navigator.pushNamed(
             context,

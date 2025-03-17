@@ -46,7 +46,7 @@ class WordleGameNotifier extends StateNotifier<WordleGameState?> {
     return await _gameLogic.checkArticle(state!, article);
   }
 
-  String winFeedback() {
+  String getWinFeedback() {
     if (state == null) return 'Sehr gut!';
     return _gameLogic.winFeedback(state!);
   }

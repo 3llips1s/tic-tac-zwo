@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/device_scan_screen.dart';
+import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
 
 import '../config/config.dart';
 import '../features/game/core/ui/screens/game_screen.dart';
@@ -87,6 +88,23 @@ class AppRouter {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               GameScreen(gameConfig: gameConfig),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      // wordle
+      case RouteNames.wordle:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              WordleGameScreen(),
           transitionDuration: const Duration(milliseconds: 600),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
