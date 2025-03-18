@@ -105,7 +105,7 @@ class AppRouter {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               WordleGameScreen(),
-          transitionDuration: const Duration(milliseconds: 600),
+          transitionDuration: Duration(milliseconds: 900),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: CurvedAnimation(

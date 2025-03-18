@@ -26,7 +26,7 @@ class NeuButton extends StatelessWidget {
 
     final bool isWordleMode = gameMode == GameMode.wordle;
 
-    final Color wordlePressedColor = Colors.grey[800]!;
+    final Color wordlePressedColor = Colors.grey[500]!;
 
     final Color neuButtonColor = isWordleMode
         ? (isNeuButtonPressed ? wordlePressedColor : Colors.black87)
@@ -41,7 +41,7 @@ class NeuButton extends StatelessWidget {
         : (isNeuButtonPressed ? colorGrey500 : colorBlack);
 
     final Color borderColor = isWordleMode
-        ? (isNeuButtonPressed ? Colors.black87 : Colors.black54)
+        ? (isNeuButtonPressed ? colorGrey400 : Colors.black54)
         : (isNeuButtonPressed ? colorGrey100 : colorGrey300);
 
     return GestureDetector(
@@ -60,7 +60,7 @@ class NeuButton extends StatelessWidget {
               : [
                   // bottom right shadow
                   BoxShadow(
-                    color: isWordleMode ? colorGrey600 : colorGrey500,
+                    color: colorGrey500,
                     offset: shadowOffset,
                     blurRadius: shadowBlurRadius,
                     spreadRadius: shadowSpreadRadius / 10,
@@ -68,7 +68,7 @@ class NeuButton extends StatelessWidget {
 
                   // top left shadow
                   BoxShadow(
-                      color: isWordleMode ? colorGrey300 : colorGrey200,
+                      color: colorGrey200,
                       offset: -shadowOffset,
                       blurRadius: shadowBlurRadius,
                       spreadRadius: shadowSpreadRadius),

@@ -14,7 +14,7 @@ class WordleKeyboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.only(bottom: 30),
       color: colorBlack,
       child: Column(
         children: [
@@ -22,7 +22,7 @@ class WordleKeyboard extends StatelessWidget {
           const SizedBox(height: 8),
           _buildKeyRow(['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ö', 'Ä']),
           const SizedBox(height: 8),
-          _buildKeyRow(['↵ ', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'ß', '←']),
+          _buildKeyRow(['✓', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'ß', '←']),
         ],
       ),
     );
@@ -36,28 +36,40 @@ class WordleKeyboard extends StatelessWidget {
   }
 
   Widget _buildKey(String letter) {
+    bool isSpecialKey = letter.trim() == '✓' || letter.trim() == '←';
+    bool isEnterKey = letter.trim() == '✓';
+    bool isDelKey = letter.trim() == '←';
+
+    Color keyColor;
+    if (letterStates.containsKey(letter)) {
+      keyColor = letterStates[letter]!;
+    } else if (isEnterKey) {
+      keyColor = colorYellow;
+    } else if (isDelKey) {
+      keyColor = colorRed;
+    } else {
+      keyColor = colorGrey300;
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: Material(
-        color: letterStates.containsKey(letter)
-            ? letterStates[letter]
-            : colorGrey300,
+        color: keyColor,
         borderRadius: BorderRadius.circular(4),
         child: InkWell(
           onTap: onKeyTap != null ? () => onKeyTap!(letter) : null,
-          borderRadius: BorderRadius.circular(4),
           child: Container(
-            width: letter.length > 1 ? 50 : 30,
-            height: 40,
+            width: isSpecialKey ? 50 : 28,
+            height: 50,
             alignment: Alignment.center,
             child: Text(
-              letter,
+              letter.trim(),
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color:
-                    letterStates.containsKey(letter) ? colorWhite : colorBlack,
-              ),
+                  fontSize: isSpecialKey ? 24 : 22,
+                  fontWeight: FontWeight.bold,
+                  color: (isDelKey || letterStates.containsKey(letter)
+                      ? colorWhite
+                      : colorBlack)),
             ),
           ),
         ),

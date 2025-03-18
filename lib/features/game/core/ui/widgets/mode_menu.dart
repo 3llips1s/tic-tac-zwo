@@ -39,12 +39,12 @@ class _ModeMenuState extends State<ModeMenu> {
         _pressedNeuButtonIndex = index;
       });
 
-      await Future.delayed(const Duration(milliseconds: 200));
-
       if (mounted) {
         if (gameModeIcons[index]['gameMode'] == GameMode.wordle) {
           await Navigator.pushNamed(context, RouteNames.wordle);
         } else {
+          await Future.delayed(const Duration(milliseconds: 200));
+
           await Navigator.pushNamed(
             context,
             RouteNames.turnSelection,

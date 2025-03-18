@@ -1,11 +1,13 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_providers.dart';
+import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dart';
 
 import '../../../../../config/constants.dart';
+import '../../../../../routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
 import '../widgets/wordle_keyboard.dart';
 
@@ -29,7 +31,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
   void _handleGuess() async {
     final guess = _currentGuess.trim();
     if (guess.length != 5) {
-      _showSnackBar('Das Wort muss 5 Buchstaben haben.');
+      _showSnackBar('Das Wort muss 5 Buchstaben haben. 🫤');
       return;
     }
 
@@ -41,7 +43,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     final isValid = await repository.isValidWord(guess);
 
     if (!isValid) {
-      _showSnackBar('Dieses Wort ist nicht in meiner Liste.');
+      _showSnackBar('Dieses Wort ist nicht in meiner Liste. 😔');
       return;
     }
 
@@ -56,9 +58,9 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     if (newState == null) return;
 
     if (newState.status == GameStatus.won) {
-      _showWinSnackBar(newState);
+      _showWinDialog(newState);
     } else if (newState.status == GameStatus.lost) {
-      _showLoseSnackBar(newState);
+      _showLoseDialog(newState);
     }
   }
 
@@ -69,13 +71,14 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
           _currentGuess = _currentGuess.substring(0, _currentGuess.length - 1);
         });
       }
-    } else if (letter == '↵') {
+    } else if (letter == '✓') {
       _handleGuess();
     } else if (_currentGuess.length < 5) {
       setState(() {
         _currentGuess += letter;
       });
     }
+    HapticFeedback.mediumImpact();
   }
 
   void _showSnackBar(String message) {
@@ -84,25 +87,18 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
         margin: EdgeInsets.only(
-          bottom: kToolbarHeight * 2,
-          left: 40,
-          right: 40,
+          bottom: kToolbarHeight * 3.5,
+          left: 10,
+          right: 10,
         ),
         content: Container(
           padding: EdgeInsets.all(12),
           height: kToolbarHeight,
           decoration: BoxDecoration(
-            color: Colors.black87,
+            color: colorWhite,
             borderRadius: BorderRadius.all(Radius.circular(9)),
-            boxShadow: [
-              BoxShadow(
-                color: colorGrey300,
-                blurRadius: 7,
-                offset: Offset(7, 7),
-              ),
-            ],
           ),
           child: Center(
             child: Text(
@@ -110,7 +106,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: colorWhite,
+                    color: colorBlack,
                   ),
             ),
           ),
@@ -119,243 +115,171 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     );
   }
 
-  void _showWinSnackBar(WordleGameState state) {
+  void _showWinDialog(WordleGameState state) {
     final feedback =
         ref.read(wordleGameStateProvider.notifier).getWinFeedback();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Column(
+    showCustomDialog(
+      context: context,
+      barrierDismissible: false,
+      width: MediaQuery.of(context).size.width * 0.8,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            feedback,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorBlack,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Artikel für ${state.targetWord}?',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorBlack,
+                ),
+            textAlign: TextAlign.center,
+          )
+        ],
+      ),
+      actions: [
+        GlassMorphicButton(
+          onPressed: () => _checkArticleAndStartNewGame('der'),
+          child: Text(
+            'der',
+            style: TextStyle(color: colorBlack),
+          ),
+        ),
+        GlassMorphicButton(
+          onPressed: () => _checkArticleAndStartNewGame('die'),
+          child: Text(
+            'die',
+            style: TextStyle(color: colorBlack),
+          ),
+        ),
+        GlassMorphicButton(
+          onPressed: () => _checkArticleAndStartNewGame('das'),
+          child: Text(
+            'das',
+            style: TextStyle(color: colorBlack),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showLoseDialog(WordleGameState state) {
+    showCustomDialog(
+        context: context,
+        barrierDismissible: false,
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(feedback),
-            const SizedBox(height: 8),
-            Text('Richtige Artikel für ${state.targetWord}?'),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _checkArticle('der'),
-                  child: const Text('der'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _checkArticle('die'),
-                  child: const Text('die'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _checkArticle('das'),
-                  child: const Text('das'),
-                ),
-              ],
+            Text(
+              'Das Wort war: ${state.targetWord}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 22,
+                    color: colorBlack,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              ' Artikel für ${state.targetWord}?',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorBlack,
+                  ),
+              textAlign: TextAlign.center,
             )
           ],
         ),
-        duration: const Duration(seconds: 9),
-      ),
-    );
+        actions: [
+          GlassMorphicButton(
+            onPressed: () => _checkArticleAndStartNewGame('der'),
+            child: Text(
+              'der',
+              style: TextStyle(color: colorBlack),
+            ),
+          ),
+          GlassMorphicButton(
+            onPressed: () => _checkArticleAndStartNewGame('die'),
+            child: Text(
+              'die',
+              style: TextStyle(color: colorBlack),
+            ),
+          ),
+          GlassMorphicButton(
+            onPressed: () => _checkArticleAndStartNewGame('das'),
+            child: Text(
+              'das',
+              style: TextStyle(color: colorBlack),
+            ),
+          ),
+        ]);
   }
 
-  void _showLoseSnackBar(WordleGameState state) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Schade! Das Wort war: ${state.targetWord}'),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _checkArticle(String article) async {
+  void _checkArticleAndStartNewGame(String article) async {
     final isCorrect =
         ref.read(wordleGameStateProvider.notifier).checkArticle(article);
     final gameState = ref.read(wordleGameStateProvider);
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            await isCorrect ? 'Richtig!' : 'Falsch! Versuche es noch einmal.'),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
+    // close current dialog
+    Navigator.of(context).pop();
 
-  @override
-  Widget build(BuildContext context) {
-    final gameState = ref.watch(wordleGameStateProvider);
-
-    if (gameState == null) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: colorBlack,
-      body: Column(
-        children: [
-          // game mode title
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: SizedBox(
-              height: kToolbarHeight * 2,
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'wördle',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildGameGrid(gameState),
-                  const SizedBox(height: 16),
-                  _buildGameInfo(gameState),
-                ],
-              ),
-            ),
-          ),
-          WordleKeyboard(
-            onKeyTap: gameState.canGuess ? _handleKeyPress : null,
-            letterStates: _getKeyboardLetterStates(gameState),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGameGrid(WordleGameState gameState) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    // result dialog
+    showCustomDialog(
+      context: context,
+      barrierDismissible: false,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // previous guesses
-          ...gameState.guesses
-              .map((guess) => _buildGuessRow(guess.word, guess.matches)),
-
-          // display current guess
-          if (gameState.canGuess) _buildCurrentGuessRow(),
-
-          // empty rows for remaining attempts
-          ...List.generate(
-            gameState.remainingAttempts - (gameState.canGuess ? 1 : 0),
-            (_) => _buildEmptyRow(),
-          )
+          Icon(
+            await isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: await isCorrect ? Colors.green : Colors.red,
+            size: 50,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            await isCorrect
+                ? '$article ${gameState?.targetWord} 🥳'
+                : 'fetch correct article',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 18,
+                  color: colorBlack,
+                ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCurrentGuessRow() {
-    final letters = _currentGuess.padRight(5, ' ').split('');
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        5,
-        (index) => Container(
-          width: 50,
-          height: 50,
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              letters[index],
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+      actions: [
+        GlassMorphicButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(wordleGameStateProvider.notifier).newGame();
+          },
+          child: Icon(
+            Icons.refresh_rounded,
+            color: Colors.green,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        5,
-        (_) => Container(
-          width: 50,
-          height: 50,
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGuessRow(String word, List<LetterMatch> matches) {
-    final letters = word.split('');
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        5,
-        (index) => TweenAnimationBuilder(
-          duration: Duration(milliseconds: 500),
-          tween: Tween<double>(begin: 0, end: 1),
-          builder: (context, double value, child) {
-            // rotate 0 - 90 for first half of animation
-            // rotate from 270 - 360 for the second half
-            final rotation =
-                value < 0.5 ? value * pi : pi + (value - 0.05) * pi;
-
-            return Transform(
-              transform: Matrix4.rotationX(rotation),
-              alignment: Alignment.center,
-              child: Container(
-                width: 50,
-                height: 50,
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  // show grey until halfway, then show actual color
-                  color: value < 0.5
-                      ? Colors.grey
-                      : _getColorForMatch(matches[index]),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Transform(
-                    // flip text so it's not mirror shaped
-                    transform: Matrix4.rotationX(value < 0.5 ? 0 : pi),
-                    alignment: Alignment.center,
-                    child: Text(
-                      letters[index],
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: value < 0.5 ? colorBlack : colorWhite,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+        GlassMorphicButton(
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              RouteNames.home,
+              (route) => false,
             );
           },
+          child: Icon(
+            Icons.home_rounded,
+            color: colorBlack,
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -368,25 +292,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
       case LetterMatch.absent:
         return Colors.grey;
     }
-  }
-
-  Widget _buildGameInfo(WordleGameState gameState) {
-    final status = gameState.status;
-    final attempts = gameState.guesses.length;
-    final remaining = gameState.remainingAttempts;
-
-    return Column(
-      children: [
-        Text(
-          status == GameStatus.playing
-              ? 'Versuch übrig: $remaining'
-              : status == GameStatus.won
-                  ? 'Gewonnen in $attempts Versuchen!'
-                  : 'Verloren. Das Wort war: ${gameState.targetWord}',
-          style: const TextStyle(fontSize: 18),
-        )
-      ],
-    );
   }
 
   Map<String, Color> _getKeyboardLetterStates(WordleGameState gameState) {
@@ -428,5 +333,62 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     if (color == Colors.green) return 2;
     if (color == colorYellow) return 1;
     return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gameState = ref.watch(wordleGameStateProvider);
+
+    if (gameState == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: colorBlack,
+      body: Column(
+        children: [
+          // game mode title
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: SizedBox(
+              height: kToolbarHeight * 2,
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  'wördle',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: colorWhite),
+                ),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  WordleGameGrid(
+                    gameState: gameState,
+                    currentGuess: _currentGuess,
+                  ),
+                  const SizedBox(height: kToolbarHeight * 2),
+                ],
+              ),
+            ),
+          ),
+          WordleKeyboard(
+            onKeyTap: gameState.canGuess ? _handleKeyPress : null,
+            letterStates: _getKeyboardLetterStates(gameState),
+          ),
+        ],
+      ),
+    );
   }
 }
