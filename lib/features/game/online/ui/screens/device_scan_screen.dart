@@ -7,7 +7,6 @@ import 'package:tic_tac_zwo/config/constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../config/config.dart';
-import '../../../../../routes/route_names.dart';
 
 class DeviceScanScreen extends ConsumerStatefulWidget {
   const DeviceScanScreen({super.key});

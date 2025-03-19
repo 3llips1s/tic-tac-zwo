@@ -27,63 +27,67 @@ class GlassmorphicDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 20.0),
-      child: AlertDialog(
-        backgroundColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: borderRadius,
-        ),
-        content: Container(
-          height: height,
-          width: width,
-          decoration: BoxDecoration(
+      child: UnconstrainedBox(
+        child: AlertDialog(
+          backgroundColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
             borderRadius: borderRadius,
           ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // blur effect
-              BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: blur,
-                  sigmaY: blur,
-                ),
-                child: Container(),
-              ),
-
-              // gradient
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: Colors.white.withAlpha((255 * 0.1).toInt())),
-                  borderRadius: borderRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withAlpha((255 * 0.7).toInt()),
-                      Colors.white.withAlpha((255 * 0.1).toInt()),
-                    ],
+          insetPadding: EdgeInsets.zero,
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            height: height,
+            width: width,
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // blur effect
+                BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: blur,
+                    sigmaY: blur,
                   ),
+                  child: Container(),
                 ),
-              ),
 
-              // content
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: padding,
-                    child: child,
-                  ),
-                  if (actions != null) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: actions!,
+                // gradient
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: Colors.white.withAlpha((255 * 0.1).toInt())),
+                    borderRadius: borderRadius,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withAlpha((255 * 0.7).toInt()),
+                        Colors.white.withAlpha((255 * 0.1).toInt()),
+                      ],
                     ),
+                  ),
+                ),
+
+                // content
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: padding,
+                      child: child,
+                    ),
+                    if (actions != null) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: actions!,
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -115,11 +119,16 @@ Future<T?> showCustomDialog<T>({
 class GlassMorphicButton extends StatelessWidget {
   final VoidCallback onPressed;
   final Widget child;
+  final EdgeInsetsGeometry padding;
 
   const GlassMorphicButton({
     super.key,
     required this.onPressed,
     required this.child,
+    this.padding = const EdgeInsets.symmetric(
+      vertical: 8,
+      horizontal: 2,
+    ),
   });
 
   @override
@@ -134,7 +143,7 @@ class GlassMorphicButton extends StatelessWidget {
         side: BorderSide(color: Colors.white70),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        padding: padding,
         child: child,
       ),
     );

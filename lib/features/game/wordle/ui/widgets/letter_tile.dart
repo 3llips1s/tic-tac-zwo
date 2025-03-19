@@ -130,7 +130,7 @@ class _LetterTileState extends State<LetterTile>
       height: 50,
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        border: Border.all(color: colorGrey300),
+        border: Border.all(color: colorGrey300, width: 1.5),
       ),
       child: Center(
         child: Text(
@@ -138,7 +138,7 @@ class _LetterTileState extends State<LetterTile>
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: colorGrey500,
+            color: colorGrey300,
           ),
         ),
       ),
@@ -170,11 +170,9 @@ class _LetterTileState extends State<LetterTile>
             height: 50,
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color:
-                  _showingBack ? _getColorForMatch(widget.match!) : Colors.grey,
-              border: Border.all(
-                color: _showingBack ? Colors.transparent : Colors.grey,
-              ),
+              color: _showingBack
+                  ? _getColorForMatch(widget.match!)
+                  : Colors.black,
             ),
             child: Center(
               child: Text(
@@ -182,7 +180,7 @@ class _LetterTileState extends State<LetterTile>
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: _showingBack ? colorWhite : colorBlack,
+                  color: colorWhite,
                 ),
               ),
             ),

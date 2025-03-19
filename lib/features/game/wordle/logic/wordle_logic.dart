@@ -108,13 +108,15 @@ class WordleLogic {
     final attempts = state.guesses.length;
 
     if (attempts == 1) {
-      return 'Fantastisch! Du bist ein Wortgenie!';
+      return 'Du bist ein Wortgenie! 🤓';
     } else if (attempts == 2) {
-      return 'Geil! Das war der Hammer!';
-    } else if (attempts <= 4) {
-      return 'Sehr gut gemacht';
+      return 'Das war der Hammer! 😎';
+    } else if (attempts == 3) {
+      return 'Sehr gut gemacht! 👏';
+    } else if (attempts == 4) {
+      return 'Gut gemacht! 👏';
     } else {
-      return 'Geschafft! Das war knapp!';
+      return 'Das war knapp! 😮‍💨';
     }
   }
 

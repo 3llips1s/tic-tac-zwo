@@ -18,14 +18,18 @@ class WordleGameScreen extends ConsumerStatefulWidget {
   ConsumerState<WordleGameScreen> createState() => _WordleGameScreenState();
 }
 
-class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
+class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _guessController = TextEditingController();
   String _currentGuess = '';
 
+  late AnimationController _hoverController;
+  late Animation<double> _hoverAnimation;
+
   @override
-  void dispose() {
-    _guessController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _initHoverAnimation();
   }
 
   void _handleGuess() async {
@@ -78,7 +82,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
         _currentGuess += letter;
       });
     }
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
   }
 
   void _showSnackBar(String message) {
@@ -89,7 +93,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: EdgeInsets.only(
-          bottom: kToolbarHeight * 3.5,
+          bottom: kToolbarHeight * 4,
           left: 10,
           right: 10,
         ),
@@ -115,34 +119,103 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     );
   }
 
-  void _showWinDialog(WordleGameState state) {
+  void _initHoverAnimation() {
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _hoverAnimation = Tween<double>(
+      begin: 3,
+      end: 15,
+    ).animate(
+      CurvedAnimation(
+        parent: _hoverController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _hoverController.repeat(reverse: true);
+  }
+
+  void _showWinDialog(WordleGameState state) async {
     final feedback =
         ref.read(wordleGameStateProvider.notifier).getWinFeedback();
+
+    await Future.delayed(Duration(seconds: 2));
 
     showCustomDialog(
       context: context,
       barrierDismissible: false,
-      width: MediaQuery.of(context).size.width * 0.8,
+      width: 300,
+      height: 300,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            feedback,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorBlack,
-                ),
-            textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: AnimatedBuilder(
+              animation: _hoverAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _hoverAnimation.value),
+                  child: Text(
+                    feedback,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: colorBlack,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Artikel für ${state.targetWord}?',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorBlack,
+          const SizedBox(height: kToolbarHeight * 1.5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Text(
+                  'Artikel für?',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorBlack,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                  textAlign: TextAlign.center,
                 ),
-            textAlign: TextAlign.center,
-          )
+              ),
+              Row(
+                children: [
+                  ...List.generate(
+                    state.targetWord.length,
+                    (index) => Container(
+                      height: 30,
+                      width: 30,
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(3)),
+                      child: Center(
+                        child: Text(
+                          state.targetWord[index],
+                          style: TextStyle(
+                            color: colorWhite,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: kToolbarHeight / 2),
         ],
       ),
       actions: [
@@ -150,51 +223,123 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
           onPressed: () => _checkArticleAndStartNewGame('der'),
           child: Text(
             'der',
-            style: TextStyle(color: colorBlack),
+            style: TextStyle(
+              color: colorBlack,
+              fontSize: 20,
+            ),
           ),
         ),
         GlassMorphicButton(
           onPressed: () => _checkArticleAndStartNewGame('die'),
           child: Text(
             'die',
-            style: TextStyle(color: colorBlack),
+            style: TextStyle(
+              color: colorBlack,
+              fontSize: 20,
+            ),
           ),
         ),
         GlassMorphicButton(
           onPressed: () => _checkArticleAndStartNewGame('das'),
           child: Text(
             'das',
-            style: TextStyle(color: colorBlack),
+            style: TextStyle(
+              color: colorBlack,
+              fontSize: 20,
+            ),
           ),
         ),
       ],
     );
   }
 
-  void _showLoseDialog(WordleGameState state) {
+  void _showLoseDialog(WordleGameState state) async {
+    await Future.delayed(Duration(seconds: 2));
+
     showCustomDialog(
         context: context,
         barrierDismissible: false,
-        width: MediaQuery.of(context).size.width * 0.8,
+        width: 300,
+        height: 300,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Das Wort war: ${state.targetWord}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 22,
-                    color: colorBlack,
-                  ),
-              textAlign: TextAlign.center,
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: AnimatedBuilder(
+                animation: _hoverAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _hoverAnimation.value),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colorBlack,
+                            ),
+                        children: [
+                          TextSpan(text: 'Das Wort war: '),
+                          TextSpan(
+                            text: state.targetWord,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontSize: 24,
+                                      color: colorBlack,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              ' Artikel für ${state.targetWord}?',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorBlack,
+            const SizedBox(height: kToolbarHeight * 1.5),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Text(
+                    'Artikel für?',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorBlack,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                    textAlign: TextAlign.center,
                   ),
-              textAlign: TextAlign.center,
-            )
+                ),
+                Row(
+                  children: [
+                    ...List.generate(
+                      state.targetWord.length,
+                      (index) => Container(
+                        height: 30,
+                        width: 30,
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(3)),
+                        child: Center(
+                          child: Text(
+                            state.targetWord[index],
+                            style: TextStyle(
+                              color: colorWhite,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: kToolbarHeight / 2),
           ],
         ),
         actions: [
@@ -202,21 +347,30 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
             onPressed: () => _checkArticleAndStartNewGame('der'),
             child: Text(
               'der',
-              style: TextStyle(color: colorBlack),
+              style: TextStyle(
+                color: colorBlack,
+                fontSize: 20,
+              ),
             ),
           ),
           GlassMorphicButton(
             onPressed: () => _checkArticleAndStartNewGame('die'),
             child: Text(
               'die',
-              style: TextStyle(color: colorBlack),
+              style: TextStyle(
+                color: colorBlack,
+                fontSize: 20,
+              ),
             ),
           ),
           GlassMorphicButton(
             onPressed: () => _checkArticleAndStartNewGame('das'),
             child: Text(
               'das',
-              style: TextStyle(color: colorBlack),
+              style: TextStyle(
+                color: colorBlack,
+                fontSize: 20,
+              ),
             ),
           ),
         ]);
@@ -234,6 +388,8 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
     showCustomDialog(
       context: context,
       barrierDismissible: false,
+      width: MediaQuery.of(context).size.width * 0.9,
+      height: 300,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -273,6 +429,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
               RouteNames.home,
               (route) => false,
             );
+            ref.read(wordleGameStateProvider.notifier).newGame();
           },
           child: Icon(
             Icons.home_rounded,
@@ -390,5 +547,12 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _guessController.dispose();
+    _hoverController.dispose();
+    super.dispose();
   }
 }
