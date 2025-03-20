@@ -133,8 +133,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                 'Artikel für?',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: colorBlack,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
+                      fontSize: 18,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -143,8 +142,8 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
               children: List.generate(
                 targetWord.length,
                 (index) => Container(
-                  height: 30,
-                  width: 30,
+                  height: 28,
+                  width: 28,
                   margin: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: Colors.green,
@@ -225,11 +224,13 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
             animation: widget.hoverAnimation,
             builder: (context, child) {
               return Transform.translate(
-                  offset: Offset(0, widget.hoverAnimation.value),
-                  child: Text(
-                    _isCorrect ? '🥳' : '😢',
-                    style: TextStyle(fontSize: 50),
-                  ));
+                offset: Offset(0, widget.hoverAnimation.value),
+                child: Icon(
+                  _isCorrect ? Icons.check_circle_sharp : Icons.cancel_sharp,
+                  size: 70,
+                  color: _isCorrect ? Colors.green : colorRed,
+                ),
+              );
             },
           ),
         ),
@@ -242,14 +243,13 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           children: [
             if (_isCorrect)
               Text(
-                '$_selectedArticle ${widget.gameState.targetWord}',
+                '$_selectedArticle ${widget.gameState.targetWord} ',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontSize: 28,
                       color: colorBlack,
                     ),
                 textAlign: TextAlign.center,
               ),
-            const SizedBox(width: 10),
             if (!_isCorrect)
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -274,6 +274,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                           decoration: TextDecoration.underline,
                         ),
                   ),
+                  const SizedBox(width: 2),
 
                   // word itself
                   Text(

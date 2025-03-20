@@ -34,7 +34,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   }
 
   void _showGameResultDialog(WordleGameState state) async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 2200));
 
     showCustomDialog(
       context: context,
@@ -89,8 +89,11 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     final newState = ref.read(wordleGameStateProvider);
     if (newState == null) return;
 
-    if (newState.status == GameStatus.won ||
-        newState.status == GameStatus.lost) {
+    if (newState.status == GameStatus.won) {
+      _showSnackBar('Geschafft! 🎉');
+      _showGameResultDialog(newState);
+    } else if (newState.status == GameStatus.lost) {
+      _showSnackBar('Schade! ❤️‍🩹');
       _showGameResultDialog(newState);
     }
   }
@@ -118,11 +121,11 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
         margin: EdgeInsets.only(
           bottom: kToolbarHeight * 4,
-          left: 10,
-          right: 10,
+          left: 20,
+          right: 20,
         ),
         content: Container(
           padding: EdgeInsets.all(12),
