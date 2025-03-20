@@ -28,7 +28,6 @@ class GameScreen extends ConsumerWidget {
     final gameState = ref.watch(gameConfig.gameMode == GameMode.offline
         ? offlineStateProvider(gameConfig)
         : gameStateProvider(gameConfig));
-    // final gameNotifier = ref.read(gameStateProvider(gameConfig).notifier);
 
     final space = SizedBox(height: kToolbarHeight);
     final halfSpace = SizedBox(height: kToolbarHeight / 2);

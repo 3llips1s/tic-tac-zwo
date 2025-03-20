@@ -189,6 +189,13 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     Animation<Offset> slideAnimation,
     bool shouldArticleAnimate,
   ) {
+    final gameState = ref.read(widget.gameConfig.gameMode == GameMode.offline
+        ? offlineStateProvider(widget.gameConfig)
+        : gameStateProvider(widget.gameConfig));
+
+    final wrongArticle = gameState.wrongSelectedArticle;
+    final hasWrongArticle = wrongArticle != null && shouldArticleAnimate;
+
     return Padding(
       padding: const EdgeInsets.only(top: 5),
       child: Row(
@@ -197,41 +204,72 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
           if (showArticle) ...[
             SlideTransition(
               position: slideAnimation,
-              child: AnimatedBuilder(
-                animation: shouldArticleAnimate
-                    ? _feedbackController
-                    : const AlwaysStoppedAnimation(0.0),
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: shouldArticleAnimate ? _bounceAnimation.value : 1.0,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currentNoun.article,
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontSize: 33,
-                                  ),
-                        ),
-
-                        // animated underline
-                        if (shouldArticleAnimate)
-                          AnimatedBuilder(
-                            animation: _underlineOpacity,
-                            builder: (context, child) {
-                              return Container(
-                                height: 3,
-                                width: currentNoun.article.length * 20.0,
-                                color: colorDarkGreen.withAlpha(
-                                    (255 * _underlineOpacity.value).toInt()),
-                              );
-                            },
-                          )
-                      ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // wrong article with strikethrough
+                  if (hasWrongArticle) ...[
+                    Text(
+                      wrongArticle,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontSize: 28,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: colorBlack,
+                            decorationThickness: 2.5,
+                            color: colorRed,
+                          ),
                     ),
-                  );
-                },
+                    SizedBox(width: 15),
+                  ],
+
+                  // correct article with animation
+                  AnimatedBuilder(
+                    animation: shouldArticleAnimate
+                        ? _feedbackController
+                        : const AlwaysStoppedAnimation(0.0),
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale:
+                            shouldArticleAnimate ? _bounceAnimation.value : 1.0,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              currentNoun.article,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    fontSize: hasWrongArticle ? 30 : 33,
+                                    color: shouldArticleAnimate
+                                        ? colorDarkGreen
+                                        : colorBlack,
+                                  ),
+                            ),
+
+                            // animated underline
+                            AnimatedBuilder(
+                              animation: shouldArticleAnimate
+                                  ? _underlineOpacity
+                                  : const AlwaysStoppedAnimation(0.0),
+                              builder: (context, child) {
+                                return Container(
+                                  height: 3,
+                                  width: currentNoun.article.length * 15.0,
+                                  color: colorBlack.withAlpha((255 *
+                                          (shouldArticleAnimate
+                                              ? _underlineOpacity.value
+                                              : 0))
+                                      .toInt()),
+                                );
+                              },
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             SizedBox(width: 10),
@@ -239,7 +277,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
           Text(
             currentNoun.noun,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 32,
+                  fontSize: 33,
                 ),
           ),
           SizedBox(width: 10),

@@ -184,6 +184,7 @@ class GameNotifier extends StateNotifier<GameState> {
       state = state.copyWith(
         isTimerActive: false,
         showArticleFeedback: true,
+        wrongSelectedArticle: selectedArticle,
       );
 
       Future.delayed(

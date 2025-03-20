@@ -16,6 +16,7 @@ class GameState {
   final bool isTimerActive;
   final int remainingSeconds;
   final int? selectedCellIndex;
+  final String? wrongSelectedArticle;
 
   // after game ends
   final bool isGameOver;
@@ -38,6 +39,7 @@ class GameState {
     required this.isTimerActive,
     required this.remainingSeconds,
     this.selectedCellIndex,
+    this.wrongSelectedArticle,
 
     // after game ends
     required this.isGameOver,
@@ -57,6 +59,7 @@ class GameState {
         remainingSeconds = turnDurationSeconds,
         isTimerActive = false,
         selectedCellIndex = null,
+        wrongSelectedArticle = null,
 
         // after game ends
         isGameOver = false,
@@ -77,6 +80,7 @@ class GameState {
     int? remainingSeconds,
     bool? isTimerActive,
     int? selectedCellIndex,
+    String? wrongSelectedArticle,
 
     // after game ends
     bool? isGameOver,
@@ -97,6 +101,7 @@ class GameState {
       isTimerActive: isTimerActive ?? this.isTimerActive,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       selectedCellIndex: selectedCellIndex ?? this.selectedCellIndex,
+      wrongSelectedArticle: wrongSelectedArticle ?? this.wrongSelectedArticle,
 
       // after game ends
       isGameOver: isGameOver ?? this.isGameOver,

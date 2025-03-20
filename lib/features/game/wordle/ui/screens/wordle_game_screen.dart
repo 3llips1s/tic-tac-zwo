@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_providers.dart';
+import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/game_result_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dart';
 
 import '../../../../../config/constants.dart';
@@ -30,6 +31,33 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   void initState() {
     super.initState();
     _initHoverAnimation();
+  }
+
+  void _showGameResultDialog(WordleGameState state) async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    showCustomDialog(
+      context: context,
+      barrierDismissible: false,
+      width: 300,
+      height: 300,
+      child: GameResultDialog(
+        gameState: state,
+        hoverAnimation: _hoverAnimation,
+        onHomePressed: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            RouteNames.home,
+            (route) => false,
+          );
+          ref.read(wordleGameStateProvider.notifier).newGame();
+        },
+        onPlayAgainPressed: () {
+          Navigator.of(context).pop();
+          ref.read(wordleGameStateProvider.notifier).newGame();
+        },
+      ),
+    );
   }
 
   void _handleGuess() async {
@@ -61,10 +89,9 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     final newState = ref.read(wordleGameStateProvider);
     if (newState == null) return;
 
-    if (newState.status == GameStatus.won) {
-      _showWinDialog(newState);
-    } else if (newState.status == GameStatus.lost) {
-      _showLoseDialog(newState);
+    if (newState.status == GameStatus.won ||
+        newState.status == GameStatus.lost) {
+      _showGameResultDialog(newState);
     }
   }
 
@@ -136,308 +163,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     );
 
     _hoverController.repeat(reverse: true);
-  }
-
-  void _showWinDialog(WordleGameState state) async {
-    final feedback =
-        ref.read(wordleGameStateProvider.notifier).getWinFeedback();
-
-    await Future.delayed(Duration(seconds: 2));
-
-    showCustomDialog(
-      context: context,
-      barrierDismissible: false,
-      width: 300,
-      height: 300,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: AnimatedBuilder(
-              animation: _hoverAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, _hoverAnimation.value),
-                  child: Text(
-                    feedback,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: colorBlack,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: kToolbarHeight * 1.5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Text(
-                  'Artikel für?',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorBlack,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Row(
-                children: [
-                  ...List.generate(
-                    state.targetWord.length,
-                    (index) => Container(
-                      height: 30,
-                      width: 30,
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(3)),
-                      child: Center(
-                        child: Text(
-                          state.targetWord[index],
-                          style: TextStyle(
-                            color: colorWhite,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: kToolbarHeight / 2),
-        ],
-      ),
-      actions: [
-        GlassMorphicButton(
-          onPressed: () => _checkArticleAndStartNewGame('der'),
-          child: Text(
-            'der',
-            style: TextStyle(
-              color: colorBlack,
-              fontSize: 20,
-            ),
-          ),
-        ),
-        GlassMorphicButton(
-          onPressed: () => _checkArticleAndStartNewGame('die'),
-          child: Text(
-            'die',
-            style: TextStyle(
-              color: colorBlack,
-              fontSize: 20,
-            ),
-          ),
-        ),
-        GlassMorphicButton(
-          onPressed: () => _checkArticleAndStartNewGame('das'),
-          child: Text(
-            'das',
-            style: TextStyle(
-              color: colorBlack,
-              fontSize: 20,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLoseDialog(WordleGameState state) async {
-    await Future.delayed(Duration(seconds: 2));
-
-    showCustomDialog(
-        context: context,
-        barrierDismissible: false,
-        width: 300,
-        height: 300,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: AnimatedBuilder(
-                animation: _hoverAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, _hoverAnimation.value),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: colorBlack,
-                            ),
-                        children: [
-                          TextSpan(text: 'Das Wort war: '),
-                          TextSpan(
-                            text: state.targetWord,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontSize: 24,
-                                      color: colorBlack,
-                                    ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: kToolbarHeight * 1.5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: Text(
-                    'Artikel für?',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorBlack,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Row(
-                  children: [
-                    ...List.generate(
-                      state.targetWord.length,
-                      (index) => Container(
-                        height: 30,
-                        width: 30,
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(3)),
-                        child: Center(
-                          child: Text(
-                            state.targetWord[index],
-                            style: TextStyle(
-                              color: colorWhite,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: kToolbarHeight / 2),
-          ],
-        ),
-        actions: [
-          GlassMorphicButton(
-            onPressed: () => _checkArticleAndStartNewGame('der'),
-            child: Text(
-              'der',
-              style: TextStyle(
-                color: colorBlack,
-                fontSize: 20,
-              ),
-            ),
-          ),
-          GlassMorphicButton(
-            onPressed: () => _checkArticleAndStartNewGame('die'),
-            child: Text(
-              'die',
-              style: TextStyle(
-                color: colorBlack,
-                fontSize: 20,
-              ),
-            ),
-          ),
-          GlassMorphicButton(
-            onPressed: () => _checkArticleAndStartNewGame('das'),
-            child: Text(
-              'das',
-              style: TextStyle(
-                color: colorBlack,
-                fontSize: 20,
-              ),
-            ),
-          ),
-        ]);
-  }
-
-  void _checkArticleAndStartNewGame(String article) async {
-    final isCorrect =
-        ref.read(wordleGameStateProvider.notifier).checkArticle(article);
-    final gameState = ref.read(wordleGameStateProvider);
-
-    // close current dialog
-    Navigator.of(context).pop();
-
-    // result dialog
-    showCustomDialog(
-      context: context,
-      barrierDismissible: false,
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: 300,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            await isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            color: await isCorrect ? Colors.green : Colors.red,
-            size: 50,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            await isCorrect
-                ? '$article ${gameState?.targetWord} 🥳'
-                : 'fetch correct article',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 18,
-                  color: colorBlack,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-      actions: [
-        GlassMorphicButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            ref.read(wordleGameStateProvider.notifier).newGame();
-          },
-          child: Icon(
-            Icons.refresh_rounded,
-            color: Colors.green,
-          ),
-        ),
-        GlassMorphicButton(
-          onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              RouteNames.home,
-              (route) => false,
-            );
-            ref.read(wordleGameStateProvider.notifier).newGame();
-          },
-          child: Icon(
-            Icons.home_rounded,
-            color: colorBlack,
-          ),
-        ),
-      ],
-    );
   }
 
   Color _getColorForMatch(LetterMatch match) {

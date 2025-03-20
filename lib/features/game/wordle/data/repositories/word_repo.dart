@@ -70,6 +70,16 @@ class WordRepo {
     return entry['article'];
   }
 
+  Future<String?> getEnglishTranslation(String word) async {
+    await initialize();
+
+    final uppercaseWord = word.toUpperCase();
+    final entry = _words.firstWhere(
+      (entry) => entry['word']!.toUpperCase() == uppercaseWord,
+    );
+    return entry['english'];
+  }
+
   List<Map<String, String>> _getFallbackWords() {
     return [
       {
