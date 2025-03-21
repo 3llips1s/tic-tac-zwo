@@ -39,21 +39,6 @@ class GameScreen extends ConsumerWidget {
         gameConfig,
         gameState,
         () {
-          /* final updatedPlayers = gameState.players
-              .map((player) => Player(
-                  userName: player.userName,
-                  symbol: player.symbol == PlayerSymbol.X
-                      ? PlayerSymbol.O
-                      : PlayerSymbol.X,
-                  isAI: player.isAI))
-              .toList();
-
-          final rematchConfig = GameConfig(
-              players: updatedPlayers,
-              startingPlayer: updatedPlayers
-                  .firstWhere((player) => player.symbol == PlayerSymbol.X),
-              gameMode: gameConfig.gameMode); */
-
           final notifier = gameConfig.gameMode == GameMode.offline
               ? ref.read(offlineStateProvider(gameConfig).notifier)
               : ref.read(gameStateProvider(gameConfig).notifier);
@@ -65,6 +50,8 @@ class GameScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colorGrey300,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: Container(
         color: colorGrey300,
         padding: EdgeInsets.only(bottom: 10),

@@ -123,7 +123,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
         margin: EdgeInsets.only(
-          bottom: kToolbarHeight * 4,
+          bottom: kToolbarHeight * 3.6,
           left: 20,
           right: 20,
         ),

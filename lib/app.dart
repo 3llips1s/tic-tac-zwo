@@ -8,11 +8,13 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        HiddenDrawer(),
-        HomeScreen(),
-      ],
+    return Scaffold(
+      body: Stack(
+        children: [
+          HiddenDrawer(),
+          HomeScreen(),
+        ],
+      ),
     );
   }
 }

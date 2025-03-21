@@ -261,7 +261,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                           fontSize: 28,
                           color: colorRed,
                           decoration: TextDecoration.lineThrough,
-                          decorationThickness: 2,
+                          decorationThickness: 1,
                         ),
                   ),
                   const SizedBox(width: 10),
