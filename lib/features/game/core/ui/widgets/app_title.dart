@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
 class AppTitle extends StatefulWidget {
   const AppTitle({super.key});

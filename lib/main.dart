@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/app.dart';
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/auth_config/auth_config.dart';
 
-import 'config/theme.dart';
+import 'config/game_config/theme.dart';
 import 'routes/app_router.dart';
 import 'routes/route_names.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setEnabledSystemUIMode(
@@ -17,11 +18,19 @@ void main() {
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: colorGrey300,
+      statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
     ),
   );
+
+  await Supabase.initialize(
+      url: AuthConfig.url,
+      anonKey: AuthConfig.anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+      ));
 
   runApp(ProviderScope(child: const MainApp()));
 }

@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:device_scan_animation/device_scan_animation.dart';
 import 'package:flutter/material.dart';
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../config/config.dart';
+import '../../../../../config/game_config/config.dart';
 
 class DeviceScanScreen extends ConsumerStatefulWidget {
   const DeviceScanScreen({super.key});

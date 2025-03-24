@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
-import '../../../../../config/config.dart';
+import '../../../../../config/game_config/config.dart';
 import '../../data/models/nouns.dart';
 import '../../data/models/player.dart';
 
@@ -215,7 +215,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                             fontSize: 28,
                             decoration: TextDecoration.lineThrough,
                             decorationColor: colorBlack,
-                            decorationThickness: 2.5,
+                            decorationThickness: 1.54,
                             color: colorRed,
                           ),
                     ),

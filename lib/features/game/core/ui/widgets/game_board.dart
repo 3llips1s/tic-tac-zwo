@@ -4,8 +4,8 @@ import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board_cell.dart';
 
-import '../../../../../config/config.dart';
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../logic/game_notifier.dart';
 
 class GameBoard extends ConsumerWidget {

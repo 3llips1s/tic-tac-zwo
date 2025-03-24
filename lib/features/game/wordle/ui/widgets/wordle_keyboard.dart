@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
 class WordleKeyboard extends StatelessWidget {
   final Function(String)? onKeyTap;

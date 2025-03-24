@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 
-import '../../../../../config/config.dart';
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../data/models/player.dart';
 
 class PlayerNameDialog extends StatefulWidget {

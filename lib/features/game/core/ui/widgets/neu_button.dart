@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:tic_tac_zwo/config/config.dart';
+import 'package:tic_tac_zwo/config/game_config/config.dart';
 
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/constants.dart';
 
 class NeuButton extends StatelessWidget {
   final String iconPath;

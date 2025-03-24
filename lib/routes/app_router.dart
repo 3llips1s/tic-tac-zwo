@@ -3,7 +3,7 @@ import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/device_scan_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
 
-import '../config/config.dart';
+import '../config/game_config/config.dart';
 import '../features/game/core/ui/screens/game_screen.dart';
 import '../features/game/core/ui/screens/home_screen.dart';
 import '../features/game/core/ui/screens/turn_selection_screen.dart';

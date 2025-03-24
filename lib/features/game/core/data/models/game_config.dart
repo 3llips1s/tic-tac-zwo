@@ -1,4 +1,4 @@
-import 'package:tic_tac_zwo/config/config.dart';
+import 'package:tic_tac_zwo/config/game_config/config.dart';
 
 import 'player.dart';
 

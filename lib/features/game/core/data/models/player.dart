@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:tic_tac_zwo/config/constants.dart';
+import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
-import '../../../../../config/config.dart';
+import '../../../../../config/game_config/config.dart';
 
 class Player {
   final String userName;

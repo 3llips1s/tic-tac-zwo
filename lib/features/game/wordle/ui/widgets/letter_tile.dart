@@ -2,7 +2,7 @@ import 'dart:math' show pi;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../data/models/guess_model.dart';
 
 class LetterTile extends StatefulWidget {

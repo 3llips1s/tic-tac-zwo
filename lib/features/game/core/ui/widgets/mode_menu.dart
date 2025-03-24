@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../config/config.dart';
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../../../../routes/route_names.dart';
 import 'neu_button.dart';
 

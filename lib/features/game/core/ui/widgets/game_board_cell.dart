@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/constants.dart';
 
 class GameBoardCell extends StatelessWidget {
   final Widget child;

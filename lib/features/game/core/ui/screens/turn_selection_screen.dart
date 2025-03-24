@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_name_dialog.dart';
 import 'package:tic_tac_zwo/routes/route_names.dart';
 
-import '../../../../../config/config.dart';
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../data/models/game_config.dart';
 import '../../data/models/player.dart';
 import '../widgets/ripple_icon.dart';

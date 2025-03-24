@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
-import '../../../../../config/config.dart';
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../data/models/game_config.dart';
 import '../../logic/game_notifier.dart';
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_providers.dart';
 
-import '../../../../../config/constants.dart';
+import '../../../../../config/game_config/constants.dart';
 import '../../../../../routes/route_names.dart';
 import '../../../core/ui/widgets/glassmorphic_dialog.dart';
 import '../../data/models/wordle_game_state.dart';
@@ -261,7 +261,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                           fontSize: 28,
                           color: colorRed,
                           decoration: TextDecoration.lineThrough,
-                          decorationThickness: 1,
+                          decorationThickness: 2,
                         ),
                   ),
                   const SizedBox(width: 10),

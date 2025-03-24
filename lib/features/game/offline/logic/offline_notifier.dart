@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tic_tac_zwo/config/config.dart';
+import 'package:tic_tac_zwo/config/game_config/config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
