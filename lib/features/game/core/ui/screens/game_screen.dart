@@ -50,8 +50,6 @@ class GameScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colorGrey300,
-      extendBody: true,
-      extendBodyBehindAppBar: true,
       body: Container(
         color: colorGrey300,
         padding: EdgeInsets.only(bottom: 10),
@@ -102,8 +100,8 @@ class GameScreen extends ConsumerWidget {
                 child: GestureDetector(
                   onTap: () {},
                   child: Container(
-                    height: 40,
-                    width: 40,
+                    height: 30,
+                    width: 30,
                     color: Colors.transparent,
                     child: Center(
                         child: SvgPicture.asset('assets/images/bookmark.svg')),

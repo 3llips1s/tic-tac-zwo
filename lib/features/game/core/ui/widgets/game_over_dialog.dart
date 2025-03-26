@@ -131,7 +131,7 @@ void showGameOverDialog(
                 behavior: SnackBarBehavior.floating,
                 duration: const Duration(seconds: 1),
                 margin: EdgeInsets.only(
-                  bottom: kToolbarHeight,
+                  bottom: kToolbarHeight * 1.75,
                   left: 40,
                   right: 40,
                 ),
