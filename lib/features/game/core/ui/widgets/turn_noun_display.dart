@@ -293,8 +293,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         Text(
           '- ${currentNoun.english}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 18,
-                color: Colors.black54,
+                fontSize: 17,
+                color: Colors.black45,
               ),
         ),
       ],

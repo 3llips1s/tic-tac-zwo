@@ -123,8 +123,6 @@ class GameNotifier extends StateNotifier<GameState> {
       remainingSeconds: GameState.turnDurationSeconds,
       currentNoun: null,
       lastPlayedPlayer: state.currentPlayer,
-      showArticleFeedback: false,
-      wrongSelectedArticle: null,
     );
   }
 
@@ -196,6 +194,8 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   void handleWinOrDraw() {
+    if (state.isGameOver) return;
+
     final (winResult, winPattern) = state.checkWinner();
     if (winResult != null) {
       _timer?.cancel();
