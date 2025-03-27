@@ -123,6 +123,8 @@ class GameNotifier extends StateNotifier<GameState> {
       remainingSeconds: GameState.turnDurationSeconds,
       currentNoun: null,
       lastPlayedPlayer: state.currentPlayer,
+      showArticleFeedback: false,
+      wrongSelectedArticle: null,
     );
   }
 
@@ -146,6 +148,8 @@ class GameNotifier extends StateNotifier<GameState> {
           ..[state.selectedCellIndex!] = true,
         isTimerActive: false,
         lastPlayedPlayer: state.currentPlayer,
+        showArticleFeedback: false,
+        wrongSelectedArticle: null,
       );
 
       final (gameResult, winningPattern) = state.checkWinner();
@@ -176,7 +180,7 @@ class GameNotifier extends StateNotifier<GameState> {
           selectedCellIndex: null,
           isTimerActive: false,
           remainingSeconds: GameState.turnDurationSeconds,
-          currentNoun: null, // clear noun only after delay
+          currentNoun: null,
         );
       }
     } else {
@@ -187,12 +191,6 @@ class GameNotifier extends StateNotifier<GameState> {
         wrongSelectedArticle: selectedArticle,
       );
 
-      Future.delayed(
-        const Duration(milliseconds: 3000),
-        () {
-          state = state.copyWith(showArticleFeedback: false);
-        },
-      );
       forfeitTurn();
     }
   }

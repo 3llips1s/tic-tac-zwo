@@ -27,18 +27,20 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 
   // article feedback animation
   late AnimationController _feedbackController;
-  late Animation<double> _bounceAnimation;
   late Animation<double> _underlineOpacity;
 
   // dynamic font scaling
   double _calculateDynamicFontSize(String noun) {
     const baseFontSize = 33.0;
+    const minFontSize = 22.0;
 
     if (noun.length <= 12) return baseFontSize;
-    if (noun.length <= 15) return 32.0;
-    if (noun.length <= 20) return 30.0;
+    if (noun.length <= 14) return 31.0;
+    if (noun.length <= 16) return 29.0;
+    if (noun.length <= 18) return 27.0;
+    if (noun.length <= 20) return 25.0;
 
-    return 33.0;
+    return minFontSize;
   }
 
   @override
@@ -56,7 +58,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 
     _hoverAnimation = Tween<double>(
       begin: 3,
-      end: 9,
+      end: 12,
     ).animate(
       CurvedAnimation(
         parent: _hoverController,
@@ -85,19 +87,6 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         curve: Curves.easeOut,
       ),
     );
-
-    // article feedback animations
-    // subtle bounce
-    _bounceAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 1.0, end: 1.1)
-              .chain(CurveTween(curve: Curves.easeOutCirc)),
-          weight: 25.0),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 1.1, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeInOutCirc)),
-          weight: 75.0)
-    ]).animate(_feedbackController);
 
     // underline opacity animation
     _underlineOpacity = TweenSequence<double>(
@@ -132,9 +121,11 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     // reset and player article animation when a move is made
     if (gameState.lastPlayedPlayer != null && !gameState.isTimerActive) {
       _articleController.forward(from: 0);
+      _feedbackController.reset();
     }
 
-    if (gameState.showArticleFeedback) {
+    if (gameState.showArticleFeedback &&
+        gameState.wrongSelectedArticle != null) {
       _feedbackController.forward(from: 0);
     }
   }
@@ -158,8 +149,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 300,
-            height: kToolbarHeight * 1.1,
+            width: MediaQuery.of(context).size.width,
+            height: kToolbarHeight * 1.25,
             child: AnimatedCrossFade(
               firstChild: AnimatedBuilder(
                 animation: _hoverAnimation,
@@ -206,120 +197,107 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         : gameStateProvider(widget.gameConfig));
 
     final wrongArticle = gameState.wrongSelectedArticle;
-    final hasWrongArticle = wrongArticle != null && shouldArticleAnimate;
+    final hasWrongArticle = wrongArticle != null &&
+        (shouldArticleAnimate || gameState.showArticleFeedback);
 
     final dynamicFontSize = _calculateDynamicFontSize(currentNoun.noun);
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // articles + noun
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (showArticle) ...[
-                  SlideTransition(
-                    position: slideAnimation,
-                    child: Row(
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // articles + noun
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (showArticle) ...[
+              SlideTransition(
+                position: slideAnimation,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    if (hasWrongArticle) ...[
+                      Text(
+                        wrongArticle,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontSize: dynamicFontSize,
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: colorBlack,
+                              decorationThickness: 1.5,
+                              color: colorRed,
+                            ),
+                      ),
+                      SizedBox(width: 15),
+                    ],
+
+                    // correct article with animation
+                    Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (hasWrongArticle) ...[
-                          Text(
-                            wrongArticle,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontSize: dynamicFontSize,
-                                      decoration: TextDecoration.lineThrough,
-                                      decorationColor: colorBlack,
-                                      decorationThickness: 1.5,
-                                      color: colorRed,
-                                    ),
-                          ),
-                          SizedBox(width: 15),
-                        ],
+                        Text(
+                          currentNoun.article,
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontSize: hasWrongArticle
+                                        ? dynamicFontSize * 0.9
+                                        : dynamicFontSize,
+                                    color: colorDarkGreen,
+                                  ),
+                        ),
 
-                        // correct article with animation
+                        // animated underline
                         AnimatedBuilder(
                           animation: shouldArticleAnimate
-                              ? _feedbackController
-                              : const AlwaysStoppedAnimation(0.0),
+                              ? _underlineOpacity
+                              : const AlwaysStoppedAnimation(0),
                           builder: (context, child) {
-                            return Transform.scale(
-                              scale: shouldArticleAnimate
-                                  ? _bounceAnimation.value
-                                  : 1.0,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    currentNoun.article,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.copyWith(
-                                          fontSize: dynamicFontSize,
-                                          color: shouldArticleAnimate
-                                              ? colorDarkGreen
-                                              : colorBlack,
-                                        ),
-                                  ),
-
-                                  // animated underline
-                                  AnimatedBuilder(
-                                    animation: shouldArticleAnimate
-                                        ? _underlineOpacity
-                                        : const AlwaysStoppedAnimation(0),
-                                    builder: (context, child) {
-                                      return Container(
-                                        height: 3,
-                                        width:
-                                            currentNoun.article.length * 15.0,
-                                        color: colorBlack.withAlpha(
-                                          (255 *
-                                                  (shouldArticleAnimate
-                                                      ? _underlineOpacity.value
-                                                      : 0))
-                                              .toInt(),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                ],
+                            return Padding(
+                              padding: shouldArticleAnimate
+                                  ? const EdgeInsets.only(bottom: 10.0)
+                                  : EdgeInsets.zero,
+                              child: Container(
+                                height: 2,
+                                width: currentNoun.article.length * 12.5,
+                                color: colorBlack.withAlpha(
+                                  (255 *
+                                          (shouldArticleAnimate
+                                              ? _underlineOpacity.value
+                                              : 0))
+                                      .toInt(),
+                                ),
                               ),
                             );
                           },
-                        ),
-                        const SizedBox(width: 10),
+                        )
                       ],
                     ),
+                    const SizedBox(width: 15),
+                  ],
+                ),
+              ),
+            ],
+
+            // noun with dynamic font sizing
+            Text(
+              currentNoun.noun,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: dynamicFontSize,
                   ),
-                ],
-
-                // noun with dynamic font sizing
-                Text(
-                  currentNoun.noun,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: dynamicFontSize,
-                      ),
-                ),
-              ],
             ),
-          ),
+          ],
+        ),
 
-          // translation
-          Text(
-            currentNoun.english,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontSize: 18,
-                  color: Colors.black54,
-                ),
-          ),
-        ],
-      ),
+        // translation
+        Text(
+          '- ${currentNoun.english}',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 18,
+                color: Colors.black54,
+              ),
+        ),
+      ],
     );
   }
 }

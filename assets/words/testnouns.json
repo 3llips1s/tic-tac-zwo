@@ -37,6 +37,18 @@
   },
   {
     "article": "die",
+    "noun": "Aufmerksamkeit",
+    "plural": "kein Pl.",
+    "english": "Attention"
+  },
+  {
+    "article": "das",
+    "noun": "Einkaufszentrum",
+    "plural": "Einkaufszentren",
+    "english": "Mall"
+  },
+  {
+    "article": "die",
     "noun": "Verpflichtung",
     "plural": "Verpflichtungen",
     "english": "Commitment/Obligation"
@@ -52,5 +64,17 @@
     "noun": "Empfangsmitarbeiter",
     "plural": "Empfangsmitarbeiter",
     "english": "Receptionist"
-  }  
+  },
+  {
+    "article": "das",
+    "noun": "Aufeinandertreffen",
+    "plural": "Aufeinandertreffen",
+    "english": "Encounter"
+  },
+  {
+    "article": "die",
+    "noun": "Start- und Landebahn",
+    "plural": "Start- und Landebahnen",
+    "english": "Runway"
+  }
 ]

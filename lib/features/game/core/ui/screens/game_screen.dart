@@ -100,8 +100,8 @@ class GameScreen extends ConsumerWidget {
                 child: GestureDetector(
                   onTap: () {},
                   child: Container(
-                    height: 30,
-                    width: 30,
+                    height: 40,
+                    width: 40,
                     color: Colors.transparent,
                     child: Center(
                         child: SvgPicture.asset('assets/images/bookmark.svg')),
