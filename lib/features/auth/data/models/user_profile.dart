@@ -11,6 +11,8 @@ class UserProfile {
   final bool isOnline;
   final String? avatarUrl;
   final String? countryCode;
+  final int totalArticleAttempts;
+  final int totalCorrectArticles;
 
   UserProfile({
     required this.id,
@@ -25,23 +27,26 @@ class UserProfile {
     required this.isOnline,
     this.avatarUrl,
     this.countryCode,
+    required this.totalArticleAttempts,
+    required this.totalCorrectArticles,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      id: json['id'],
-      username: json['username'],
-      score: json['score'] ?? 0,
-      gamesPlayed: json['games_played'] ?? 0,
-      gamesWon: json['games_won'] ?? 0,
-      gamesDrawn: json['games_drawn'] ?? 0,
-      lat: json['lat'],
-      lng: json['lng'],
-      lastOnline: DateTime.parse(json['last_online']),
-      isOnline: json['is_online'] ?? false,
-      avatarUrl: json['avatar_url'],
-      countryCode: json['country_code'],
-    );
+        id: json['id'],
+        username: json['username'],
+        score: json['score'] ?? 0,
+        gamesPlayed: json['games_played'] ?? 0,
+        gamesWon: json['games_won'] ?? 0,
+        gamesDrawn: json['games_drawn'] ?? 0,
+        lat: json['lat'],
+        lng: json['lng'],
+        lastOnline: DateTime.parse(json['last_online']),
+        isOnline: json['is_online'] ?? false,
+        avatarUrl: json['avatar_url'],
+        countryCode: json['country_code'],
+        totalArticleAttempts: json['total_article_attempts'],
+        totalCorrectArticles: json['total_correct_articles']);
   }
 
   Map<String, dynamic> toJson() {
@@ -58,6 +63,8 @@ class UserProfile {
       'is_online': isOnline,
       'avatar_url': avatarUrl,
       'country_code': countryCode,
+      'total_article_attempts': totalArticleAttempts,
+      'total_correct_articles': totalCorrectArticles,
     };
   }
 
@@ -73,6 +80,8 @@ class UserProfile {
     bool? isOnline,
     String? avatarUrl,
     String? countryCode,
+    int? totalArticleAttempts,
+    int? totalCorrectArticles,
   }) {
     return UserProfile(
       id: id,
@@ -87,6 +96,8 @@ class UserProfile {
       isOnline: isOnline ?? this.isOnline,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       countryCode: countryCode ?? this.countryCode,
+      totalArticleAttempts: totalArticleAttempts ?? this.totalArticleAttempts,
+      totalCorrectArticles: totalCorrectArticles ?? this.totalCorrectArticles,
     );
   }
 }

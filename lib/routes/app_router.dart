@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tic_tac_zwo/features/auth/ui/screens/login_screen.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/device_scan_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
@@ -111,6 +112,23 @@ class AppRouter {
               opacity: CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      // login screen
+      case RouteNames.login:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              LoginScreen(),
+          transitionDuration: Duration(milliseconds: 900),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOutCubic,
               ),
               child: child,
             );

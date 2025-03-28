@@ -7,4 +7,5 @@ class RouteNames {
   static const String gameBoard = '/game-board';
   static const String deviceScan = '/device-scan';
   static const String wordle = '/wordle';
+  static const String login = '/login';
 }
