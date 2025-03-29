@@ -15,6 +15,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _obscurePassword = true;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
+  bool _showUsernameOverlay = false;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -23,6 +30,14 @@ class _LoginScreenState extends State<LoginScreen>
       length: 2,
       vsync: this,
     );
+
+    _fadeController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
   }
 
   @override
@@ -34,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: colorBlack,
       body: Stack(
         children: [
           Container(
@@ -108,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(height: 20),
+          SizedBox(height: 15),
 
           // username or email
           TextField(
@@ -130,11 +146,11 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          SizedBox(height: 10),
+          SizedBox(height: 15),
 
           // password
           TextField(
-            obscureText: true,
+            obscureText: _obscurePassword,
             style: TextStyle(
               color: colorWhite,
             ),
@@ -149,15 +165,26 @@ class _LoginScreenState extends State<LoginScreen>
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+                icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: _obscurePassword ? colorGrey400 : colorGrey200,
+                    size: 20),
+              ),
             ),
             cursorColor: colorGrey400,
           ),
 
           SizedBox(height: 50),
 
-          _buildGradientButton('anmelden'),
+          _buildGradientButton('einloggen'),
 
-          SizedBox(height: 25),
+          SizedBox(height: 40),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -171,8 +198,9 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               SizedBox(width: 10),
               _buildGoogleLogin(),
-              SizedBox(width: 10),
-              if (Platform.isIOS) _buildAppleLogin(),
+              SizedBox(width: 20),
+              // if (Platform.isIOS)
+              _buildAppleLogin(),
             ],
           ),
         ],
@@ -181,7 +209,117 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   _buildSignupTab() {
-    return Padding(padding: EdgeInsets.all(20));
+    return Padding(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // email field
+          TextField(
+            controller: emailController,
+            style: TextStyle(
+              color: colorWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Email:',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey500,
+                  ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+            ),
+            cursorColor: colorGrey400,
+          ),
+          SizedBox(height: 20),
+
+          // password field with toggle
+          TextField(
+            controller: passwordController,
+            obscureText: _obscurePassword,
+            style: TextStyle(
+              color: colorWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Passwort:',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey500,
+                  ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              suffixIcon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: _obscurePassword ? colorGrey400 : colorGrey200,
+                size: 20,
+              ),
+            ),
+            cursorColor: colorGrey400,
+          ),
+
+          SizedBox(height: 20),
+
+          // show password toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'Passwort anzeigen?',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey400,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              Checkbox(
+                value: !_obscurePassword,
+                onChanged: (value) {
+                  setState(() {
+                    _obscurePassword = !(value ?? false);
+                  });
+                },
+                activeColor: colorGrey200,
+                checkColor: colorBlack,
+                side: BorderSide(color: colorGrey400),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 10),
+
+          // register button
+          GestureDetector(
+            onTap: () {}, // => _handleRegistration(context),
+            child: _buildGradientButton('anmelden'),
+          ),
+
+          SizedBox(height: 20),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                'Weiter mit:',
+                style: TextStyle(
+                    color: colorBlack,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+              SizedBox(width: 10),
+              _buildGoogleLogin(),
+              SizedBox(width: 20),
+              // if (Platform.isIOS)
+              _buildAppleLogin(),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   _buildGoogleLogin() {
@@ -195,11 +333,30 @@ class _LoginScreenState extends State<LoginScreen>
         'assets/images/google.svg',
         height: 25,
         width: 25,
+        colorFilter: ColorFilter.mode(colorBlack, BlendMode.srcIn),
       ),
     );
   }
 
-  _buildAppleLogin() {}
+  _buildAppleLogin() {
+    return GestureDetector(
+      child: Container(
+        height: 33,
+        width: 33,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colorWhite.withOpacity(0.4),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.apple_rounded,
+            size: 25,
+            color: colorBlack,
+          ),
+        ),
+      ),
+    );
+  }
 
   _buildGradientButton(String buttonText) {
     return Container(

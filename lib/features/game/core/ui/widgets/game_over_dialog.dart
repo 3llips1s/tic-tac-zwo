@@ -27,23 +27,16 @@ class GameOverDialog extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              gameState.winningPlayer!.userName == 'Du'
-                  ? Text(
-                      '${gameState.winningPlayer!.userName} gewinnst!',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: colorBlack,
-                          ),
-                    )
-                  : Text(
-                      '${gameState.winningPlayer!.userName} gewinnt!',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: colorBlack,
-                          ),
+              Text(
+                gameState.winningPlayer!.userName == 'Du'
+                    ? '${gameState.winningPlayer!.userName} gewinnst!'
+                    : '${gameState.winningPlayer!.userName} gewinnt!',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: colorBlack,
                     ),
+              ),
             ],
           ),
         ] else ...[
@@ -129,7 +122,7 @@ void showGameOverDialog(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 1),
+                duration: const Duration(seconds: 2),
                 margin: EdgeInsets.only(
                   bottom: kToolbarHeight,
                   left: 40,
@@ -152,29 +145,16 @@ void showGameOverDialog(
                   child:
                       // message
                       Center(
-                          child: nextStartingPlayer.userName == 'Du'
-                              ? Text(
-                                  '${nextStartingPlayer.userName} beginnst.',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: colorWhite,
-                                      ),
-                                )
-                              : Text(
-                                  '${nextStartingPlayer.userName} beginnt.',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: colorWhite,
-                                      ),
-                                )),
+                          child: Text(
+                    nextStartingPlayer.userName == 'Du'
+                        ? '${nextStartingPlayer.userName} beginnst.'
+                        : '${nextStartingPlayer.userName} beginnt.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorWhite,
+                        ),
+                  )),
                 ),
               ),
             );

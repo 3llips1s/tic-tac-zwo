@@ -52,13 +52,13 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   void _initializeAnimations() {
     // hover turn noun
     _hoverController = AnimationController(
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
     _hoverAnimation = Tween<double>(
-      begin: 3,
-      end: 12,
+      begin: 5,
+      end: 15,
     ).animate(
       CurvedAnimation(
         parent: _hoverController,
@@ -303,7 +303,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 }
 
 Widget _showCurrentPlayer(BuildContext context, Player currentPlayer) {
-  final space = SizedBox(width: 10);
+  final space = SizedBox(width: 5);
 
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -311,20 +311,21 @@ Widget _showCurrentPlayer(BuildContext context, Player currentPlayer) {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          currentPlayer.symbolString,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontSize: 20,
+          currentPlayer.userName,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 18,
                 fontStyle: FontStyle.italic,
-                color: colorBlack,
+                color: Colors.black26,
               ),
         ),
         space,
         Text(
-          'spielt...',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(fontSize: 20, fontStyle: FontStyle.italic),
+          currentPlayer.userName == 'Du' ? 'spielst...' : 'spielt...',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 18,
+                fontStyle: FontStyle.italic,
+                color: Colors.black26,
+              ),
         ),
       ],
     ),
