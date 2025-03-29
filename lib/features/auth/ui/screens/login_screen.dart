@@ -72,14 +72,14 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                         dividerColor: Colors.transparent,
-                        tabs: [Tab(text: 'einloggen'), Tab(text: 'anmelden')],
+                        tabs: [Tab(text: 'anmelden'), Tab(text: 'einloggen')],
                         labelColor: colorBlack,
                         labelStyle:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
                                 ),
-                        unselectedLabelColor: colorGrey500,
+                        unselectedLabelColor: colorGrey600,
                         unselectedLabelStyle:
                             Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontStyle: FontStyle.italic,
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -106,18 +106,75 @@ class _LoginScreenState extends State<LoginScreen>
     return Padding(
       padding: EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          SizedBox(height: 20),
+
+          // username or email
+          TextField(
+            style: TextStyle(
+              color: colorWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Username oder Email:',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey500,
+                  ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+            ),
+            cursorColor: colorGrey400,
+          ),
+
+          SizedBox(height: 10),
+
+          // password
+          TextField(
+            obscureText: true,
+            style: TextStyle(
+              color: colorWhite,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Passwort:',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey500,
+                  ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+            ),
+            cursorColor: colorGrey400,
+          ),
+
+          SizedBox(height: 50),
+
+          _buildGradientButton('anmelden'),
+
+          SizedBox(height: 25),
+
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              // _buildGoogleIcon(),
+              Text(
+                'Weiter mit:',
+                style: TextStyle(
+                    color: colorBlack,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
               SizedBox(width: 10),
-              if (Platform.isIOS)
-                // _buildAppleIcon(),
-                SizedBox(width: 10),
+              _buildGoogleLogin(),
+              SizedBox(width: 10),
+              if (Platform.isIOS) _buildAppleLogin(),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -125,5 +182,42 @@ class _LoginScreenState extends State<LoginScreen>
 
   _buildSignupTab() {
     return Padding(padding: EdgeInsets.all(20));
+  }
+
+  _buildGoogleLogin() {
+    return Container(
+      padding: EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colorWhite.withOpacity(0.4),
+      ),
+      child: SvgPicture.asset(
+        'assets/images/google.svg',
+        height: 25,
+        width: 25,
+      ),
+    );
+  }
+
+  _buildAppleLogin() {}
+
+  _buildGradientButton(String buttonText) {
+    return Container(
+      width: double.infinity,
+      height: kToolbarHeight,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(27),
+          gradient: LinearGradient(colors: [colorGrey100, colorGrey600])),
+      child: Center(
+        child: Text(
+          buttonText,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorBlack,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+        ),
+      ),
+    );
   }
 }
