@@ -60,4 +60,14 @@ class UserProfileRepo {
       'last_online': DateTime.now().toIso8601String(),
     }).eq('id', userId);
   }
+
+  Future<bool> checkUsernameAvailability(String username) async {
+    final response = await _supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+
+    return response != null;
+  }
 }

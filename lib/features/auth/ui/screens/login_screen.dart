@@ -1,9 +1,11 @@
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/auth/data/repositories/user_profile_repo.dart';
+import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 
 import '../../../../routes/route_names.dart';
 
@@ -21,15 +23,89 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _fadeAnimation;
 
   // state variables
-  bool _obscurePassword = true;
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
+  TextEditingController loginEmailController = TextEditingController();
+  TextEditingController loginPasswordController = TextEditingController();
+  TextEditingController signupEmailController = TextEditingController();
+  TextEditingController signupPasswordController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
+
+  bool _obscureLoginPassword = true;
+  bool _obscureSignupPassword = true;
   bool _showUsernameOverlay = false;
+
+  String? _emailError;
+  String? _passwordError;
+  String? _usernameError;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+  }
+
+  bool _validateEmail(String email) {
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = 'Email ist erforderlich';
+      });
+      return false;
+    }
+
+    // validation regex
+    bool validEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+    if (!validEmail) {
+      setState(() {
+        _emailError = 'Ungültige Email-Adresse';
+      });
+      return false;
+    }
+
+    setState(() {
+      _emailError = null;
+    });
+    return true;
+  }
+
+  bool _validatePassword(String password) {
+    if (password.isEmpty) {
+      setState(() {
+        _passwordError = 'Passwort ist erforderlich';
+      });
+      return false;
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _passwordError = 'Passwort muss mindestens 6 Zeichen haben';
+      });
+      return false;
+    }
+
+    setState(() {
+      _passwordError = null;
+    });
+    return true;
+  }
+
+  bool _validateUsername(String username) {
+    if (username.isEmpty) {
+      setState(() {
+        _usernameError = 'Username ist erforderlich';
+      });
+      return false;
+    }
+
+    if (username.length > 9) {
+      setState(() {
+        _usernameError = 'Username darf maximal 9 Zeichen haben';
+      });
+      return false;
+    }
+
+    setState(() {
+      _usernameError = null;
+    });
+    return true;
   }
 
   void _initializeControllers() {
@@ -53,8 +129,11 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _tabController.dispose();
     _fadeController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
+    loginEmailController.dispose();
+    loginPasswordController.dispose();
+    signupEmailController.dispose();
+    signupPasswordController.dispose();
+    usernameController.dispose();
     super.dispose();
   }
 
@@ -154,23 +233,24 @@ class _LoginScreenState extends State<LoginScreen>
 
           // username or email
           TextField(
+            controller: loginEmailController,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
                 ),
             decoration: InputDecoration(
-              hintText: 'Username/Email:',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorGrey500,
-                    fontSize: 16,
-                  ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-            ),
+                hintText: 'Username/Email:',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey500,
+                      fontSize: 16,
+                    ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: colorGrey400),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: colorGrey400),
+                ),
+                errorText: _emailError),
             cursorColor: colorGrey400,
           ),
 
@@ -178,7 +258,8 @@ class _LoginScreenState extends State<LoginScreen>
 
           // password
           TextField(
-            obscureText: _obscurePassword,
+            controller: loginPasswordController,
+            obscureText: _obscureLoginPassword,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
@@ -189,6 +270,7 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
+              errorText: _passwordError,
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -198,12 +280,14 @@ class _LoginScreenState extends State<LoginScreen>
               suffixIcon: IconButton(
                 onPressed: () {
                   setState(() {
-                    _obscurePassword = !_obscurePassword;
+                    _obscureLoginPassword = !_obscureLoginPassword;
                   });
                 },
                 icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: _obscurePassword ? colorGrey400 : colorGrey200,
+                  _obscureLoginPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: _obscureLoginPassword ? colorGrey400 : colorGrey200,
                   size: 20,
                 ),
               ),
@@ -213,7 +297,11 @@ class _LoginScreenState extends State<LoginScreen>
 
           SizedBox(height: 50),
 
-          _buildGradientButton('einloggen'),
+          // login button
+          GestureDetector(
+            onTap: _handleLogin,
+            child: _buildGradientButton('einloggen'),
+          ),
 
           SizedBox(height: 40),
 
@@ -247,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen>
         children: [
           // email field
           TextField(
-            controller: emailController,
+            controller: signupEmailController,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
@@ -258,6 +346,7 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
+              errorText: _emailError,
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -271,8 +360,8 @@ class _LoginScreenState extends State<LoginScreen>
 
           // password field with toggle
           TextField(
-            controller: passwordController,
-            obscureText: _obscurePassword,
+            controller: signupPasswordController,
+            obscureText: _obscureSignupPassword,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
@@ -283,6 +372,7 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
+              errorText: _passwordError,
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -290,8 +380,10 @@ class _LoginScreenState extends State<LoginScreen>
                 borderSide: BorderSide(color: colorGrey400),
               ),
               suffixIcon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: _obscurePassword ? colorGrey400 : colorGrey200,
+                _obscureSignupPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: _obscureSignupPassword ? colorGrey400 : colorGrey200,
                 size: 20,
               ),
             ),
@@ -312,10 +404,10 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
               ),
               Checkbox(
-                value: !_obscurePassword,
+                value: !_obscureSignupPassword,
                 onChanged: (value) {
                   setState(() {
-                    _obscurePassword = !(value ?? false);
+                    _obscureSignupPassword = !(value ?? false);
                   });
                 },
                 activeColor: colorGrey200,
@@ -329,7 +421,7 @@ class _LoginScreenState extends State<LoginScreen>
 
           // register button
           GestureDetector(
-            onTap: _handleRegistration,
+            onTap: _startRegistration,
             child: _buildGradientButton('anmelden'),
           ),
 
@@ -414,8 +506,6 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   _buildUsernameContent() {
-    final TextEditingController usernameController = TextEditingController();
-
     return Padding(
       padding: EdgeInsets.all(20),
       child: Column(
@@ -446,6 +536,7 @@ class _LoginScreenState extends State<LoginScreen>
                       color: colorGrey500,
                       fontSize: 16,
                     ),
+                errorText: _usernameError,
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: colorGrey400),
                 ),
@@ -469,14 +560,28 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           SizedBox(height: 30),
           GestureDetector(
-            onTap: () {
-              // Save username and continue to main app
-              // if (usernameController.text.isNotEmpty) {
-              //   // Update user profile with the username
-              //   // Then navigate to your main app screen
-              //   Navigator.pushReplacementNamed(context, RouteNames.login);
-              // }
-              Navigator.pushReplacementNamed(context, RouteNames.login);
+            onTap: () async {
+              final username = usernameController.text.trim();
+              if (_validateUsername(username)) {
+                try {
+                  final userRepo = UserProfileRepo(Supabase.instance.client);
+
+                  final exists =
+                      await userRepo.checkUsernameAvailability(username);
+
+                  if (exists) {
+                    setState(() {
+                      _usernameError = 'Username bereits vergeben';
+                    });
+                    return;
+                  }
+                  _registerUser();
+                } catch (e) {
+                  setState(() {
+                    _usernameError = 'Fehler bei der Überprüfung des Usernames';
+                  });
+                }
+              }
             },
             child: _buildGradientButton('fertig'),
           ),
@@ -485,14 +590,67 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _handleRegistration() {
-    // validate email and password
+  void _startRegistration() {
+    bool isEmailValid = _validateEmail(signupEmailController.text);
+    bool isPasswordValid = _validatePassword(signupPasswordController.text);
 
-    // if valid register user with supabase
+    // validate email and password + register to supabase
+    if (isEmailValid && isPasswordValid) {
+      setState(() {
+        _showUsernameOverlay = true;
+      });
+      _fadeController.forward();
+    }
+  }
 
-    setState(() {
-      _showUsernameOverlay = true;
-    });
-    _fadeController.forward();
+  Future<void> _registerUser() async {
+    try {
+      final authService = AuthService(Supabase.instance.client);
+      final response = await authService.signUp(
+        signupEmailController.text,
+        signupPasswordController.text,
+      );
+
+      if (response.user != null) {
+        // update user profile with username and country code
+        await UserProfileRepo(Supabase.instance.client).updateUserProfile(
+          userId: response.user!.id,
+          username: usernameController.text,
+          countryCode: 'KE',
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _emailError = 'Registration fehlgeschlagen: ${e.toString()}';
+      });
+    }
+  }
+
+  void _handleLogin() {
+    bool isEmailValid = _validateEmail(loginEmailController.text);
+    bool isPasswordValid = _validatePassword(loginPasswordController.text);
+
+    // validate email and password + register to supabase
+    if (isEmailValid && isPasswordValid) {
+      _loginUser();
+    }
+  }
+
+  Future<void> _loginUser() async {
+    try {
+      final authService = AuthService(Supabase.instance.client);
+      final response = await authService.signIn(
+        loginEmailController.text,
+        loginPasswordController.text,
+      );
+
+      if (response.user != null) {
+        Navigator.pushReplacementNamed(context, RouteNames.home);
+      }
+    } catch (e) {
+      setState(() {
+        _emailError = 'Login fehlgeschlagen: ${e.toString()}';
+      });
+    }
   }
 }
