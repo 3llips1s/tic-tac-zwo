@@ -42,7 +42,13 @@ class WordRepo {
   Future<Map<String, String>> getRandomWord() async {
     await initialize();
 
-    final filteredWords = fiveLetterWords;
+    var filteredWords = fiveLetterWords;
+
+    if (filteredWords.isEmpty) {
+      final fallbackWords = _getFallbackWords();
+      filteredWords = fallbackWords;
+    }
+
     if (filteredWords.isEmpty) {
       return {'word': 'BINGO', 'article': 'das', 'english': 'bingo'};
     }
@@ -85,31 +91,31 @@ class WordRepo {
       {
         'word': 'TASSE',
         'article': 'die',
-        'translation': 'cup',
-        'plural': 'Tassen'
+        'english': 'cup',
+        'plural': 'Tassen',
       },
       {
         'word': 'TISCH',
         'article': 'der',
-        'translation': 'table',
+        'english': 'table',
         'plural': 'Tische'
       },
       {
         'word': 'BLATT',
         'article': 'das',
-        'translation': 'leaf',
+        'english': 'leaf',
         'plural': 'Blätter'
       },
       {
         'word': 'LAMPE',
         'article': 'die',
-        'translation': 'lamp',
+        'english': 'lamp',
         'plural': 'Lampen'
       },
       {
         'word': 'STUHL',
         'article': 'der',
-        'translation': 'chair',
+        'english': 'chair',
         'plural': 'Stühle'
       },
     ];

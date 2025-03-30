@@ -1,6 +1,49 @@
 [
   {
     "article": "das",
+    "noun": "Ei",
+    "plural": "Eier",
+    "english": "Egg"
+  },
+  {
+    "article": "der",
+    "noun": "Bus",
+    "plural": "Busse",
+    "english": "Bus"
+  },
+  {
+    "article": "das",
+    "noun": "Brot",
+    "plural": "Brote",
+    "english": "Bread"
+  },
+  {
+    "article": "der",
+    "noun": "Tisch",
+    "plural": "Tische",
+    "english": "Table"
+  },
+  {
+    "article": "die",
+    "noun": "Lampe",
+    "plural": "Lampen",
+    "english": "Lamp"
+  },
+  {
+    "article": "das",
+    "noun": "Blatt",
+    "plural": "Blätter",
+    "english": "Leaf"
+  },
+
+  {
+    "article": "das",
+    "noun": "Wasser",
+    "plural": "kein Pl.",
+    "english": "Water"
+  },
+  {
+    "article": "das",
     "noun": "Mädchen",
     "plural": "Mädchen",
     "english": "Girl"
@@ -58,12 +101,6 @@
     "noun": "Windschutzscheibe",
     "plural": "Windschutzscheiben",
     "english": "Windshield"
-  },
-  {
-    "article": "der",
-    "noun": "Empfangsmitarbeiter",
-    "plural": "Empfangsmitarbeiter",
-    "english": "Receptionist"
   },
   {
     "article": "das",

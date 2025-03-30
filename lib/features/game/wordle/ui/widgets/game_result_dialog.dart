@@ -217,7 +217,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // result emoji
+        // result
         Padding(
           padding: const EdgeInsets.only(top: 10),
           child: AnimatedBuilder(
@@ -228,7 +228,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                 child: Icon(
                   _isCorrect ? Icons.check_circle_sharp : Icons.cancel_sharp,
                   size: 70,
-                  color: _isCorrect ? Colors.green : colorRed,
+                  color: _isCorrect ? Color(0xFF32CD32) : colorRed,
                 ),
               );
             },
@@ -243,7 +243,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           children: [
             if (_isCorrect)
               Text(
-                '$_selectedArticle ${widget.gameState.targetWord} ',
+                '$_selectedArticle  ${widget.gameState.targetWord} ',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontSize: 28,
                       color: colorBlack,
@@ -259,22 +259,32 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                     _selectedArticle,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontSize: 28,
+                          fontStyle: FontStyle.italic,
                           color: colorRed,
                           decoration: TextDecoration.lineThrough,
-                          decorationThickness: 2,
+                          decorationThickness: 1,
                         ),
                   ),
                   const SizedBox(width: 10),
                   // correct article
-                  Text(
-                    _correctArticle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 28,
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
                           color: colorBlack,
-                          decoration: TextDecoration.underline,
+                          width: 2,
                         ),
+                      ),
+                    ),
+                    child: Text(
+                      _correctArticle,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontSize: 28,
+                            color: Color(0xFF32CD32),
+                          ),
+                    ),
                   ),
-                  const SizedBox(width: 2),
+                  const SizedBox(width: 5),
 
                   // word itself
                   Text(
@@ -290,9 +300,9 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
               ),
             // translation
             Text(
-              '- $_englishTranslation',
+              ' - $_englishTranslation',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 20,
+                    fontSize: 18,
                     color: colorBlack,
                   ),
               textAlign: TextAlign.center,
@@ -300,7 +310,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           ],
         ),
 
-        const SizedBox(height: kToolbarHeight * 0.75),
+        const SizedBox(height: kToolbarHeight * 0.5),
 
         // action buttons
         Row(

@@ -222,7 +222,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                       Text(
                         wrongArticle,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: dynamicFontSize,
+                              fontSize: dynamicFontSize * 0.8,
+                              fontStyle: FontStyle.italic,
                               decoration: TextDecoration.lineThrough,
                               decorationColor: colorBlack,
                               decorationThickness: 1.5,
