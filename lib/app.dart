@@ -8,8 +8,9 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
         children: [
           HiddenDrawer(),
           HomeScreen(),

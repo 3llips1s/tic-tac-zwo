@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/data/repositories/user_profile_repo.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
+//  import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 
 import '../../../../routes/route_names.dart';
 
@@ -33,8 +35,10 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscureSignupPassword = true;
   bool _showUsernameOverlay = false;
 
-  String? _emailError;
-  String? _passwordError;
+  String? _signupEmailError;
+  String? _loginEmailError;
+  String? _signupPasswordError;
+  String? _loginPasswordError;
   String? _usernameError;
 
   @override
@@ -43,10 +47,14 @@ class _LoginScreenState extends State<LoginScreen>
     _initializeControllers();
   }
 
-  bool _validateEmail(String email) {
+  bool _validateEmail(String email, {bool isLogin = false}) {
     if (email.isEmpty) {
       setState(() {
-        _emailError = 'Email ist erforderlich';
+        if (isLogin) {
+          _loginEmailError = 'Email ist erforderlich';
+        } else {
+          _signupEmailError = 'Email ist erforderlich';
+        }
       });
       return false;
     }
@@ -55,34 +63,54 @@ class _LoginScreenState extends State<LoginScreen>
     bool validEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
     if (!validEmail) {
       setState(() {
-        _emailError = 'Ungültige Email-Adresse';
+        if (isLogin) {
+          _loginEmailError = 'Ungültige Email-Adresse';
+        } else {
+          _signupEmailError = 'Ungültige Email-Adresse';
+        }
       });
       return false;
     }
 
     setState(() {
-      _emailError = null;
+      if (isLogin) {
+        _loginEmailError = null;
+      } else {
+        _signupEmailError = null;
+      }
     });
     return true;
   }
 
-  bool _validatePassword(String password) {
+  bool _validatePassword(String password, {bool isLogin = false}) {
     if (password.isEmpty) {
       setState(() {
-        _passwordError = 'Passwort ist erforderlich';
+        if (isLogin) {
+          _loginPasswordError = 'Passwort ist erforderlich.';
+        } else {
+          _signupPasswordError = 'Passwort ist erforderlich.';
+        }
       });
       return false;
     }
 
     if (password.length < 6) {
       setState(() {
-        _passwordError = 'Passwort muss mindestens 6 Zeichen haben';
+        if (isLogin) {
+          _loginPasswordError = 'Passwort muss mindestens 6 Zeichen haben.';
+        } else {
+          _signupPasswordError = 'Passwort muss mindestens 6 Zeichen haben.';
+        }
       });
       return false;
     }
 
     setState(() {
-      _passwordError = null;
+      if (isLogin) {
+        _loginPasswordError = null;
+      } else {
+        _signupPasswordError = null;
+      }
     });
     return true;
   }
@@ -90,14 +118,14 @@ class _LoginScreenState extends State<LoginScreen>
   bool _validateUsername(String username) {
     if (username.isEmpty) {
       setState(() {
-        _usernameError = 'Username ist erforderlich';
+        _usernameError = 'Username ist erforderlich.';
       });
       return false;
     }
 
     if (username.length > 9) {
       setState(() {
-        _usernameError = 'Username darf maximal 9 Zeichen haben';
+        _usernameError = 'Username darf maximal 9 Zeichen haben.';
       });
       return false;
     }
@@ -157,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  height: _showUsernameOverlay ? 300 : 400,
+                  height: _showUsernameOverlay ? 300 : 450,
                   width: 300,
                   decoration: BoxDecoration(
                     color: colorWhite.withAlpha((255 * 0.1).toInt()),
@@ -239,18 +267,23 @@ class _LoginScreenState extends State<LoginScreen>
                   fontSize: 18,
                 ),
             decoration: InputDecoration(
-                hintText: 'Username/Email:',
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey500,
-                      fontSize: 16,
-                    ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorGrey400),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorGrey400),
-                ),
-                errorText: _emailError),
+              hintText: 'Email:',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey500,
+                    fontSize: 16,
+                  ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: colorGrey400),
+              ),
+              errorText: _loginEmailError,
+              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorRed,
+                  ),
+            ),
             cursorColor: colorGrey400,
           ),
 
@@ -270,7 +303,11 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
-              errorText: _passwordError,
+              errorText: _loginPasswordError,
+              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorRed,
+                  ),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -346,7 +383,11 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
-              errorText: _emailError,
+              errorText: _signupEmailError,
+              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorRed,
+                  ),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -372,7 +413,11 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
-              errorText: _passwordError,
+              errorText: _signupPasswordError,
+              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorRed,
+                  ),
               enabledBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: colorGrey400),
               ),
@@ -520,43 +565,72 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 15),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
-              controller: usernameController,
-              enableSuggestions: false,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorWhite,
-                    fontSize: 18,
+          SizedBox(height: 20),
+          Row(
+            children: [
+              // username textfield
+              Expanded(
+                child: TextField(
+                  controller: usernameController,
+                  enableSuggestions: false,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorWhite,
+                        fontSize: 18,
+                      ),
+                  decoration: InputDecoration(
+                    hintText: 'Username:',
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorGrey500,
+                          fontSize: 16,
+                        ),
+                    errorText: _usernameError,
+                    errorStyle:
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorRed,
+                            ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colorGrey400),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colorGrey400),
+                    ),
                   ),
-              decoration: InputDecoration(
-                hintText: 'Username:',
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey500,
-                      fontSize: 16,
-                    ),
-                errorText: _usernameError,
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorGrey400),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: colorGrey400),
+                  cursorColor: colorGrey400,
+                  maxLength: 9,
+                  buildCounter: (context,
+                          {required currentLength,
+                          required isFocused,
+                          required maxLength}) =>
+                      Text(
+                    '0${9 - currentLength}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorBlack,
+                        ),
+                  ),
                 ),
               ),
-              cursorColor: colorGrey400,
-              maxLength: 9,
-              buildCounter: (context,
-                      {required currentLength,
-                      required isFocused,
-                      required maxLength}) =>
-                  Text(
-                '0${9 - currentLength}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorBlack,
-                    ),
-              ),
-            ),
+
+              SizedBox(width: 30),
+
+              // flag
+              GestureDetector(
+                onTap: () {},
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Flag(countryCode: 'KE'),
+                    SizedBox(width: 10),
+                    Icon(
+                      Icons.arrow_drop_down_sharp,
+                      size: 25,
+                      color: colorGrey400,
+                    )
+                  ],
+                ),
+              )
+            ],
           ),
           SizedBox(height: 30),
           GestureDetector(
@@ -585,21 +659,34 @@ class _LoginScreenState extends State<LoginScreen>
             },
             child: _buildGradientButton('fertig'),
           ),
+          SizedBox(height: 5)
         ],
       ),
     );
   }
 
   void _startRegistration() {
-    bool isEmailValid = _validateEmail(signupEmailController.text);
-    bool isPasswordValid = _validatePassword(signupPasswordController.text);
+    print("Starting registration");
+    bool isEmailValid = _validateEmail(
+      signupEmailController.text,
+      isLogin: false,
+    );
+    print("Email validation: $isEmailValid");
+    bool isPasswordValid = _validatePassword(
+      signupPasswordController.text,
+      isLogin: false,
+    );
+    print("Password validation: $isPasswordValid");
 
     // validate email and password + register to supabase
     if (isEmailValid && isPasswordValid) {
+      print("Setting state to show username overlay");
       setState(() {
         _showUsernameOverlay = true;
       });
+      print("Starting fade animation");
       _fadeController.forward();
+      print("Animation started");
     }
   }
 
@@ -621,14 +708,18 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       setState(() {
-        _emailError = 'Registration fehlgeschlagen: ${e.toString()}';
+        _signupEmailError = 'Registration fehlgeschlagen: ${e.toString()}';
       });
     }
   }
 
   void _handleLogin() {
-    bool isEmailValid = _validateEmail(loginEmailController.text);
-    bool isPasswordValid = _validatePassword(loginPasswordController.text);
+    bool isEmailValid =
+        _validateEmail(loginEmailController.text, isLogin: true);
+    bool isPasswordValid = _validatePassword(
+      loginPasswordController.text,
+      isLogin: true,
+    );
 
     // validate email and password + register to supabase
     if (isEmailValid && isPasswordValid) {
@@ -644,12 +735,13 @@ class _LoginScreenState extends State<LoginScreen>
         loginPasswordController.text,
       );
 
+      // change route name to device scan later
       if (response.user != null) {
         Navigator.pushReplacementNamed(context, RouteNames.home);
       }
     } catch (e) {
       setState(() {
-        _emailError = 'Login fehlgeschlagen: ${e.toString()}';
+        _loginEmailError = 'Login gescheitert. Erneut versuchen bitte.';
       });
     }
   }

@@ -12,18 +12,6 @@ import 'routes/route_names.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.transparent,
-    ),
-  );
-
   await Supabase.initialize(
       url: AuthConfig.url,
       anonKey: AuthConfig.anonKey,
@@ -31,6 +19,15 @@ void main() async {
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
       ));
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark));
 
   runApp(ProviderScope(child: const MainApp()));
 }
@@ -47,9 +44,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: appTheme,
-      home: Scaffold(
-        body: const App(),
-      ),
+      home: Scaffold(body: const App()),
       onGenerateRoute: AppRouter.generateRoute,
       initialRoute: RouteNames.home,
       scaffoldMessengerKey: scaffoldMessengerKey,
