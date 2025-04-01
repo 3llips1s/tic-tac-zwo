@@ -41,6 +41,8 @@ class _LoginScreenState extends State<LoginScreen>
   String? _loginPasswordError;
   String? _usernameError;
 
+  String _selectedCountryCode = '';
+
   @override
   void initState() {
     super.initState();
@@ -118,14 +120,14 @@ class _LoginScreenState extends State<LoginScreen>
   bool _validateUsername(String username) {
     if (username.isEmpty) {
       setState(() {
-        _usernameError = 'Username ist erforderlich.';
+        _usernameError = 'Username erforderlich.';
       });
       return false;
     }
 
     if (username.length > 9) {
       setState(() {
-        _usernameError = 'Username darf maximal 9 Zeichen haben.';
+        _usernameError = 'Maximal 9 Zeichen';
       });
       return false;
     }
@@ -152,6 +154,8 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
   }
+
+  void _showCountrySelector() {}
 
   @override
   void dispose() {
@@ -614,22 +618,22 @@ class _LoginScreenState extends State<LoginScreen>
               SizedBox(width: 30),
 
               // flag
-              GestureDetector(
-                onTap: () {},
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Flag(countryCode: 'KE'),
-                    SizedBox(width: 10),
-                    Icon(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Flag(countryCode: 'KE'),
+                  SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Icon(
                       Icons.arrow_drop_down_sharp,
                       size: 25,
                       color: colorGrey400,
-                    )
-                  ],
-                ),
-              )
+                    ),
+                  )
+                ],
+              ),
             ],
           ),
           SizedBox(height: 30),
@@ -666,27 +670,21 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _startRegistration() {
-    print("Starting registration");
     bool isEmailValid = _validateEmail(
       signupEmailController.text,
       isLogin: false,
     );
-    print("Email validation: $isEmailValid");
     bool isPasswordValid = _validatePassword(
       signupPasswordController.text,
       isLogin: false,
     );
-    print("Password validation: $isPasswordValid");
 
     // validate email and password + register to supabase
     if (isEmailValid && isPasswordValid) {
-      print("Setting state to show username overlay");
       setState(() {
         _showUsernameOverlay = true;
       });
-      print("Starting fade animation");
       _fadeController.forward();
-      print("Animation started");
     }
   }
 
@@ -735,11 +733,15 @@ class _LoginScreenState extends State<LoginScreen>
         loginPasswordController.text,
       );
 
+      if (!mounted) return;
+
       // change route name to device scan later
       if (response.user != null) {
         Navigator.pushReplacementNamed(context, RouteNames.home);
       }
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _loginEmailError = 'Login gescheitert. Erneut versuchen bitte.';
       });
