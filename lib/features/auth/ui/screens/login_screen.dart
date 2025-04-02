@@ -43,19 +43,125 @@ class _LoginScreenState extends State<LoginScreen>
 
   String _selectedCountryCode = '';
 
+  void _showCountrySelector() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: colorBlack.withOpacity(0.9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          width: 300,
+          height: 450,
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colorWhite.withAlpha((255 * 0.1).toInt()),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorWhite.withAlpha((255 * 0.1).toInt()),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Land wählen:',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey400,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+              ),
+              SizedBox(height: 30),
+              Expanded(
+                  child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 15,
+                  crossAxisSpacing: 15,
+                ),
+                itemCount: countryCodes.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedCountryCode = countryCodes[index];
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: colorGrey600,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 10),
+                          Flag(
+                            countryCode: countryCodes[index],
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            countryCodes[index],
+                            style: TextStyle(
+                              color: colorGrey500,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ))
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _initializeCountryCode() {
+    final localeCountryCode =
+        View.of(context).platformDispatcher.locale.countryCode;
+    if (localeCountryCode != null && countryCodes.contains(localeCountryCode)) {
+      setState(() {
+        _selectedCountryCode = localeCountryCode;
+      });
+    } else {
+      setState(() {
+        _selectedCountryCode = '';
+      });
+    }
+  }
+
+  void _showForgotPasswordDialog() {}
+
   @override
   void initState() {
     super.initState();
     _initializeControllers();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initializeCountryCode();
+  }
+
   bool _validateEmail(String email, {bool isLogin = false}) {
     if (email.isEmpty) {
       setState(() {
         if (isLogin) {
-          _loginEmailError = 'Email ist erforderlich';
+          _loginEmailError = 'Email erforderlich';
         } else {
-          _signupEmailError = 'Email ist erforderlich';
+          _signupEmailError = 'Email erforderlich';
         }
       });
       return false;
@@ -88,9 +194,9 @@ class _LoginScreenState extends State<LoginScreen>
     if (password.isEmpty) {
       setState(() {
         if (isLogin) {
-          _loginPasswordError = 'Passwort ist erforderlich.';
+          _loginPasswordError = 'Passwort erforderlich';
         } else {
-          _signupPasswordError = 'Passwort ist erforderlich.';
+          _signupPasswordError = 'Passwort erforderlich';
         }
       });
       return false;
@@ -120,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _validateUsername(String username) {
     if (username.isEmpty) {
       setState(() {
-        _usernameError = 'Username erforderlich.';
+        _usernameError = 'Username erforderlich';
       });
       return false;
     }
@@ -154,8 +260,6 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
   }
-
-  void _showCountrySelector() {}
 
   @override
   void dispose() {
@@ -261,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(height: 10),
+          // SizedBox(height: 10),
 
           // username or email
           TextField(
@@ -336,7 +440,24 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          SizedBox(height: 50),
+          SizedBox(height: 20),
+
+          // forgot password
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: _showForgotPasswordDialog,
+              child: Text(
+                'Passwort vergessen?',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey500,
+                      fontSize: 14,
+                    ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 30),
 
           // login button
           GestureDetector(
@@ -344,7 +465,7 @@ class _LoginScreenState extends State<LoginScreen>
             child: _buildGradientButton('einloggen'),
           ),
 
-          SizedBox(height: 40),
+          SizedBox(height: 30),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -570,71 +691,73 @@ class _LoginScreenState extends State<LoginScreen>
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 20),
-          Row(
-            children: [
-              // username textfield
-              Expanded(
-                child: TextField(
-                  controller: usernameController,
-                  enableSuggestions: false,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorWhite,
-                        fontSize: 18,
-                      ),
-                  decoration: InputDecoration(
-                    hintText: 'Username:',
-                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorGrey500,
-                          fontSize: 16,
-                        ),
-                    errorText: _usernameError,
-                    errorStyle:
-                        Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorRed,
-                            ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: colorGrey400),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: colorGrey400),
-                    ),
-                  ),
-                  cursorColor: colorGrey400,
-                  maxLength: 9,
-                  buildCounter: (context,
-                          {required currentLength,
-                          required isFocused,
-                          required maxLength}) =>
-                      Text(
-                    '0${9 - currentLength}',
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                // username textfield
+                Expanded(
+                  child: TextField(
+                    controller: usernameController,
+                    enableSuggestions: false,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorBlack,
+                          color: colorWhite,
+                          fontSize: 18,
                         ),
+                    decoration: InputDecoration(
+                      hintText: 'Username:',
+                      hintStyle:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: colorGrey500,
+                                fontSize: 16,
+                              ),
+                      errorText: _usernameError,
+                      errorStyle:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorRed,
+                              ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: colorGrey400),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: colorGrey400),
+                      ),
+                    ),
+                    cursorColor: colorGrey400,
+                    maxLength: 9,
+                    buildCounter: (context,
+                            {required currentLength,
+                            required isFocused,
+                            required maxLength}) =>
+                        Text(
+                      '0${9 - currentLength}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colorBlack,
+                          ),
+                    ),
                   ),
                 ),
-              ),
 
-              SizedBox(width: 30),
+                SizedBox(width: 20),
 
-              // flag
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Flag(countryCode: 'KE'),
-                  SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Icon(
-                      Icons.arrow_drop_down_sharp,
-                      size: 25,
-                      color: colorGrey400,
-                    ),
-                  )
-                ],
-              ),
-            ],
+                // flag
+                GestureDetector(
+                  onTap: _showCountrySelector,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flag(countryCode: _selectedCountryCode),
+                      Icon(
+                        Icons.arrow_drop_down,
+                        size: 30,
+                        color: colorGrey400,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: 30),
           GestureDetector(
@@ -701,7 +824,7 @@ class _LoginScreenState extends State<LoginScreen>
         await UserProfileRepo(Supabase.instance.client).updateUserProfile(
           userId: response.user!.id,
           username: usernameController.text,
-          countryCode: 'KE',
+          countryCode: _selectedCountryCode,
         );
       }
     } catch (e) {
