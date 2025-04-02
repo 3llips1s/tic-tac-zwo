@@ -7,7 +7,6 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/data/repositories/user_profile_repo.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
-//  import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 
 import '../../../../routes/route_names.dart';
 
@@ -141,7 +140,152 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  void _showForgotPasswordDialog() {}
+  void _showForgotPasswordDialog() {
+    final TextEditingController resetEmailController = TextEditingController();
+    String? resetEmailError;
+
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: colorBlack.withAlpha((255 * 0.5).toInt()),
+          actionsAlignment: MainAxisAlignment.spaceBetween,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: colorWhite.withAlpha((255 * 0.1).toInt()),
+              width: 1,
+            ),
+          ),
+          title: Text(
+            'Passwort zurücksetzen',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorGrey400,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 20),
+              TextField(
+                controller: resetEmailController,
+                style: TextStyle(color: colorWhite),
+                decoration: InputDecoration(
+                  hintText: 'Email:',
+                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorGrey500,
+                        fontSize: 16,
+                      ),
+                  errorText: resetEmailError,
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorGrey400),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorGrey400),
+                  ),
+                ),
+                cursorColor: colorGrey400,
+              ),
+              SizedBox(height: 40),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                overlayColor: colorWhite,
+                side: BorderSide(color: Colors.white70),
+              ),
+              child: Text(
+                'Abbrechen',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey400,
+                      fontSize: 15,
+                    ),
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                // Handle password reset
+                _resetPassword(resetEmailController.text);
+                Navigator.of(context).pop();
+              },
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                overlayColor: colorWhite,
+                side: BorderSide(color: Colors.white70),
+              ),
+              child: Text(
+                'Senden',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey400,
+                      fontSize: 15,
+                    ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _resetPassword(String email) async {
+    try {
+      final authService = AuthService(Supabase.instance.client);
+      // Add this method to your AuthService class
+      await authService.resetPassword(email);
+
+      // Show success message
+      _showSnackBar('Passwort-Reset-Email gesendet.');
+    } catch (e) {
+      // show error message
+      _showSnackBar('Fehler! Erneut versuchen bitte.');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        margin: EdgeInsets.only(
+          bottom: kToolbarHeight,
+          left: 40,
+          right: 40,
+        ),
+        content: Container(
+            padding: EdgeInsets.all(12),
+            height: kToolbarHeight,
+            decoration: BoxDecoration(
+              color: colorWhite,
+              borderRadius: BorderRadius.all(Radius.circular(9)),
+            ),
+            child: Center(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colorBlack,
+                    ),
+              ),
+            )
+            // message
+
+            ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -365,8 +509,6 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // SizedBox(height: 10),
-
           // username or email
           TextField(
             controller: loginEmailController,
@@ -450,8 +592,12 @@ class _LoginScreenState extends State<LoginScreen>
               child: Text(
                 'Passwort vergessen?',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey500,
+                      color: colorGrey400,
+                      fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      decoration: TextDecoration.underline,
+                      decorationColor: colorGrey500,
+                      decorationThickness: 1.5,
                     ),
               ),
             ),

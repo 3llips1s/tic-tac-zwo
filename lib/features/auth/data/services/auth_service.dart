@@ -37,6 +37,10 @@ class AuthService {
     );
   }
 
+  Future<void> resetPassword(String email) async {
+    await _supabase.auth.resetPasswordForEmail(email);
+  }
+
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
   User? get currentUser => _supabase.auth.currentUser;
