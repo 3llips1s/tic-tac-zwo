@@ -16,6 +16,28 @@ class UserProfileRepo {
     return UserProfile.fromJson(response);
   }
 
+  Future<void> createUserProfile({
+    required String userId,
+    required String username,
+    String? countryCode,
+  }) async {
+    final userData = {
+      'id': userId,
+      'username': username,
+      'country_code': countryCode,
+      'score': 0,
+      'games_played': 0,
+      'games_won': 0,
+      'games_drawn': 0,
+      'last_online': DateTime.now().toIso8601String(),
+      'is_online': true,
+      'total_article_attempts': 0,
+      'total_correct_articles': 0
+    };
+
+    await _supabase.from('users').insert(userData);
+  }
+
   Future<void> updateUserProfile({
     required String userId,
     String? username,
@@ -68,6 +90,6 @@ class UserProfileRepo {
         .eq('username', username)
         .maybeSingle();
 
-    return response != null;
+    return response == null;
   }
 }

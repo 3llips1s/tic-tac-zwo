@@ -1,14 +1,34 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
-  final SupabaseClient _supabase;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  AuthService(this._supabase);
+  // Future<AuthResponse> signUp(String email, String password) async {
+  //   return await _supabase.auth.signUp(
+  //     email: email,
+  //     password: password,
+  //   );
+  // }
 
-  Future<AuthResponse> signUp(String email, String password) async {
-    return await _supabase.auth.signUp(
+  Future<AuthResponse?> signUp(String email, String password) async {
+    try {
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+      print('User registered: ${response.user?.id}');
+      return response;
+    } catch (error) {
+      print('Registration error: $error');
+      return null;
+    }
+  }
+
+  Future<AuthResponse> verifyOTP(String email, String token) async {
+    return await _supabase.auth.verifyOTP(
       email: email,
-      password: password,
+      token: token,
+      type: OtpType.signup,
     );
   }
 

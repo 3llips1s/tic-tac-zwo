@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -239,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _resetPassword(String email) async {
     try {
-      final authService = AuthService(Supabase.instance.client);
+      final authService = AuthService();
       // Add this method to your AuthService class
       await authService.resetPassword(email);
 
@@ -247,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen>
       _showSnackBar('Passwort-Reset-Email gesendet.');
     } catch (e) {
       // show error message
-      _showSnackBar('Fehler! Erneut versuchen bitte.');
+      _showSnackBar('Fehler! Bitte erneut versuchen.');
     }
   }
 
@@ -274,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: colorBlack,
                     ),
@@ -912,18 +913,21 @@ class _LoginScreenState extends State<LoginScreen>
               if (_validateUsername(username)) {
                 try {
                   final userRepo = UserProfileRepo(Supabase.instance.client);
+                  print('checking username availability');
 
-                  final exists =
+                  final isAvailable =
                       await userRepo.checkUsernameAvailability(username);
 
-                  if (exists) {
+                  if (!isAvailable) {
                     setState(() {
                       _usernameError = 'Username bereits vergeben';
                     });
                     return;
                   }
+                  print("Username is available, proceeding to registration");
                   _registerUser();
                 } catch (e) {
+                  print("Error checking username: $e");
                   setState(() {
                     _usernameError = 'Fehler bei der Überprüfung des Usernames';
                   });
@@ -958,24 +962,64 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _registerUser() async {
+    print('Starting user registration');
+    print("Email: ${signupEmailController.text}");
+    print("Username: ${usernameController.text}");
     try {
-      final authService = AuthService(Supabase.instance.client);
+      final authService = AuthService();
+      print('calling up signup method');
       final response = await authService.signUp(
         signupEmailController.text,
         signupPasswordController.text,
       );
 
-      if (response.user != null) {
-        // update user profile with username and country code
-        await UserProfileRepo(Supabase.instance.client).updateUserProfile(
-          userId: response.user!.id,
-          username: usernameController.text,
-          countryCode: _selectedCountryCode,
-        );
+      print('SignUp response: User ID ${response?.user?.id ?? "No user ID"}');
+      print(
+          'Session: ${response?.session != null ? "Created" : "Not created"}');
+
+      if (response?.user != null) {
+        try {
+          await UserProfileRepo(Supabase.instance.client).createUserProfile(
+            userId: response!.user!.id,
+            username: usernameController.text,
+            countryCode: _selectedCountryCode,
+          );
+          print('created user: ${usernameController.text}');
+
+          if (mounted) {
+            print("Navigating to home screen");
+            Navigator.pushReplacementNamed(context, RouteNames.home);
+          }
+        } catch (profileError) {
+          print("Error creating profile: $profileError");
+          _showSnackBar('Konto erstellt, aber Profil-Setup gescheitert.');
+          await Future.delayed(Duration(seconds: 2));
+          _showSnackBar('Bitte aktualisiere dein Profil später.');
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, RouteNames.home);
+          }
+        }
+      } else {
+        print("User registration did not return a user object");
+        _showSnackBar('Anmeldung gescheitert. Bitte erneut versuchen.');
       }
     } catch (e) {
+      print('registration error: $e');
+
+      String errorMessage = 'Anmeldung gescheitert';
+
+      if (e is AuthException) {
+        if (e.message.contains('email')) {
+          errorMessage = 'E-Mail bereits vergeben';
+        } else if (e.message.contains('password')) {
+          errorMessage = 'Passwort ist zu schwach.';
+        }
+      } else if (e is SocketException) {
+        errorMessage = 'Netzwerkfehler. Überprüfe deine Verbindung.';
+      }
+
       setState(() {
-        _signupEmailError = 'Registration fehlgeschlagen: ${e.toString()}';
+        _signupEmailError = errorMessage;
       });
     }
   }
@@ -996,7 +1040,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _loginUser() async {
     try {
-      final authService = AuthService(Supabase.instance.client);
+      final authService = AuthService();
       final response = await authService.signIn(
         loginEmailController.text,
         loginPasswordController.text,
@@ -1012,7 +1056,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
 
       setState(() {
-        _loginEmailError = 'Login gescheitert. Erneut versuchen bitte.';
+        _loginEmailError = 'Login gescheitert. Bitte erneut versuchen.';
       });
     }
   }

@@ -30,14 +30,13 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle, color: colorYellowAccent),
-                    child: SvgPicture.asset(
-                      'assets/images/user.svg',
-                      width: 24,
-                    ),
-                  ),
+                      padding: EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle, color: colorYellowAccent),
+                      child: Icon(
+                        Icons.face_5_rounded,
+                        size: 25,
+                      )),
                   const SizedBox(width: 15),
                   Text(
                     'Patient 0',
