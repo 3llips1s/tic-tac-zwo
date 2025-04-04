@@ -13,9 +13,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: AuthConfig.url,
-    anonKey: AuthConfig.anonKey,
-  );
+      url: AuthConfig.url,
+      anonKey: AuthConfig.anonKey,
+      authOptions: FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+      ));
 
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.edgeToEdge,

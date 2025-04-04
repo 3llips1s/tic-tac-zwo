@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
@@ -25,23 +26,118 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _fadeAnimation;
 
   // state variables
-  TextEditingController loginEmailController = TextEditingController();
-  TextEditingController loginPasswordController = TextEditingController();
-  TextEditingController signupEmailController = TextEditingController();
-  TextEditingController signupPasswordController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  List<TextEditingController> otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  List<FocusNode> otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
   TextEditingController usernameController = TextEditingController();
 
-  bool _obscureLoginPassword = true;
-  bool _obscureSignupPassword = true;
   bool _showUsernameOverlay = false;
+  bool _otpTabEnabled = false;
+  bool _isExistingUser = false;
+  bool _otpVerified = false;
+  bool _agreeToTerms = false;
 
-  String? _signupEmailError;
-  String? _loginEmailError;
-  String? _signupPasswordError;
-  String? _loginPasswordError;
+  String? _emailError;
+  String? _otpError;
   String? _usernameError;
 
   String _selectedCountryCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+    _setupOtpFocusNodes();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initializeCountryCode();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _fadeController.dispose();
+    emailController.dispose();
+    for (var controller in otpControllers) {
+      controller.dispose();
+    }
+    for (var node in otpFocusNodes) {
+      node.dispose();
+    }
+    usernameController.dispose();
+    super.dispose();
+  }
+
+  void _initializeControllers() {
+    // tab controller with listener to prevent unauthorized tab switching
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+    )..addListener(() {
+        // Prevent manual switching to OTP tab if not enabled
+        if (_tabController.index == 1 && !_otpTabEnabled) {
+          _tabController.animateTo(0);
+        }
+      });
+
+    // username overlay fade in controller
+    _fadeController = AnimationController(
+      duration: Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
+  }
+
+  void _setupOtpFocusNodes() {
+    for (int i = 0; i < otpControllers.length; i++) {
+      final node = otpFocusNodes[i];
+      final controller = otpControllers[i];
+
+      // Add listener to automatically move focus to next field
+      controller.addListener(() {
+        if (controller.text.length == 1 && i < otpControllers.length - 1) {
+          FocusScope.of(context).requestFocus(otpFocusNodes[i + 1]);
+        }
+      });
+
+      // Handle backspace to go to previous field
+      node.onKeyEvent = (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.backspace &&
+            controller.text.isEmpty &&
+            i > 0) {
+          FocusScope.of(context).requestFocus(otpFocusNodes[i - 1]);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      };
+    }
+  }
+
+  void _initializeCountryCode() {
+    final localeCountryCode =
+        View.of(context).platformDispatcher.locale.countryCode;
+    if (localeCountryCode != null && countryCodes.contains(localeCountryCode)) {
+      setState(() {
+        _selectedCountryCode = localeCountryCode;
+      });
+    } else {
+      setState(() {
+        _selectedCountryCode = '';
+      });
+    }
+  }
 
   void _showCountrySelector() {
     showDialog(
@@ -127,131 +223,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _initializeCountryCode() {
-    final localeCountryCode =
-        View.of(context).platformDispatcher.locale.countryCode;
-    if (localeCountryCode != null && countryCodes.contains(localeCountryCode)) {
-      setState(() {
-        _selectedCountryCode = localeCountryCode;
-      });
-    } else {
-      setState(() {
-        _selectedCountryCode = '';
-      });
-    }
-  }
-
-  void _showForgotPasswordDialog() {
-    final TextEditingController resetEmailController = TextEditingController();
-    String? resetEmailError;
-
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: colorBlack.withAlpha((255 * 0.5).toInt()),
-          actionsAlignment: MainAxisAlignment.spaceBetween,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: colorWhite.withAlpha((255 * 0.1).toInt()),
-              width: 1,
-            ),
-          ),
-          title: Text(
-            'Passwort zurücksetzen',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorGrey400,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 20),
-              TextField(
-                controller: resetEmailController,
-                style: TextStyle(color: colorWhite),
-                decoration: InputDecoration(
-                  hintText: 'Email:',
-                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorGrey500,
-                        fontSize: 16,
-                      ),
-                  errorText: resetEmailError,
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: colorGrey400),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: colorGrey400),
-                  ),
-                ),
-                cursorColor: colorGrey400,
-              ),
-              SizedBox(height: 40),
-            ],
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                overlayColor: colorWhite,
-                side: BorderSide(color: Colors.white70),
-              ),
-              child: Text(
-                'Abbrechen',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey400,
-                      fontSize: 15,
-                    ),
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                // Handle password reset
-                _resetPassword(resetEmailController.text);
-                Navigator.of(context).pop();
-              },
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                overlayColor: colorWhite,
-                side: BorderSide(color: Colors.white70),
-              ),
-              child: Text(
-                'Senden',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey400,
-                      fontSize: 15,
-                    ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _resetPassword(String email) async {
-    try {
-      final authService = AuthService();
-      // Add this method to your AuthService class
-      await authService.resetPassword(email);
-
-      // Show success message
-      _showSnackBar('Passwort-Reset-Email gesendet.');
-    } catch (e) {
-      // show error message
-      _showSnackBar('Fehler! Bitte erneut versuchen.');
-    }
-  }
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -280,34 +251,15 @@ class _LoginScreenState extends State<LoginScreen>
                       color: colorBlack,
                     ),
               ),
-            )
-            // message
-
-            ),
+            )),
       ),
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeControllers();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _initializeCountryCode();
-  }
-
-  bool _validateEmail(String email, {bool isLogin = false}) {
+  bool _validateEmail(String email) {
     if (email.isEmpty) {
       setState(() {
-        if (isLogin) {
-          _loginEmailError = 'Email erforderlich';
-        } else {
-          _signupEmailError = 'Email erforderlich';
-        }
+        _emailError = 'Email erforderlich';
       });
       return false;
     }
@@ -316,54 +268,13 @@ class _LoginScreenState extends State<LoginScreen>
     bool validEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
     if (!validEmail) {
       setState(() {
-        if (isLogin) {
-          _loginEmailError = 'Ungültige Email-Adresse';
-        } else {
-          _signupEmailError = 'Ungültige Email-Adresse';
-        }
+        _emailError = 'Ungültige Email-Adresse';
       });
       return false;
     }
 
     setState(() {
-      if (isLogin) {
-        _loginEmailError = null;
-      } else {
-        _signupEmailError = null;
-      }
-    });
-    return true;
-  }
-
-  bool _validatePassword(String password, {bool isLogin = false}) {
-    if (password.isEmpty) {
-      setState(() {
-        if (isLogin) {
-          _loginPasswordError = 'Passwort erforderlich';
-        } else {
-          _signupPasswordError = 'Passwort erforderlich';
-        }
-      });
-      return false;
-    }
-
-    if (password.length < 6) {
-      setState(() {
-        if (isLogin) {
-          _loginPasswordError = 'Passwort muss mindestens 6 Zeichen haben.';
-        } else {
-          _signupPasswordError = 'Passwort muss mindestens 6 Zeichen haben.';
-        }
-      });
-      return false;
-    }
-
-    setState(() {
-      if (isLogin) {
-        _loginPasswordError = null;
-      } else {
-        _signupPasswordError = null;
-      }
+      _emailError = null;
     });
     return true;
   }
@@ -389,33 +300,163 @@ class _LoginScreenState extends State<LoginScreen>
     return true;
   }
 
-  void _initializeControllers() {
-    // tab controller
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-    );
-
-    // username overlay fade in controller
-    _fadeController = AnimationController(
-      duration: Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _fadeAnimation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
+  String _getOtpCode() {
+    return otpControllers.map((controller) => controller.text).join();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _fadeController.dispose();
-    loginEmailController.dispose();
-    loginPasswordController.dispose();
-    signupEmailController.dispose();
-    signupPasswordController.dispose();
-    usernameController.dispose();
-    super.dispose();
+  bool _validateOtp() {
+    String otpCode = _getOtpCode();
+    if (otpCode.length != 6) {
+      setState(() {
+        _otpError = 'Bitte geben Sie alle Ziffern ein';
+      });
+      return false;
+    }
+
+    if (!RegExp(r'^\d{6}$').hasMatch(otpCode)) {
+      setState(() {
+        _otpError = 'OTP muss aus 6 Ziffern bestehen';
+      });
+      return false;
+    }
+
+    setState(() {
+      _otpError = null;
+    });
+    return true;
+  }
+
+  void _submitEmail() async {
+    if (_validateEmail(emailController.text)) {
+      try {
+        setState(() {
+          // Show loading indicator or disable UI
+        });
+
+        final authService = AuthService();
+
+        // Check if the user already exists
+        final userExists =
+            await authService.checkUserExists(emailController.text);
+
+        setState(() {
+          _isExistingUser = userExists;
+        });
+
+        // Send OTP for either sign in or sign up
+        await authService.sendOTP(emailController.text);
+
+        setState(() {
+          _otpTabEnabled = true;
+        });
+
+        // Switch to OTP tab
+        _tabController.animateTo(1);
+
+        _showSnackBar(_isExistingUser
+            ? 'Bestätigungscode wurde gesendet.'
+            : 'Bestätigungscode für die Registrierung wurde gesendet.');
+      } catch (e) {
+        print('Error submitting email: $e');
+
+        String errorMessage =
+            'Ein Fehler ist aufgetreten. Bitte erneut versuchen.';
+        if (e is SocketException) {
+          errorMessage = 'Netzwerkfehler. Überprüfe deine Verbindung.';
+        }
+
+        setState(() {
+          _emailError = errorMessage;
+        });
+      }
+    }
+  }
+
+  void _verifyOtp() async {
+    if (_validateOtp()) {
+      try {
+        setState(() {
+          // Show loading indicator or disable UI
+        });
+
+        final authService = AuthService();
+        final otpCode = _getOtpCode();
+
+        // Verify OTP
+        final response =
+            await authService.verifyOTP(emailController.text, otpCode);
+
+        if (response?.user == null) {
+          throw Exception('Verification failed');
+        }
+
+        setState(() {
+          _otpVerified = true;
+        });
+
+        if (_isExistingUser) {
+          // Existing user - go directly to home screen
+          Navigator.pushReplacementNamed(context, RouteNames.home);
+        } else {
+          // New user - show username overlay
+          setState(() {
+            _showUsernameOverlay = true;
+          });
+          _fadeController.forward();
+        }
+      } catch (e) {
+        print('OTP verification error: $e');
+
+        setState(() {
+          _otpError = 'Ungültiger Code. Bitte erneut versuchen.';
+        });
+      }
+    }
+  }
+
+  Future<void> _completeRegistration() async {
+    final username = usernameController.text.trim();
+    if (_validateUsername(username)) {
+      try {
+        final userRepo = UserProfileRepo(Supabase.instance.client);
+        print('checking username availability');
+
+        final isAvailable = await userRepo.checkUsernameAvailability(username);
+
+        if (!isAvailable) {
+          setState(() {
+            _usernameError = 'Username bereits vergeben';
+          });
+          return;
+        }
+
+        print("Username is available, creating profile");
+
+        // Get the current user from already verified OTP
+        final authService = AuthService();
+        final userId = authService.currentUserId;
+
+        if (userId == null) {
+          throw Exception('User ID not found');
+        }
+
+        await userRepo.createUserProfile(
+          userId: userId,
+          username: username,
+          countryCode: _selectedCountryCode,
+        );
+
+        print('created user: $username');
+
+        if (mounted) {
+          print("Navigating to home screen");
+          Navigator.pushReplacementNamed(context, RouteNames.home);
+        }
+      } catch (e) {
+        print("Error in registration completion: $e");
+        _showSnackBar('Fehler bei der Registrierung. Bitte erneut versuchen.');
+      }
+    }
   }
 
   @override
@@ -466,7 +507,16 @@ class _LoginScreenState extends State<LoginScreen>
                               dividerColor: Colors.transparent,
                               tabs: [
                                 Tab(text: 'anmelden'),
-                                Tab(text: 'einloggen')
+                                Tab(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('einloggen'),
+                                      if (!_otpTabEnabled)
+                                        Icon(Icons.lock, size: 16),
+                                    ],
+                                  ),
+                                ),
                               ],
                               labelColor: colorBlack,
                               labelStyle: Theme.of(context)
@@ -476,7 +526,9 @@ class _LoginScreenState extends State<LoginScreen>
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                   ),
-                              unselectedLabelColor: colorGrey600,
+                              unselectedLabelColor: _otpTabEnabled
+                                  ? colorGrey600
+                                  : Colors.grey.shade800,
                               unselectedLabelStyle: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -484,14 +536,21 @@ class _LoginScreenState extends State<LoginScreen>
                                     fontStyle: FontStyle.italic,
                                     fontSize: 16,
                                   ),
+                              onTap: (index) {
+                                // If trying to go to OTP tab but it's not enabled
+                                if (index == 1 && !_otpTabEnabled) {
+                                  // Cancel the tab change
+                                  _tabController.animateTo(0);
+                                }
+                              },
                             ),
                             Expanded(
                               child: TabBarView(
                                   controller: _tabController,
-                                  children: [
-                                    _buildSignupTab(),
-                                    _buildLoginTab()
-                                  ]),
+                                  physics: _otpTabEnabled
+                                      ? null
+                                      : NeverScrollableScrollPhysics(),
+                                  children: [_buildEmailTab(), _buildOtpTab()]),
                             )
                           ],
                         ),
@@ -504,139 +563,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  _buildLoginTab() {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // username or email
-          TextField(
-            controller: loginEmailController,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorWhite,
-                  fontSize: 18,
-                ),
-            decoration: InputDecoration(
-              hintText: 'Email:',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorGrey500,
-                    fontSize: 16,
-                  ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              errorText: _loginEmailError,
-              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorRed,
-                  ),
-            ),
-            cursorColor: colorGrey400,
-          ),
-
-          SizedBox(height: 20),
-
-          // password
-          TextField(
-            controller: loginPasswordController,
-            obscureText: _obscureLoginPassword,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorWhite,
-                  fontSize: 18,
-                ),
-            decoration: InputDecoration(
-              hintText: 'Passwort:',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorGrey500,
-                    fontSize: 16,
-                  ),
-              errorText: _loginPasswordError,
-              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorRed,
-                  ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              suffixIcon: IconButton(
-                onPressed: () {
-                  setState(() {
-                    _obscureLoginPassword = !_obscureLoginPassword;
-                  });
-                },
-                icon: Icon(
-                  _obscureLoginPassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: _obscureLoginPassword ? colorGrey400 : colorGrey200,
-                  size: 20,
-                ),
-              ),
-            ),
-            cursorColor: colorGrey400,
-          ),
-
-          SizedBox(height: 20),
-
-          // forgot password
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: _showForgotPasswordDialog,
-              child: Text(
-                'Passwort vergessen?',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey400,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
-                      decorationColor: colorGrey500,
-                      decorationThickness: 1.5,
-                    ),
-              ),
-            ),
-          ),
-
-          SizedBox(height: 30),
-
-          // login button
-          GestureDetector(
-            onTap: _handleLogin,
-            child: _buildGradientButton('einloggen'),
-          ),
-
-          SizedBox(height: 30),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                'Weiter mit:',
-                style: TextStyle(
-                    color: colorBlack,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-              SizedBox(width: 10),
-              _buildGoogleLogin(),
-              SizedBox(width: 20),
-              // if (Platform.isIOS)
-              _buildAppleLogin(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  _buildSignupTab() {
+  Widget _buildEmailTab() {
     return Padding(
       padding: EdgeInsets.all(20),
       child: Column(
@@ -644,7 +571,7 @@ class _LoginScreenState extends State<LoginScreen>
         children: [
           // email field
           TextField(
-            controller: signupEmailController,
+            controller: emailController,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
@@ -655,7 +582,7 @@ class _LoginScreenState extends State<LoginScreen>
                     color: colorGrey500,
                     fontSize: 16,
                   ),
-              errorText: _signupEmailError,
+              errorText: _emailError,
               errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorRed,
@@ -669,80 +596,44 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             cursorColor: colorGrey400,
           ),
+
           SizedBox(height: 20),
 
-          // password field with toggle
-          TextField(
-            controller: signupPasswordController,
-            obscureText: _obscureSignupPassword,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorWhite,
-                  fontSize: 18,
-                ),
-            decoration: InputDecoration(
-              hintText: 'Passwort:',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorGrey500,
-                    fontSize: 16,
-                  ),
-              errorText: _signupPasswordError,
-              errorStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorRed,
-                  ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: colorGrey400),
-              ),
-              suffixIcon: Icon(
-                _obscureSignupPassword
-                    ? Icons.visibility_off
-                    : Icons.visibility,
-                color: _obscureSignupPassword ? colorGrey400 : colorGrey200,
-                size: 20,
-              ),
-            ),
-            cursorColor: colorGrey400,
-          ),
-
-          SizedBox(height: 15),
-
-          // show password toggle
+          // Terms and conditions (optional)
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                'Passwort anzeigen?',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey400,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
               Checkbox(
-                value: !_obscureSignupPassword,
+                value: _agreeToTerms,
                 onChanged: (value) {
                   setState(() {
-                    _obscureSignupPassword = !(value ?? false);
+                    _agreeToTerms = value ?? false;
                   });
                 },
                 activeColor: colorGrey200,
                 checkColor: colorBlack,
                 side: BorderSide(color: colorGrey400),
               ),
+              Expanded(
+                child: Text(
+                  'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorGrey400,
+                        fontSize: 12,
+                      ),
+                ),
+              ),
             ],
           ),
 
-          SizedBox(height: 15),
+          SizedBox(height: 30),
 
-          // register button
+          // submit button
           GestureDetector(
-            onTap: _startRegistration,
-            child: _buildGradientButton('anmelden'),
+            onTap: _submitEmail,
+            child: _buildGradientButton('weiter'),
           ),
 
-          SizedBox(height: 20),
+          SizedBox(height: 30),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -757,8 +648,7 @@ class _LoginScreenState extends State<LoginScreen>
               SizedBox(width: 10),
               _buildGoogleLogin(),
               SizedBox(width: 20),
-              // if (Platform.isIOS)
-              _buildAppleLogin(),
+              if (Platform.isIOS) _buildAppleLogin(),
             ],
           ),
         ],
@@ -766,63 +656,140 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  _buildGoogleLogin() {
-    return Container(
-      padding: EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colorWhite.withOpacity(0.4),
-      ),
-      child: SvgPicture.asset(
-        'assets/images/google.svg',
-        height: 25,
-        width: 25,
-        colorFilter: ColorFilter.mode(colorBlack, BlendMode.srcIn),
-      ),
-    );
-  }
-
-  _buildAppleLogin() {
-    return GestureDetector(
-      child: Container(
-        height: 33,
-        width: 33,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colorWhite.withOpacity(0.4),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.apple_rounded,
-            size: 25,
-            color: colorBlack,
+  Widget _buildOtpTab() {
+    return Padding(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Text(
+            _isExistingUser
+                ? 'Bestätigungscode eingeben'
+                : 'Registrierungscode eingeben',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorGrey400,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
           ),
-        ),
-      ),
-    );
-  }
 
-  _buildGradientButton(String buttonText) {
-    return Container(
-      width: double.infinity,
-      height: kToolbarHeight,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(27),
-          gradient: LinearGradient(colors: [colorGrey100, colorGrey600])),
-      child: Center(
-        child: Text(
-          buttonText,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorBlack,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+          SizedBox(height: 10),
+
+          Text(
+            'Ein Code wurde an ${emailController.text} gesendet',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorGrey500,
+                  fontSize: 14,
+                ),
+            textAlign: TextAlign.center,
+          ),
+
+          SizedBox(height: 30),
+
+          // OTP input boxes
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(
+              6,
+              (index) => SizedBox(
+                width: 40,
+                child: TextField(
+                  controller: otpControllers[index],
+                  focusNode: otpFocusNodes[index],
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(1),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  style: TextStyle(
+                    color: colorWhite,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.zero,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: colorGrey400),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: colorGrey200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  cursorColor: colorGrey400,
+                ),
               ),
-        ),
+            ),
+          ),
+
+          if (_otpError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                _otpError!,
+                style: TextStyle(
+                  color: colorRed,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+
+          SizedBox(height: 20),
+
+          // Resend code option
+          GestureDetector(
+            onTap: () async {
+              try {
+                final authService = AuthService();
+                await authService.sendOTP(emailController.text);
+                _showSnackBar('Code erneut gesendet');
+              } catch (e) {
+                _showSnackBar('Fehler beim Senden des Codes');
+              }
+            },
+            child: Text(
+              'Code erneut senden',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorGrey400,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    decoration: TextDecoration.underline,
+                    decorationColor: colorGrey500,
+                    decorationThickness: 1.5,
+                  ),
+            ),
+          ),
+
+          SizedBox(height: 30),
+
+          // verify button
+          GestureDetector(
+            onTap: _verifyOtp,
+            child: _buildGradientButton('bestätigen'),
+          ),
+
+          // Go back option
+          TextButton(
+            onPressed: () {
+              _tabController.animateTo(0);
+            },
+            child: Text(
+              'Zurück zur E-Mail-Eingabe',
+              style: TextStyle(
+                color: colorGrey400,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  _buildUsernameContent() {
+  Widget _buildUsernameContent() {
     return Padding(
       padding: EdgeInsets.all(20),
       child: Column(
@@ -908,32 +875,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           SizedBox(height: 30),
           GestureDetector(
-            onTap: () async {
-              final username = usernameController.text.trim();
-              if (_validateUsername(username)) {
-                try {
-                  final userRepo = UserProfileRepo(Supabase.instance.client);
-                  print('checking username availability');
-
-                  final isAvailable =
-                      await userRepo.checkUsernameAvailability(username);
-
-                  if (!isAvailable) {
-                    setState(() {
-                      _usernameError = 'Username bereits vergeben';
-                    });
-                    return;
-                  }
-                  print("Username is available, proceeding to registration");
-                  _registerUser();
-                } catch (e) {
-                  print("Error checking username: $e");
-                  setState(() {
-                    _usernameError = 'Fehler bei der Überprüfung des Usernames';
-                  });
-                }
-              }
-            },
+            onTap: _completeRegistration,
             child: _buildGradientButton('fertig'),
           ),
           SizedBox(height: 5)
@@ -942,122 +884,77 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  void _startRegistration() {
-    bool isEmailValid = _validateEmail(
-      signupEmailController.text,
-      isLogin: false,
-    );
-    bool isPasswordValid = _validatePassword(
-      signupPasswordController.text,
-      isLogin: false,
-    );
-
-    // validate email and password + register to supabase
-    if (isEmailValid && isPasswordValid) {
-      setState(() {
-        _showUsernameOverlay = true;
-      });
-      _fadeController.forward();
-    }
-  }
-
-  Future<void> _registerUser() async {
-    print('Starting user registration');
-    print("Email: ${signupEmailController.text}");
-    print("Username: ${usernameController.text}");
-    try {
-      final authService = AuthService();
-      print('calling up signup method');
-      final response = await authService.signUp(
-        signupEmailController.text,
-        signupPasswordController.text,
-      );
-
-      print('SignUp response: User ID ${response?.user?.id ?? "No user ID"}');
-      print(
-          'Session: ${response?.session != null ? "Created" : "Not created"}');
-
-      if (response?.user != null) {
+  Widget _buildGoogleLogin() {
+    return GestureDetector(
+      onTap: () async {
         try {
-          await UserProfileRepo(Supabase.instance.client).createUserProfile(
-            userId: response!.user!.id,
-            username: usernameController.text,
-            countryCode: _selectedCountryCode,
-          );
-          print('created user: ${usernameController.text}');
-
-          if (mounted) {
-            print("Navigating to home screen");
-            Navigator.pushReplacementNamed(context, RouteNames.home);
-          }
-        } catch (profileError) {
-          print("Error creating profile: $profileError");
-          _showSnackBar('Konto erstellt, aber Profil-Setup gescheitert.');
-          await Future.delayed(Duration(seconds: 2));
-          _showSnackBar('Bitte aktualisiere dein Profil später.');
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, RouteNames.home);
-          }
+          final authService = AuthService();
+          await authService.signInWithGoogle();
+        } catch (e) {
+          _showSnackBar('Google-Anmeldung fehlgeschlagen');
         }
-      } else {
-        print("User registration did not return a user object");
-        _showSnackBar('Anmeldung gescheitert. Bitte erneut versuchen.');
-      }
-    } catch (e) {
-      print('registration error: $e');
-
-      String errorMessage = 'Anmeldung gescheitert';
-
-      if (e is AuthException) {
-        if (e.message.contains('email')) {
-          errorMessage = 'E-Mail bereits vergeben';
-        } else if (e.message.contains('password')) {
-          errorMessage = 'Passwort ist zu schwach.';
-        }
-      } else if (e is SocketException) {
-        errorMessage = 'Netzwerkfehler. Überprüfe deine Verbindung.';
-      }
-
-      setState(() {
-        _signupEmailError = errorMessage;
-      });
-    }
-  }
-
-  void _handleLogin() {
-    bool isEmailValid =
-        _validateEmail(loginEmailController.text, isLogin: true);
-    bool isPasswordValid = _validatePassword(
-      loginPasswordController.text,
-      isLogin: true,
+      },
+      child: Container(
+        padding: EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colorWhite.withOpacity(0.4),
+        ),
+        child: SvgPicture.asset(
+          'assets/images/google.svg',
+          height: 25,
+          width: 25,
+          colorFilter: ColorFilter.mode(colorBlack, BlendMode.srcIn),
+        ),
+      ),
     );
-
-    // validate email and password + register to supabase
-    if (isEmailValid && isPasswordValid) {
-      _loginUser();
-    }
   }
 
-  Future<void> _loginUser() async {
-    try {
-      final authService = AuthService();
-      final response = await authService.signIn(
-        loginEmailController.text,
-        loginPasswordController.text,
-      );
+  Widget _buildAppleLogin() {
+    return GestureDetector(
+      onTap: () async {
+        try {
+          final authService = AuthService();
+          await authService.signInWithApple();
+        } catch (e) {
+          _showSnackBar('Apple-Anmeldung fehlgeschlagen');
+        }
+      },
+      child: Container(
+        height: 33,
+        width: 33,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: colorWhite.withOpacity(0.4),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.apple_rounded,
+            size: 25,
+            color: colorBlack,
+          ),
+        ),
+      ),
+    );
+  }
 
-      if (!mounted) return;
-
-      // change route name to device scan later
-      if (response.user != null) {
-        Navigator.pushReplacementNamed(context, RouteNames.home);
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _loginEmailError = 'Login gescheitert. Bitte erneut versuchen.';
-      });
-    }
+  Widget _buildGradientButton(String buttonText) {
+    return Container(
+      width: double.infinity,
+      height: kToolbarHeight,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(27),
+          gradient: LinearGradient(colors: [colorGrey100, colorGrey600])),
+      child: Center(
+        child: Text(
+          buttonText,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorBlack,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+        ),
+      ),
+    );
   }
 }
