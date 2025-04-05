@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -36,16 +37,22 @@ class _LoginScreenState extends State<LoginScreen>
     (index) => FocusNode(),
   );
   TextEditingController usernameController = TextEditingController();
+  FocusNode otpRowFocusNode = FocusNode();
 
   bool _showUsernameOverlay = false;
-  bool _otpTabEnabled = false;
+  bool _otpTabEnabled = true;
   bool _isExistingUser = false;
   bool _otpVerified = false;
   bool _agreeToTerms = false;
+  bool _isLoading = false;
 
   String? _emailError;
   String? _otpError;
   String? _usernameError;
+
+  bool _canResendOTP = false;
+  int _resendTimeoutSeconds = 60;
+  Timer? _resendTimer;
 
   String _selectedCountryCode = '';
 
@@ -54,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _initializeControllers();
     _setupOtpFocusNodes();
+    _isLoading = false;
   }
 
   @override
@@ -74,7 +82,31 @@ class _LoginScreenState extends State<LoginScreen>
       node.dispose();
     }
     usernameController.dispose();
+    _resendTimer?.cancel();
+    otpRowFocusNode.dispose();
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    setState(() {
+      _canResendOTP = false;
+      _resendTimeoutSeconds = 60;
+    });
+
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) {
+        setState(() {
+          if (_resendTimeoutSeconds > 0) {
+            _resendTimeoutSeconds--;
+          } else {
+            _canResendOTP = true;
+            timer.cancel();
+          }
+        });
+      },
+    );
   }
 
   void _initializeControllers() {
@@ -97,6 +129,10 @@ class _LoginScreenState extends State<LoginScreen>
 
     _fadeAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
+
+    Future.delayed(Duration(milliseconds: 100), () {
+      otpRowFocusNode.requestFocus();
+    });
   }
 
   void _setupOtpFocusNodes() {
@@ -106,19 +142,30 @@ class _LoginScreenState extends State<LoginScreen>
 
       // Add listener to automatically move focus to next field
       controller.addListener(() {
-        if (controller.text.length == 1 && i < otpControllers.length - 1) {
-          FocusScope.of(context).requestFocus(otpFocusNodes[i + 1]);
+        if (controller.text.length == 1) {
+          if (i < otpControllers.length - 1) {
+            FocusScope.of(context).requestFocus(otpFocusNodes[i + 1]);
+          } else {
+            if (otpControllers
+                .every((controller) => controller.text.length == 1)) {
+              _verifyOtp();
+            }
+          }
         }
       });
 
       // Handle backspace to go to previous field
       node.onKeyEvent = (node, event) {
         if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.backspace &&
-            controller.text.isEmpty &&
-            i > 0) {
-          FocusScope.of(context).requestFocus(otpFocusNodes[i - 1]);
-          return KeyEventResult.handled;
+            event.logicalKey == LogicalKeyboardKey.backspace) {
+          if (controller.text.isEmpty && i > 0) {
+            // move to previous field if current is empty
+            FocusScope.of(context).requestFocus(otpFocusNodes[i - 1]);
+            return KeyEventResult.handled;
+          } else if (controller.text.isNotEmpty) {
+            controller.clear();
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       };
@@ -327,10 +374,16 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _submitEmail() async {
+    if (!_agreeToTerms) {
+      _showSnackBar('Bitte akzeptiere die Nutzungsbedingungen!');
+      return;
+    }
+
     if (_validateEmail(emailController.text)) {
       try {
         setState(() {
           // Show loading indicator or disable UI
+          _isLoading = true;
         });
 
         final authService = AuthService();
@@ -344,18 +397,33 @@ class _LoginScreenState extends State<LoginScreen>
         });
 
         // Send OTP for either sign in or sign up
-        await authService.sendOTP(emailController.text);
+        bool success;
 
-        setState(() {
-          _otpTabEnabled = true;
-        });
+        if (_isExistingUser) {
+          success = await authService.signInWithOTP(emailController.text);
+        } else {
+          success = await authService.signUpWithOTP(emailController.text);
+        }
 
-        // Switch to OTP tab
-        _tabController.animateTo(1);
+        if (success) {
+          setState(() {
+            _otpTabEnabled = true;
+            _isLoading = false;
+            _startResendTimer();
+          });
 
-        _showSnackBar(_isExistingUser
-            ? 'Bestätigungscode wurde gesendet.'
-            : 'Bestätigungscode für die Registrierung wurde gesendet.');
+          // Switch to OTP tab
+          _tabController.animateTo(1);
+
+          _showSnackBar(_isExistingUser
+              ? 'Bestätigungscode wurde gesendet.'
+              : 'Anmeldungscode wurde gesendet.');
+        } else {
+          _showSnackBar('Fehler beim Senden des Codes.');
+          setState(() {
+            _isLoading = false;
+          });
+        }
       } catch (e) {
         print('Error submitting email: $e');
 
@@ -367,6 +435,7 @@ class _LoginScreenState extends State<LoginScreen>
 
         setState(() {
           _emailError = errorMessage;
+          _isLoading = false;
         });
       }
     }
@@ -377,6 +446,7 @@ class _LoginScreenState extends State<LoginScreen>
       try {
         setState(() {
           // Show loading indicator or disable UI
+          _isLoading = true;
         });
 
         final authService = AuthService();
@@ -390,8 +460,11 @@ class _LoginScreenState extends State<LoginScreen>
           throw Exception('Verification failed');
         }
 
+        if (!mounted) return;
+
         setState(() {
           _otpVerified = true;
+          _isLoading = false;
         });
 
         if (_isExistingUser) {
@@ -409,15 +482,25 @@ class _LoginScreenState extends State<LoginScreen>
 
         setState(() {
           _otpError = 'Ungültiger Code. Bitte erneut versuchen.';
+          _isLoading = false;
         });
       }
     }
   }
 
   Future<void> _completeRegistration() async {
+    if (!_otpVerified) {
+      _showSnackBar('Bitte bestätige zuerst den OTP-Code.');
+      return;
+    }
+
     final username = usernameController.text.trim();
     if (_validateUsername(username)) {
       try {
+        setState(() {
+          _isLoading = true;
+        });
+
         final userRepo = UserProfileRepo(Supabase.instance.client);
         print('checking username availability');
 
@@ -455,6 +538,10 @@ class _LoginScreenState extends State<LoginScreen>
       } catch (e) {
         print("Error in registration completion: $e");
         _showSnackBar('Fehler bei der Registrierung. Bitte erneut versuchen.');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -509,7 +596,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 Tab(text: 'anmelden'),
                                 Tab(
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text('einloggen'),
                                       if (!_otpTabEnabled)
@@ -526,9 +614,8 @@ class _LoginScreenState extends State<LoginScreen>
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                   ),
-                              unselectedLabelColor: _otpTabEnabled
-                                  ? colorGrey600
-                                  : Colors.grey.shade800,
+                              unselectedLabelColor:
+                                  _otpTabEnabled ? colorGrey400 : colorGrey600,
                               unselectedLabelStyle: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -550,7 +637,10 @@ class _LoginScreenState extends State<LoginScreen>
                                   physics: _otpTabEnabled
                                       ? null
                                       : NeverScrollableScrollPhysics(),
-                                  children: [_buildEmailTab(), _buildOtpTab()]),
+                                  children: [
+                                    _buildEmailTab(),
+                                    _buildOtpTab(),
+                                  ]),
                             )
                           ],
                         ),
@@ -569,9 +659,16 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          SizedBox(height: 10),
+
           // email field
           TextField(
             controller: emailController,
+            onChanged: (value) {
+              if (_emailError != null) {
+                _validateEmail(value);
+              }
+            },
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorWhite,
                   fontSize: 18,
@@ -597,11 +694,20 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          SizedBox(height: 20),
+          SizedBox(height: 30),
 
           // Terms and conditions (optional)
           Row(
             children: [
+              Expanded(
+                child: Text(
+                  'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _agreeToTerms ? colorGrey200 : colorGrey400,
+                        fontSize: 12,
+                      ),
+                ),
+              ),
               Checkbox(
                 value: _agreeToTerms,
                 onChanged: (value) {
@@ -612,15 +718,6 @@ class _LoginScreenState extends State<LoginScreen>
                 activeColor: colorGrey200,
                 checkColor: colorBlack,
                 side: BorderSide(color: colorGrey400),
-              ),
-              Expanded(
-                child: Text(
-                  'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorGrey400,
-                        fontSize: 12,
-                      ),
-                ),
               ),
             ],
           ),
@@ -648,7 +745,8 @@ class _LoginScreenState extends State<LoginScreen>
               SizedBox(width: 10),
               _buildGoogleLogin(),
               SizedBox(width: 20),
-              if (Platform.isIOS) _buildAppleLogin(),
+              // if (Platform.isIOS)
+              _buildAppleLogin(),
             ],
           ),
         ],
@@ -662,63 +760,84 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          SizedBox(height: 20),
+
           Text(
-            _isExistingUser
-                ? 'Bestätigungscode eingeben'
-                : 'Registrierungscode eingeben',
+            'Ein Code wurde an ${emailController.text} gesendet.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorGrey400,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-          ),
-
-          SizedBox(height: 10),
-
-          Text(
-            'Ein Code wurde an ${emailController.text} gesendet',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorGrey500,
-                  fontSize: 14,
                 ),
             textAlign: TextAlign.center,
           ),
 
-          SizedBox(height: 30),
+          SizedBox(height: 40),
 
           // OTP input boxes
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(
-              6,
-              (index) => SizedBox(
-                width: 40,
-                child: TextField(
-                  controller: otpControllers[index],
-                  focusNode: otpFocusNodes[index],
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(1),
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  style: TextStyle(
-                    color: colorWhite,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.zero,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: colorGrey400),
-                      borderRadius: BorderRadius.circular(8),
+          KeyboardListener(
+            focusNode: otpRowFocusNode,
+            onKeyEvent: (KeyEvent event) {
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace) {
+                int currentFocusIndex = -1;
+                for (int i = 0; i < otpFocusNodes.length; i++) {
+                  if (otpFocusNodes[i].hasFocus) {
+                    currentFocusIndex = i;
+                    break;
+                  }
+                }
+
+                if (currentFocusIndex >= 0) {
+                  if (otpControllers[currentFocusIndex].text.isEmpty &&
+                      currentFocusIndex > 0) {
+                    FocusScope.of(context)
+                        .requestFocus(otpFocusNodes[currentFocusIndex - 1]);
+                  }
+                }
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                6,
+                (index) => Container(
+                  padding: EdgeInsets.symmetric(horizontal: 1),
+                  width: 40,
+                  child: TextField(
+                    controller: otpControllers[index],
+                    focusNode: otpFocusNodes[index],
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(1),
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorWhite,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.zero,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: colorGrey400),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: colorGrey200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: colorGrey200),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    cursorColor: colorGrey400,
+                    onChanged: (value) {
+                      if (index == 5 &&
+                          (otpControllers.every(
+                              (controller) => controller.text.length == 1))) {
+                        _verifyOtp();
+                      }
+                    },
                   ),
-                  cursorColor: colorGrey400,
                 ),
               ),
             ),
@@ -737,33 +856,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
 
-          SizedBox(height: 20),
-
-          // Resend code option
-          GestureDetector(
-            onTap: () async {
-              try {
-                final authService = AuthService();
-                await authService.sendOTP(emailController.text);
-                _showSnackBar('Code erneut gesendet');
-              } catch (e) {
-                _showSnackBar('Fehler beim Senden des Codes');
-              }
-            },
-            child: Text(
-              'Code erneut senden',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorGrey400,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    decoration: TextDecoration.underline,
-                    decorationColor: colorGrey500,
-                    decorationThickness: 1.5,
-                  ),
-            ),
-          ),
-
-          SizedBox(height: 30),
+          SizedBox(height: 40),
 
           // verify button
           GestureDetector(
@@ -771,19 +864,52 @@ class _LoginScreenState extends State<LoginScreen>
             child: _buildGradientButton('bestätigen'),
           ),
 
-          // Go back option
-          TextButton(
-            onPressed: () {
-              _tabController.animateTo(0);
-            },
-            child: Text(
-              'Zurück zur E-Mail-Eingabe',
-              style: TextStyle(
-                color: colorGrey400,
-                fontSize: 14,
+          SizedBox(height: 40),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Go back option
+              GestureDetector(
+                onTap: () {
+                  _tabController.animateTo(0);
+                },
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: colorGrey400,
+                  size: 20,
+                ),
               ),
-            ),
-          ),
+
+              // resend new code
+              GestureDetector(
+                onTap: _canResendOTP
+                    ? () async {
+                        try {
+                          final authService = AuthService();
+                          await authService.signInWithOTP(emailController.text);
+                          _showSnackBar('Code erneut gesendet.');
+                        } catch (e) {
+                          _showSnackBar('Fehler beim Senden des Codes');
+                        }
+                      }
+                    : null,
+                child: Text(
+                  _canResendOTP
+                      ? 'Code erneut senden'
+                      : 'Code erneut senden in ${_resendTimeoutSeconds}s',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _canResendOTP ? colorGrey200 : colorGrey400,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                        decorationColor: colorGrey500,
+                        decorationThickness: 1.5,
+                      ),
+                ),
+              ),
+            ],
+          )
         ],
       ),
     );
@@ -813,6 +939,11 @@ class _LoginScreenState extends State<LoginScreen>
                 Expanded(
                   child: TextField(
                     controller: usernameController,
+                    onChanged: (value) {
+                      if (_usernameError != null) {
+                        _validateUsername(value);
+                      }
+                    },
                     enableSuggestions: false,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colorWhite,
@@ -946,14 +1077,23 @@ class _LoginScreenState extends State<LoginScreen>
           borderRadius: BorderRadius.circular(27),
           gradient: LinearGradient(colors: [colorGrey100, colorGrey600])),
       child: Center(
-        child: Text(
-          buttonText,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorBlack,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+        child: _isLoading
+            ? SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: colorBlack,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text(
+                buttonText,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorBlack,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
               ),
-        ),
       ),
     );
   }

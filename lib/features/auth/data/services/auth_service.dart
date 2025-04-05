@@ -1,48 +1,38 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+class AuthException implements Exception {
+  final String message;
+  final dynamic originalError;
+
+  AuthException(this.message, [this.originalError]);
+
+  @override
+  String toString() => 'AuthException: $message';
+}
+
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Checks if a user with the given email exists
+  // Check if a user with the given email exists
   Future<bool> checkUserExists(String email) async {
     try {
-      await _supabase.auth.resetPasswordForEmail(email);
-      // If no exception is thrown, user exists
-      return true;
+      final response = await _supabase
+          .rpc('check_user_exists', params: {'email_to_check': email});
+      return response as bool;
     } catch (error) {
-      if (error is AuthException && error.message.contains('Email not found')) {
-        return false;
-      }
-      // For other errors, log and assume user might exist
-      print('Error checking user existence: $error');
+      print('error checking user existence: $error');
       return false;
     }
   }
 
-  /// Universal method to send OTP regardless of whether user exists
-  /// Returns true if OTP was sent successfully
-  Future<bool> sendOTP(String email) async {
-    try {
-      // For both new and existing users, we use signInWithOtp
-      await _supabase.auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: 'io.supabase.ticTacZwo://login-callback/',
-      );
-      return true;
-    } catch (error) {
-      print('OTP sending error: $error');
-      throw Exception('Failed to send verification code: $error');
-    }
-  }
-
-  /// Initiates email OTP sign-in flow
-  /// Returns true if OTP was sent successfully
+  // Initiates email OTP sign-in flow
   Future<bool> signInWithOTP(String email) async {
     try {
       await _supabase.auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: 'io.supabase.ticTacZwo://login-callback/',
-      );
+          email: email,
+          emailRedirectTo: 'io.supabase.ticTacZwo://login-callback/',
+          shouldCreateUser: false,
+          data: {'type': 'email_otp'});
       return true;
     } catch (error) {
       print('OTP sign-in error: $error');
@@ -50,13 +40,13 @@ class AuthService {
     }
   }
 
-  /// Verifies OTP for authentication
+  // Verifies OTP for authentication
   Future<AuthResponse?> verifyOTP(String email, String token) async {
     try {
       final response = await _supabase.auth.verifyOTP(
         email: email,
         token: token,
-        type: OtpType.magiclink,
+        type: OtpType.email,
       );
       print('User authenticated: ${response.user?.id}');
       return response;
@@ -66,8 +56,7 @@ class AuthService {
     }
   }
 
-  /// Initiates email OTP sign-up flow
-  /// Returns true if OTP was sent successfully
+  // Returns true if OTP was sent successfully
   Future<bool> signUpWithOTP(String email) async {
     try {
       // Check if user exists first
@@ -79,9 +68,10 @@ class AuthService {
 
       // If user doesn't exist, proceed with OTP sign-up
       await _supabase.auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: 'io.supabase.ticTacZwo://signup-callback/',
-      );
+          email: email,
+          emailRedirectTo: 'io.supabase.ticTacZwo://signup-callback/',
+          shouldCreateUser: true,
+          data: {'type': 'email_otp'});
       return true;
     } catch (error) {
       print('OTP sign-up error: $error');
@@ -107,8 +97,8 @@ class AuthService {
     );
   }
 
-  /// Checks if the user has completed their profile
-  /// Call this after successful authentication
+  // Checks if the user has completed their profile
+  // Call this after successful authentication
   Future<bool> hasUserProfile() async {
     final userId = currentUserId;
     if (userId == null) return false;
