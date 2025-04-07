@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../config/game_config/constants.dart';
 
@@ -17,9 +16,9 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
       color: Colors.black,
       child: Padding(
         padding: const EdgeInsets.only(
-          bottom: 35,
-          left: 20,
           top: 25,
+          bottom: 30,
+          right: 40,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -28,6 +27,7 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
             Padding(
               padding: EdgeInsets.only(top: kToolbarHeight / 1.5),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Container(
                       padding: EdgeInsets.all(9),
@@ -56,22 +56,23 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                     (drawerItem) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 30),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Icon(
-                            drawerItem['icon'],
-                            color: colorYellowAccent,
-                            size: 30,
-                          ),
-                          const SizedBox(
-                            width: 15,
-                          ),
                           Text(
                             drawerItem['title'],
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(color: colorWhite, fontSize: 16),
-                          )
+                          ),
+                          const SizedBox(
+                            width: 15,
+                          ),
+                          Icon(
+                            drawerItem['icon'],
+                            color: colorYellowAccent,
+                            size: 30,
+                          ),
                         ],
                       ),
                     ),
@@ -80,35 +81,13 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
             ),
 
             Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                // about
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: colorYellowAccent,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'info',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: colorWhite, fontSize: 16),
-                ),
-
-                // spacer
-                Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20),
-                  child: Container(
-                    height: 17,
-                    width: 1,
-                    color: colorGrey600,
-                  ),
-                ),
-
                 // logout
                 Icon(
                   Icons.logout_rounded,
                   color: colorRed,
+                  size: 26,
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -116,7 +95,7 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
-                      ?.copyWith(color: colorWhite, fontSize: 16),
+                      ?.copyWith(color: colorWhite, fontSize: 18),
                 ),
               ],
             )
@@ -137,7 +116,7 @@ final drawerItems = <Map<String, dynamic>>[
     'title': 'w o r t s c h a t z',
   },
   {
-    'icon': Icons.grid_4x4_rounded,
-    'title': 'w ö r d l e',
+    'icon': Icons.info_outline_rounded,
+    'title': 'i n f o',
   }
 ];

@@ -3,13 +3,13 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/data/repositories/user_profile_repo.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
+import 'package:tic_tac_zwo/features/auth/ui/widgets/otp_input_field.dart';
 
 import '../../../../routes/route_names.dart';
 
@@ -28,19 +28,14 @@ class _LoginScreenState extends State<LoginScreen>
 
   // state variables
   TextEditingController emailController = TextEditingController();
-  List<TextEditingController> otpControllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  List<FocusNode> otpFocusNodes = List.generate(
-    6,
-    (index) => FocusNode(),
-  );
+  final OtpInputFieldController _otpInputFieldController =
+      OtpInputFieldController();
+  String _currentOtpValue = '';
+
   TextEditingController usernameController = TextEditingController();
-  FocusNode otpRowFocusNode = FocusNode();
 
   bool _showUsernameOverlay = false;
-  bool _otpTabEnabled = true;
+  bool _otpTabEnabled = false;
   bool _isExistingUser = false;
   bool _otpVerified = false;
   bool _agreeToTerms = false;
@@ -60,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _initializeControllers();
-    _setupOtpFocusNodes();
+    // _setupOtpFocusNodes();
     _isLoading = false;
   }
 
@@ -75,15 +70,9 @@ class _LoginScreenState extends State<LoginScreen>
     _tabController.dispose();
     _fadeController.dispose();
     emailController.dispose();
-    for (var controller in otpControllers) {
-      controller.dispose();
-    }
-    for (var node in otpFocusNodes) {
-      node.dispose();
-    }
+
     usernameController.dispose();
     _resendTimer?.cancel();
-    otpRowFocusNode.dispose();
     super.dispose();
   }
 
@@ -129,47 +118,6 @@ class _LoginScreenState extends State<LoginScreen>
 
     _fadeAnimation =
         Tween<double>(begin: 0.0, end: 1.0).animate(_fadeController);
-
-    Future.delayed(Duration(milliseconds: 100), () {
-      otpRowFocusNode.requestFocus();
-    });
-  }
-
-  void _setupOtpFocusNodes() {
-    for (int i = 0; i < otpControllers.length; i++) {
-      final node = otpFocusNodes[i];
-      final controller = otpControllers[i];
-
-      // Add listener to automatically move focus to next field
-      controller.addListener(() {
-        if (controller.text.length == 1) {
-          if (i < otpControllers.length - 1) {
-            FocusScope.of(context).requestFocus(otpFocusNodes[i + 1]);
-          } else {
-            if (otpControllers
-                .every((controller) => controller.text.length == 1)) {
-              _verifyOtp();
-            }
-          }
-        }
-      });
-
-      // Handle backspace to go to previous field
-      node.onKeyEvent = (node, event) {
-        if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.backspace) {
-          if (controller.text.isEmpty && i > 0) {
-            // move to previous field if current is empty
-            FocusScope.of(context).requestFocus(otpFocusNodes[i - 1]);
-            return KeyEventResult.handled;
-          } else if (controller.text.isNotEmpty) {
-            controller.clear();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      };
-    }
   }
 
   void _initializeCountryCode() {
@@ -348,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   String _getOtpCode() {
-    return otpControllers.map((controller) => controller.text).join();
+    return _currentOtpValue;
   }
 
   bool _validateOtp() {
@@ -374,6 +322,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _submitEmail() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_agreeToTerms) {
       _showSnackBar('Bitte akzeptiere die Nutzungsbedingungen!');
       return;
@@ -433,15 +383,19 @@ class _LoginScreenState extends State<LoginScreen>
           errorMessage = 'Netzwerkfehler. Überprüfe deine Verbindung.';
         }
 
-        setState(() {
-          _emailError = errorMessage;
-          _isLoading = false;
-        });
+        setState(
+          () {
+            _emailError = errorMessage;
+            _isLoading = false;
+          },
+        );
       }
     }
   }
 
   void _verifyOtp() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (_validateOtp()) {
       try {
         setState(() {
@@ -489,6 +443,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _completeRegistration() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_otpVerified) {
       _showSnackBar('Bitte bestätige zuerst den OTP-Code.');
       return;
@@ -774,73 +730,15 @@ class _LoginScreenState extends State<LoginScreen>
 
           SizedBox(height: 40),
 
-          // OTP input boxes
-          KeyboardListener(
-            focusNode: otpRowFocusNode,
-            onKeyEvent: (KeyEvent event) {
-              if (event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.backspace) {
-                int currentFocusIndex = -1;
-                for (int i = 0; i < otpFocusNodes.length; i++) {
-                  if (otpFocusNodes[i].hasFocus) {
-                    currentFocusIndex = i;
-                    break;
-                  }
-                }
-
-                if (currentFocusIndex >= 0) {
-                  if (otpControllers[currentFocusIndex].text.isEmpty &&
-                      currentFocusIndex > 0) {
-                    FocusScope.of(context)
-                        .requestFocus(otpFocusNodes[currentFocusIndex - 1]);
-                  }
-                }
-              }
+          OtpInputField(
+            length: 6,
+            controller: _otpInputFieldController,
+            onCompleted: (value) {
+              setState(() {
+                _currentOtpValue = value;
+              });
+              _verifyOtp();
             },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                6,
-                (index) => Container(
-                  padding: EdgeInsets.symmetric(horizontal: 1),
-                  width: 40,
-                  child: TextField(
-                    controller: otpControllers[index],
-                    focusNode: otpFocusNodes[index],
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(1),
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorWhite,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.zero,
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorGrey400),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: colorGrey200),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    cursorColor: colorGrey400,
-                    onChanged: (value) {
-                      if (index == 5 &&
-                          (otpControllers.every(
-                              (controller) => controller.text.length == 1))) {
-                        _verifyOtp();
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
           ),
 
           if (_otpError != null)
@@ -889,6 +787,10 @@ class _LoginScreenState extends State<LoginScreen>
                           final authService = AuthService();
                           await authService.signInWithOTP(emailController.text);
                           _showSnackBar('Code erneut gesendet.');
+                          setState(() {
+                            _currentOtpValue = '';
+                          });
+                          _otpInputFieldController.clear();
                         } catch (e) {
                           _showSnackBar('Fehler beim Senden des Codes');
                         }
@@ -897,7 +799,7 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Text(
                   _canResendOTP
                       ? 'Code erneut senden'
-                      : 'Code erneut senden in ${_resendTimeoutSeconds}s',
+                      : 'Code erneut senden in ${_resendTimeoutSeconds}S',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: _canResendOTP ? colorGrey200 : colorGrey400,
                         fontWeight: FontWeight.bold,

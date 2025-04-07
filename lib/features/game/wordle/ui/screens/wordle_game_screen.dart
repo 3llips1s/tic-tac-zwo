@@ -36,6 +36,8 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   void _showGameResultDialog(WordleGameState state) async {
     await Future.delayed(const Duration(milliseconds: 2200));
 
+    if (!mounted) return;
+
     showCustomDialog(
       context: context,
       barrierDismissible: false,
@@ -254,6 +256,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
             ),
           ),
 
+          // grid
           Expanded(
             child: Center(
               child: Column(
@@ -263,11 +266,34 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                     gameState: gameState,
                     currentGuess: _currentGuess,
                   ),
-                  const SizedBox(height: kToolbarHeight * 2),
                 ],
               ),
             ),
           ),
+
+          // back home
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 55),
+              child: IconButton(
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  RouteNames.home,
+                  (route) => false,
+                ),
+                icon: Icon(
+                  Icons.home_rounded,
+                  color: colorGrey600,
+                  size: 35,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: kToolbarHeight / 1.5),
+
+          // keyboard
           WordleKeyboard(
             onKeyTap: gameState.canGuess ? _handleKeyPress : null,
             letterStates: _getKeyboardLetterStates(gameState),

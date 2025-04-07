@@ -29,10 +29,9 @@ class AuthService {
   Future<bool> signInWithOTP(String email) async {
     try {
       await _supabase.auth.signInWithOtp(
-          email: email,
-          emailRedirectTo: 'io.supabase.ticTacZwo://login-callback/',
-          shouldCreateUser: false,
-          data: {'type': 'email_otp'});
+        email: email,
+        shouldCreateUser: false,
+      );
       return true;
     } catch (error) {
       print('OTP sign-in error: $error');
@@ -68,10 +67,9 @@ class AuthService {
 
       // If user doesn't exist, proceed with OTP sign-up
       await _supabase.auth.signInWithOtp(
-          email: email,
-          emailRedirectTo: 'io.supabase.ticTacZwo://signup-callback/',
-          shouldCreateUser: true,
-          data: {'type': 'email_otp'});
+        email: email,
+        shouldCreateUser: true,
+      );
       return true;
     } catch (error) {
       print('OTP sign-up error: $error');
@@ -105,11 +103,8 @@ class AuthService {
 
     try {
       // Using .maybeSingle() instead of .single() to avoid exceptions
-      final response = await _supabase
-          .from('user_profiles')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
+      final response =
+          await _supabase.from('users').select().eq('id', userId).maybeSingle();
 
       // Simply return whether response is not null
       return response != null;

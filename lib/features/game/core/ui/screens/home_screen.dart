@@ -21,7 +21,7 @@ class _HomePageState extends State<HomeScreen> {
   void _toggleDrawer() {
     setState(() {
       _isDrawerOpen = !_isDrawerOpen;
-      _xOffset = _isDrawerOpen ? 225 : 0;
+      _xOffset = _isDrawerOpen ? -225 : 0;
       _yOffset = _isDrawerOpen ? 86.5 : 0;
       _scaleFactor = _isDrawerOpen ? 0.8 : 1;
     });
@@ -43,7 +43,7 @@ class _HomePageState extends State<HomeScreen> {
               ? [
                   BoxShadow(
                     color: Colors.grey.shade100.withAlpha((255 / 0.4).toInt()),
-                    offset: const Offset(-10, 10),
+                    offset: const Offset(10, 10),
                     blurRadius: 15,
                   )
                 ]
@@ -61,14 +61,14 @@ class _HomePageState extends State<HomeScreen> {
 
             // menu icon
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                padding: const EdgeInsets.only(right: 20, bottom: 20, top: 10),
                 child: IconButton(
                   onPressed: _toggleDrawer,
                   icon: _isDrawerOpen
                       ? const Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                          Icons.arrow_forward_ios_rounded,
                           color: Colors.black45,
                           size: 28,
                         )
