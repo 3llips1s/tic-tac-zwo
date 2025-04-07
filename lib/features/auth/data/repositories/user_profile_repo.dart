@@ -35,7 +35,7 @@ class UserProfileRepo {
       'total_correct_articles': 0
     };
 
-    await _supabase.from('users').insert(userData);
+    await _supabase.from('users').update(userData).eq('id', userId);
   }
 
   Future<void> updateUserProfile({

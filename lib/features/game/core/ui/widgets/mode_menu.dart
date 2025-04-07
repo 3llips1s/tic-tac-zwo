@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
@@ -43,7 +44,13 @@ class _ModeMenuState extends State<ModeMenu> {
         if (gameModeIcons[index]['gameMode'] == GameMode.wordle) {
           await Navigator.pushNamed(context, RouteNames.wordle);
         } else if (gameModeIcons[index]['gameMode'] == GameMode.online) {
-          await Navigator.pushNamed(context, RouteNames.login);
+          final authService = AuthService();
+
+          if (authService.isAuthenticated) {
+            await Navigator.pushNamed(context, RouteNames.deviceScan);
+          } else {
+            await Navigator.pushNamed(context, RouteNames.login);
+          }
         } else {
           await Future.delayed(const Duration(milliseconds: 200));
 

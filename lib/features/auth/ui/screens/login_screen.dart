@@ -102,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen>
     // tab controller with listener to prevent unauthorized tab switching
     _tabController = TabController(
       length: 2,
+      animationDuration: Duration(milliseconds: 300),
       vsync: this,
     )..addListener(() {
         // Prevent manual switching to OTP tab if not enabled
