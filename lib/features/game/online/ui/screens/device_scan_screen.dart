@@ -114,7 +114,7 @@ class _DeviceScanScreenState extends ConsumerState<DeviceScanScreen>
                   alignment: Alignment.center,
                   child: Text(
                     // might need to change this down the line
-                    GameMode.wordle.string,
+                    GameMode.online.string,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,

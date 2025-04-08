@@ -8,17 +8,17 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   double _xOffset = 0;
   double _yOffset = 0;
   double _scaleFactor = 1;
   bool _isDrawerOpen = false;
 
   // toggle drawer
-  void _toggleDrawer() {
+  void toggleDrawer() {
     setState(() {
       _isDrawerOpen = !_isDrawerOpen;
       _xOffset = _isDrawerOpen ? -225 : 0;
@@ -65,7 +65,7 @@ class _HomePageState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 20, bottom: 20, top: 10),
                 child: IconButton(
-                  onPressed: _toggleDrawer,
+                  onPressed: toggleDrawer,
                   icon: _isDrawerOpen
                       ? const Icon(
                           Icons.arrow_forward_ios_rounded,

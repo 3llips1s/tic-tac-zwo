@@ -114,6 +114,20 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final userId = currentUserId;
+    if (userId == null) return null;
+
+    try {
+      final response =
+          await _supabase.from('users').select().eq('id', userId).maybeSingle();
+      return response;
+    } catch (error) {
+      print('error fetching user profile: $error');
+      return null;
+    }
+  }
+
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
   User? get currentUser => _supabase.auth.currentUser;

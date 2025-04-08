@@ -1,6 +1,11 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 
 import '../../../config/game_config/constants.dart';
+import '../../../routes/route_names.dart';
 
 class HiddenDrawer extends StatefulWidget {
   const HiddenDrawer({super.key});
@@ -10,6 +15,84 @@ class HiddenDrawer extends StatefulWidget {
 }
 
 class _HiddenDrawerState extends State<HiddenDrawer> {
+  final authService = AuthService();
+  String displayName = 'User${Random().nextInt(100000)}';
+  String countryCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  void _logout() async {
+    if (authService.isAuthenticated) {
+      await authService.signOut();
+    }
+    if (mounted) {
+      Navigator.pushNamed(context, RouteNames.home);
+      _showSnackBar('Du wurdest ausgeloggt.');
+    }
+  }
+
+  void _navigateToLogin() {
+    if (mounted) {
+      Navigator.pushNamed(context, RouteNames.home);
+      Future.delayed(Duration(milliseconds: 300));
+      Navigator.pushNamed(context, RouteNames.login);
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        margin: EdgeInsets.only(
+          left: 40,
+          right: 40,
+        ),
+        content: Container(
+          padding: EdgeInsets.all(12),
+          height: kToolbarHeight,
+          decoration: BoxDecoration(
+            color: colorBlack,
+            borderRadius: BorderRadius.all(Radius.circular(9)),
+          ),
+          child: Center(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: colorWhite,
+                  ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadUserProfile() async {
+    final Map<String, dynamic>? userProfile =
+        await AuthService().getUserProfile();
+
+    if (userProfile != null && userProfile.containsKey('username')) {
+      setState(() {
+        displayName = userProfile['username'] as String;
+        countryCode = userProfile['country_code'] as String;
+      });
+    } else {
+      setState(() {
+        displayName = 'User${Random().nextInt(100000)}';
+        countryCode = '';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -39,12 +122,18 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                       )),
                   const SizedBox(width: 15),
                   Text(
-                    'Patient 0',
+                    displayName,
                     style: Theme.of(context)
                         .textTheme
                         .bodyLarge
-                        ?.copyWith(color: colorYellowAccent, fontSize: 16.0),
+                        ?.copyWith(color: colorYellowAccent, fontSize: 20.0),
                   ),
+                  const SizedBox(width: 10),
+                  Flag(
+                    countryCode: countryCode,
+                    height: 15,
+                    width: 22.5,
+                  )
                 ],
               ),
             ),
@@ -80,24 +169,28 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   .toList(),
             ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // logout
-                Icon(
-                  Icons.logout_rounded,
-                  color: colorRed,
-                  size: 26,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'ausloggen',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: colorWhite, fontSize: 18),
-                ),
-              ],
+            GestureDetector(
+              onTap: authService.isAuthenticated ? _logout : _navigateToLogin,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // logout
+                  Icon(
+                    Icons.logout_rounded,
+                    color: colorRed,
+                    size: 26,
+                  ),
+
+                  const SizedBox(width: 10),
+                  Text(
+                    authService.isAuthenticated ? 'ausloggen' : 'einloggen',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: colorWhite, fontSize: 18),
+                  ),
+                ],
+              ),
             )
           ],
         ),

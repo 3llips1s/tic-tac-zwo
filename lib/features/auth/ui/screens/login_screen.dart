@@ -55,8 +55,15 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _initializeControllers();
-    // _setupOtpFocusNodes();
+    _checkAuthStatus();
     _isLoading = false;
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final isAuthenticated = AuthService().isAuthenticated;
+    setState(() {
+      _isExistingUser = isAuthenticated;
+    });
   }
 
   @override
@@ -253,6 +260,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   bool _validateEmail(String email) {
+    // Trim the email to remove leading and trailing whitespace
+    email = email.trim();
     if (email.isEmpty) {
       setState(() {
         _emailError = 'Email erforderlich';
@@ -260,8 +269,11 @@ class _LoginScreenState extends State<LoginScreen>
       return false;
     }
 
-    // validation regex
-    bool validEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+    // Email validation regex that allows dots in local part
+    bool validEmail =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+            .hasMatch(email);
+
     if (!validEmail) {
       setState(() {
         _emailError = 'Ungültige Email-Adresse';
@@ -433,8 +445,6 @@ class _LoginScreenState extends State<LoginScreen>
           _fadeController.forward();
         }
       } catch (e) {
-        print('OTP verification error: $e');
-
         setState(() {
           _otpError = 'Ungültiger Code. Bitte erneut versuchen.';
           _isLoading = false;
@@ -459,7 +469,6 @@ class _LoginScreenState extends State<LoginScreen>
         });
 
         final userRepo = UserProfileRepo(Supabase.instance.client);
-        print('checking username availability');
 
         final isAvailable = await userRepo.checkUsernameAvailability(username);
 
@@ -469,8 +478,6 @@ class _LoginScreenState extends State<LoginScreen>
           });
           return;
         }
-
-        print("Username is available, creating profile");
 
         // Get the current user from already verified OTP
         final authService = AuthService();
@@ -486,14 +493,10 @@ class _LoginScreenState extends State<LoginScreen>
           countryCode: _selectedCountryCode,
         );
 
-        print('created user: $username');
-
         if (mounted) {
-          print("Navigating to home screen");
-          Navigator.pushReplacementNamed(context, RouteNames.home);
+          Navigator.pushReplacementNamed(context, RouteNames.deviceScan);
         }
       } catch (e) {
-        print("Error in registration completion: $e");
         _showSnackBar('Fehler bei der Registrierung. Bitte erneut versuchen.');
       } finally {
         setState(() {
@@ -651,33 +654,34 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          SizedBox(height: 30),
+          if (!_isExistingUser) SizedBox(height: 30),
 
-          // Terms and conditions (optional)
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _agreeToTerms ? colorGrey200 : colorGrey400,
-                        fontSize: 12,
-                      ),
+          // Terms and conditions if new user
+          if (!_isExistingUser)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: _agreeToTerms ? colorGrey200 : colorGrey400,
+                          fontSize: 12,
+                        ),
+                  ),
                 ),
-              ),
-              Checkbox(
-                value: _agreeToTerms,
-                onChanged: (value) {
-                  setState(() {
-                    _agreeToTerms = value ?? false;
-                  });
-                },
-                activeColor: colorGrey200,
-                checkColor: colorBlack,
-                side: BorderSide(color: colorGrey400),
-              ),
-            ],
-          ),
+                Checkbox(
+                  value: _agreeToTerms,
+                  onChanged: (value) {
+                    setState(() {
+                      _agreeToTerms = value ?? false;
+                    });
+                  },
+                  activeColor: colorGrey200,
+                  checkColor: colorBlack,
+                  side: BorderSide(color: colorGrey400),
+                ),
+              ],
+            ),
 
           SizedBox(height: 30),
 
