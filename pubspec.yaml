@@ -13,6 +13,9 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.6.1
   flutter_svg: ^2.0.16
+  hive_ce: ^2.10.1
+  hive_ce_flutter: ^2.2.0
+  path_provider: ^2.1.5
   supabase_flutter: ^2.8.4
   
 
@@ -20,6 +23,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  hive_ce_generator: ^1.8.2
+  build_runner: ^2.4.15
 
 flutter:
   uses-material-design: true
