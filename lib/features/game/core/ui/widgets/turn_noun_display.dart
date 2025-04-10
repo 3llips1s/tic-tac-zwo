@@ -6,7 +6,7 @@ import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
 import '../../../../../config/game_config/config.dart';
-import '../../data/models/nouns.dart';
+import '../../data/models/german_noun.dart';
 import '../../data/models/player.dart';
 
 class TurnNounDisplay extends ConsumerStatefulWidget {

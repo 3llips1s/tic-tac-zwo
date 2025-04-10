@@ -13,7 +13,7 @@ class WordRepo {
     try {
       // load json from assets
       final jsonString =
-          await rootBundle.loadString('assets/words/testnouns.json');
+          await rootBundle.loadString('assets/words/fallback_nouns.json');
       final List<dynamic> jsonList = json.decode(jsonString);
 
       // convert json to word format

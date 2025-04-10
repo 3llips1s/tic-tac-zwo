@@ -1,5 +1,5 @@
 import 'package:hive_ce/hive.dart';
-import 'package:tic_tac_zwo/features/game/core/data/models/nouns.dart';
+import 'package:tic_tac_zwo/features/game/core/data/models/german_noun.dart';
 
 part 'german_noun_hive.g.dart';
 

@@ -1,6 +1,6 @@
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
-import 'package:tic_tac_zwo/features/game/wordle/data/repositories/word_repo.dart';
+import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
 
 class WordleLogic {
   final WordRepo repository;

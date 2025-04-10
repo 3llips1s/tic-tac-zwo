@@ -26,7 +26,7 @@ class GermanNoun {
 }
 
 class NounRepository {
-  static const String _assetPath = 'assets/words/testnouns.json';
+  static const String _assetPath = 'assets/words/fallback_nouns.json';
   List<GermanNoun> _allNouns = [];
   List<GermanNoun> _availableNouns = [];
 
@@ -68,6 +68,8 @@ class NounRepository {
 
   void removeUsedNoun(GermanNoun noun) {
     _availableNouns.removeWhere((n) => n.noun == noun.noun);
+
+    // change to germannounrepo.markNounAsUsed(noun);
   }
 
   Future<GermanNoun> loadRandomNoun() async {

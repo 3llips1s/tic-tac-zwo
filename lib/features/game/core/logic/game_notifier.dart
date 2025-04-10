@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
+import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 
 import '../data/models/game_config.dart';
@@ -134,6 +135,9 @@ class GameNotifier extends StateNotifier<GameState> {
 
     final nounsRepository = ref.read(nounRepositoryProvider);
     nounsRepository.removeUsedNoun(state.currentNoun!);
+
+    // final germanNounsRepository = ref.read(germanNounRepoProvider);
+    // germanNounRepoProvider.removedUsedNoun(state.currentNoun!);
 
     if (isCorrect) {
       var newBoard = List<String?>.from(state.board);

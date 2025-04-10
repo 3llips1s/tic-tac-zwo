@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
-import 'package:tic_tac_zwo/features/game/wordle/data/repositories/word_repo.dart';
+import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
 import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_logic.dart';
 
 // word repo provider

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,10 +23,6 @@ void main() async {
     anonKey: AuthConfig.anonKey,
   );
 
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
-
   final Directory appDocumentDir = await getApplicationDocumentsDirectory();
   Hive
     ..initFlutter(appDocumentDir.path)
@@ -35,6 +30,10 @@ void main() async {
 
   await Hive.openBox<GermanNounHive>('german_nouns');
   await Hive.openBox('sync_info');
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+  );
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
