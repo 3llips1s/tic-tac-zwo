@@ -3,12 +3,12 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
-import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 
 import '../data/models/game_config.dart';
-import '../data/models/nouns.dart';
+import '../data/models/german_noun.dart';
 import '../data/models/player.dart';
+import '../data/repositories/german_noun_repo.dart';
 
 class GameNotifier extends StateNotifier<GameState> {
   final Ref ref;
@@ -133,11 +133,10 @@ class GameNotifier extends StateNotifier<GameState> {
     _timer?.cancel();
     bool isCorrect = state.currentNoun?.article == selectedArticle;
 
-    final nounsRepository = ref.read(nounRepositoryProvider);
-    nounsRepository.removeUsedNoun(state.currentNoun!);
-
-    // final germanNounsRepository = ref.read(germanNounRepoProvider);
-    // germanNounRepoProvider.removedUsedNoun(state.currentNoun!);
+    final germanNounsRepository = ref.read(germanNounRepoProvider);
+    if (state.currentNoun != null) {
+      germanNounsRepository.removeUsedNoun(state.currentNoun!);
+    }
 
     if (isCorrect) {
       var newBoard = List<String?>.from(state.board);

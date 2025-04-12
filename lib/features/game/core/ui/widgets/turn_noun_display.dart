@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
+import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
@@ -143,44 +144,57 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     final lastPlayerPlayer = gameState.lastPlayedPlayer;
     final showArticleFeedback = gameState.showArticleFeedback;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: kToolbarHeight * 1.25,
-            child: AnimatedCrossFade(
-              firstChild: AnimatedBuilder(
-                animation: _hoverAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, _hoverAnimation.value),
-                    child: _showCurrentPlayer(context, currentPlayer),
-                  );
-                },
+    final nounRepoReady = ref.watch(nounReadyProvider);
+
+    return nounRepoReady.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(
+          color: colorBlack,
+          strokeWidth: 1,
+        ),
+      ),
+      error: (error, stackTrace) => Center(
+        child: Text('Fehler. Bitte lade das Spiel noch einmal.'),
+      ),
+      data: (data) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: kToolbarHeight * 1.25,
+              child: AnimatedCrossFade(
+                firstChild: AnimatedBuilder(
+                  animation: _hoverAnimation,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _hoverAnimation.value),
+                      child: _showCurrentPlayer(context, currentPlayer),
+                    );
+                  },
+                ),
+                secondChild: currentNoun != null
+                    ? _showCurrentNoun(
+                        context,
+                        currentNoun,
+                        lastPlayerPlayer != null && !isTimerActive,
+                        _articleSlideAnimation,
+                        showArticleFeedback,
+                      )
+                    : const Row(children: [SizedBox()]),
+                crossFadeState: (selectedCellIndex != null && isTimerActive)
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 600),
+                reverseDuration: Duration(milliseconds: 3000),
+                secondCurve: Curves.easeInOutCirc,
+                firstCurve: Curves.easeOutCirc,
+                sizeCurve: Curves.easeIn,
               ),
-              secondChild: currentNoun != null
-                  ? _showCurrentNoun(
-                      context,
-                      currentNoun,
-                      lastPlayerPlayer != null && !isTimerActive,
-                      _articleSlideAnimation,
-                      showArticleFeedback,
-                    )
-                  : const Row(children: [SizedBox()]),
-              crossFadeState: (selectedCellIndex != null && isTimerActive)
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 600),
-              reverseDuration: Duration(milliseconds: 3000),
-              secondCurve: Curves.easeInOutCirc,
-              firstCurve: Curves.easeOutCirc,
-              sizeCurve: Curves.easeIn,
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }

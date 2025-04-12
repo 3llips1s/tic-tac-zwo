@@ -44,10 +44,11 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
     // fetch necessary futures
     final isCorrectFuture =
         ref.read(wordleGameStateProvider.notifier).checkArticle(article);
-    final correctArticleFuture =
-        ref.read(wordRepoProvider).getWordArticle(widget.gameState.targetWord);
+    final correctArticleFuture = ref
+        .read(worldeWordRepoProvider)
+        .getWordArticle(widget.gameState.targetWord);
     final englishTranslationFuture = ref
-        .read(wordRepoProvider)
+        .read(worldeWordRepoProvider)
         .getEnglishTranslation(widget.gameState.targetWord);
 
     final results = await Future.wait([

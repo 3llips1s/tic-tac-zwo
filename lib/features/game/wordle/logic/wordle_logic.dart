@@ -3,12 +3,14 @@ import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.d
 import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
 
 class WordleLogic {
-  final WordRepo repository;
+  final WorldeWordRepo repository;
 
   WordleLogic({required this.repository});
 
   // initial game state
   Future<WordleGameState> createNewGame() async {
+    await repository.ready;
+
     final targetWordData = await repository.getRandomWord();
     return WordleGameState(
       targetWord: targetWordData['word']!.toUpperCase(),

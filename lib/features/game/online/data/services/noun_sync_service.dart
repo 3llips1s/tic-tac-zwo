@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NounSyncService {
@@ -41,4 +42,9 @@ class NounSyncService {
   }
 }
 
-final supabaseClient = Supabase.instance.client;
+final nounSyncServiceProvider = Provider<NounSyncService>(
+  (ref) {
+    final supabaseClient = Supabase.instance.client;
+    return NounSyncService(client: supabaseClient);
+  },
+);

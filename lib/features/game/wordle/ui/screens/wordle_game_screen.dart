@@ -73,7 +73,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     if (gameState == null) return;
 
     // check if word is valid
-    final repository = ref.read(wordRepoProvider);
+    final repository = ref.read(worldeWordRepoProvider);
     final isValid = await repository.isValidWord(guess);
 
     if (!isValid) {

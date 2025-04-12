@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/noun_sync_service.dart';
 
@@ -15,6 +16,9 @@ class GermanNounRepo {
   final Box<GermanNounHive> _nounsBox;
   final Box<dynamic> _syncInfoBox;
   final NounSyncService _syncService;
+
+  final _nounsReadyCompleter = Completer<void>();
+  Future<void> get ready => _nounsReadyCompleter.future;
 
   List<GermanNoun> _availableNouns = [];
 
@@ -32,13 +36,22 @@ class GermanNounRepo {
 
   // initialize the repo - loads from local db or fallback nouns
   Future<void> initialize() async {
-    if (_nounsBox.isEmpty) {
-      await _loadFromAssets();
-      // schedule sync with remote after initial load
-      _scheduleRemoteSync();
-    } else {
-      // refresh from available nouns
-      _refreshAvailableNouns();
+    try {
+      if (_nounsBox.isEmpty) {
+        await _loadFromAssets();
+        // schedule sync with remote after initial load
+        _scheduleRemoteSync();
+      } else {
+        // refresh from available nouns
+        _refreshAvailableNouns();
+      }
+      if (!_nounsReadyCompleter.isCompleted) {
+        _nounsReadyCompleter.complete();
+      }
+    } catch (e) {
+      if (!_nounsReadyCompleter.isCompleted) {
+        _nounsReadyCompleter.completeError(e);
+      }
     }
   }
 
@@ -243,3 +256,50 @@ class SyncStatus {
     this.isSuccess = false,
   });
 }
+
+// providers
+final nounsBoxProvider = Provider<Box<GermanNounHive>>((ref) {
+  return Hive.box<GermanNounHive>('german_nouns');
+});
+
+final syncInfoBoxProvider = Provider<Box>((ref) {
+  return Hive.box('sync_info');
+});
+
+final germanNounRepoProvider = Provider<GermanNounRepo>(
+  (ref) {
+    final nounsBox = ref.watch(nounsBoxProvider);
+    final syncInfoBox = ref.watch(syncInfoBoxProvider);
+    final syncService = ref.watch(nounSyncServiceProvider);
+
+    final repo = GermanNounRepo(
+      nounsBox: nounsBox,
+      syncInfoBox: syncInfoBox,
+      syncService: syncService,
+    );
+
+    repo.initialize();
+
+    ref.onDispose(
+      () {
+        repo.dispose();
+      },
+    );
+
+    return repo;
+  },
+);
+
+final syncStatusProvider = StreamProvider<SyncStatus>(
+  (ref) {
+    return ref.read(germanNounRepoProvider).syncStatus;
+  },
+);
+
+final nounReadyProvider = FutureProvider<bool>(
+  (ref) async {
+    final repo = ref.read(germanNounRepoProvider);
+    await repo.ready;
+    return true;
+  },
+);

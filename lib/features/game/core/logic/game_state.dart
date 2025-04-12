@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
 import '../../../../config/game_config/config.dart';
-import '../data/models/nouns.dart';
+import '../data/models/german_noun.dart';
 import '../data/models/player.dart';
 
 class GameState {

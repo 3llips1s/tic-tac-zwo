@@ -1,16 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
 import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_logic.dart';
 
-// word repo provider
-final wordRepoProvider = Provider<WordRepo>((ref) {
-  return WordRepo();
-});
+final worldeWordRepoProvider = Provider<WorldeWordRepo>(
+  (ref) {
+    final nounsBox = ref.watch(nounsBoxProvider);
+    final repo = WorldeWordRepo(nounsBox: nounsBox);
+    repo.initialize();
+
+    return repo;
+  },
+);
+
+final wordleRepoReadyProvider = FutureProvider<bool>(
+  (ref) async {
+    final repo = ref.read(worldeWordRepoProvider);
+    await repo.ready;
+    return true;
+  },
+);
 
 // game logic
 final wordleLogicProvider = Provider<WordleLogic>((ref) {
-  final repository = ref.watch(wordRepoProvider);
+  final repository = ref.watch(worldeWordRepoProvider);
   return WordleLogic(repository: repository);
 });
 

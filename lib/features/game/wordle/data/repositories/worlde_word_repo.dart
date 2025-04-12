@@ -1,61 +1,83 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 
-class WordRepo {
-  List<Map<String, String>> _words = [];
+import '../../../online/data/models/german_noun_hive.dart';
+
+class WorldeWordRepo {
+  final Box<GermanNounHive> _nounsBox;
+  List<Map<String, String>> _cachedWords = [];
   bool _isInitialized = false;
+
+  final _wordleWordsReadyCompleter = Completer<void>();
+  Future<void> get ready => _wordleWordsReadyCompleter.future;
+
+  WorldeWordRepo({required Box<GermanNounHive> nounsBox})
+      : _nounsBox = nounsBox;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      // load json from assets
-      final jsonString =
-          await rootBundle.loadString('assets/words/fallback_nouns.json');
-      final List<dynamic> jsonList = json.decode(jsonString);
-
-      // convert json to word format
-      _words = jsonList.map((word) {
-        return {
-          'word': word['noun'] as String,
-          'article': word['article'] as String,
-          'english': word['english'] as String,
-          'plural': word['plural'] as String,
-        };
-      }).toList();
-
+      await _loadFromLocalDb();
       _isInitialized = true;
+
+      if (!_wordleWordsReadyCompleter.isCompleted) {
+        _wordleWordsReadyCompleter.complete();
+      }
     } catch (e) {
       print('error loading words: $e');
-      _words = _getFallbackWords();
+      _cachedWords = _getFallbackWords();
       _isInitialized = true;
+
+      if (!_wordleWordsReadyCompleter.isCompleted) {
+        _wordleWordsReadyCompleter.completeError(e);
+      }
     }
   }
 
-  List<Map<String, String>> get fiveLetterWords {
-    return _words.where((word) => word['word']!.length == 5).toList();
+  Future<void> _loadFromLocalDb() async {
+    // clear cached words
+    _cachedWords = [];
+
+    // convert hive object to wordle word repo
+    _nounsBox.values.forEach(
+      (hiveNoun) {
+        if (hiveNoun.noun.length == 5) {
+          _cachedWords.add({
+            'word': hiveNoun.noun,
+            'article': hiveNoun.article,
+            'english': hiveNoun.english,
+            'plural': hiveNoun.plural
+          });
+        }
+      },
+    );
+
+    if (_cachedWords.isEmpty) {
+      throw Exception('No words found in local DB');
+    }
+  }
+
+  Future<void> refreshWords() async {
+    _isInitialized = false;
+    return initialize();
   }
 
   // get a random word
   Future<Map<String, String>> getRandomWord() async {
     await initialize();
 
-    var filteredWords = fiveLetterWords;
-
-    if (filteredWords.isEmpty) {
-      final fallbackWords = _getFallbackWords();
-      filteredWords = fallbackWords;
-    }
-
-    if (filteredWords.isEmpty) {
-      return {'word': 'BINGO', 'article': 'das', 'english': 'bingo'};
+    if (_cachedWords.isEmpty) {
+      _getFallbackWords();
     }
 
     final random = Random();
-    final index = random.nextInt(filteredWords.length);
-    return filteredWords[index];
+    final index = random.nextInt(_cachedWords.length);
+    return _cachedWords[index];
   }
 
   // check if word is in dictionary
@@ -63,27 +85,38 @@ class WordRepo {
     await initialize();
 
     final uppercaseWord = word.toUpperCase();
-    return _words.any((entry) => entry['word']!.toUpperCase() == uppercaseWord);
+    return _cachedWords
+        .any((entry) => entry['word']!.toUpperCase() == uppercaseWord);
   }
 
   Future<String?> getWordArticle(String word) async {
     await initialize();
 
     final uppercaseWord = word.toUpperCase();
-    final entry = _words.firstWhere(
+    final matchingEntry = _cachedWords.firstWhere(
       (entry) => entry['word']!.toUpperCase() == uppercaseWord,
     );
-    return entry['article'];
+
+    if (matchingEntry.isEmpty) {
+      return null;
+    }
+
+    return matchingEntry['article'];
   }
 
   Future<String?> getEnglishTranslation(String word) async {
     await initialize();
 
     final uppercaseWord = word.toUpperCase();
-    final entry = _words.firstWhere(
+    final matchingEntry = _cachedWords.firstWhere(
       (entry) => entry['word']!.toUpperCase() == uppercaseWord,
     );
-    return entry['english'];
+
+    if (matchingEntry.isEmpty) {
+      return null;
+    }
+
+    return matchingEntry['english'];
   }
 
   List<Map<String, String>> _getFallbackWords() {

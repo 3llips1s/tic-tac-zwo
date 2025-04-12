@@ -1,8 +1,6 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../repositories/german_noun_repo.dart';
 
 class GermanNoun {
   final String article;
@@ -26,63 +24,31 @@ class GermanNoun {
 }
 
 class NounRepository {
-  static const String _assetPath = 'assets/words/fallback_nouns.json';
-  List<GermanNoun> _allNouns = [];
-  List<GermanNoun> _availableNouns = [];
+  final GermanNounRepo _germanNounRepo;
+
+  NounRepository(this._germanNounRepo);
 
   Future<List<GermanNoun>> loadNouns() async {
-    try {
-      // load all nouns just once
-      if (_allNouns.isEmpty) {
-        final String jsonString = await rootBundle.loadString(_assetPath);
-        final List<dynamic> jsonList = json.decode(jsonString);
-        _allNouns = jsonList.map((json) => GermanNoun.fromJson(json)).toList();
-      }
-
-      // reset available nouns if they're depleted
-      if (_availableNouns.isEmpty) {
-        _availableNouns = List<GermanNoun>.from(_allNouns)..shuffle();
-      }
-
-      // take 9 nouns from available nouns
-      final selectedNouns = _availableNouns.take(9).toList();
-
-      // remove from available nouns
-      _availableNouns.removeWhere(
-        (noun) => selectedNouns.contains(noun),
-      );
-
-      return selectedNouns;
-    } catch (e) {
-      print('Error loading noun: $e');
-      return [
-        GermanNoun(
-          article: 'das',
-          noun: 'Fehler',
-          english: 'Error',
-          plural: 'Fehler',
-        )
-      ];
-    }
+    return _germanNounRepo.loadNouns();
   }
 
   void removeUsedNoun(GermanNoun noun) {
-    _availableNouns.removeWhere((n) => n.noun == noun.noun);
-
-    // change to germannounrepo.markNounAsUsed(noun);
+    _germanNounRepo.removeUsedNoun(noun);
   }
 
   Future<GermanNoun> loadRandomNoun() async {
-    final nouns = await loadNouns();
-    return nouns[Random().nextInt(nouns.length)];
+    return _germanNounRepo.loadRandomNoun();
   }
 
   void resetNouns() {
-    _availableNouns = List<GermanNoun>.from(_allNouns)..shuffle();
+    _germanNounRepo.resetNouns();
   }
 }
 
-final nounRepositoryProvider = Provider((ref) => NounRepository());
+final nounRepositoryProvider = Provider((ref) {
+  final nounRepo = ref.watch(germanNounRepoProvider);
+  return NounRepository(nounRepo);
+});
 final nounsProvider = FutureProvider<List<GermanNoun>>((ref) {
   return ref.read(nounRepositoryProvider).loadNouns();
 });

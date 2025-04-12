@@ -25,7 +25,7 @@ void main() async {
 
   final Directory appDocumentDir = await getApplicationDocumentsDirectory();
   Hive
-    ..initFlutter(appDocumentDir.path)
+    ..init(appDocumentDir.path)
     ..registerAdapters();
 
   await Hive.openBox<GermanNounHive>('german_nouns');
