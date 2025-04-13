@@ -26,6 +26,8 @@ class GermanNounRepo {
   final _syncController = StreamController<SyncStatus>.broadcast();
   Stream<SyncStatus> get syncStatus => _syncController.stream;
 
+  StreamSubscription? _connectivitySubscription;
+
   GermanNounRepo({
     required Box<GermanNounHive> nounsBox,
     required Box<dynamic> syncInfoBox,
@@ -39,12 +41,16 @@ class GermanNounRepo {
     try {
       if (_nounsBox.isEmpty) {
         await _loadFromAssets();
-        // schedule sync with remote after initial load
-        _scheduleRemoteSync();
       } else {
         // refresh from available nouns
         _refreshAvailableNouns();
       }
+
+      // schedule sync with remote after initial load
+      _scheduleRemoteSync();
+
+      _monitorConnectivity();
+
       if (!_nounsReadyCompleter.isCompleted) {
         _nounsReadyCompleter.complete();
       }
@@ -53,6 +59,27 @@ class GermanNounRepo {
         _nounsReadyCompleter.completeError(e);
       }
     }
+  }
+
+  void _monitorConnectivity() {
+    _connectivitySubscription?.cancel();
+
+    syncWithRemote();
+
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen((result) {
+      if (!result.contains(ConnectivityResult.none)) {
+        syncWithRemote();
+      }
+    });
+
+    Connectivity().checkConnectivity().then(
+      (result) {
+        if (!result.contains(ConnectivityResult.none)) {
+          syncWithRemote();
+        }
+      },
+    );
   }
 
   // load nouns from assets and store in hive
@@ -146,10 +173,12 @@ class GermanNounRepo {
 
   Future<void> syncWithRemote() async {
     try {
+      print('Starting noun sync with remote');
       _syncController.add(SyncStatus(status: 'Syncing...'));
 
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
+        print('Sync aborted: No internet connection');
         _syncController.add(SyncStatus(status: 'no internet connection'));
         return;
       }
@@ -157,8 +186,11 @@ class GermanNounRepo {
       // get last sync info
       final lastSync = _syncInfoBox.get('lastSyncTime') as DateTime?;
       final lastVersion = _syncInfoBox.get('lastVersion') as int? ?? 0;
+      print(
+          'Last sync: ${lastSync?.toIso8601String() ?? 'never'}, version: $lastVersion');
 
       // fetch updates from supabase
+      print('Fetching nouns from Supabase...');
       final nounsData = await _syncService.fetchNouns(
         since: lastSync,
         lastVersions: lastVersion,
@@ -199,6 +231,7 @@ class GermanNounRepo {
         count: updateCount,
         isSuccess: true,
       ));
+      print('Sync completed successfully');
     } catch (e) {
       print('error syncing with remote: $e');
       _syncController.add(
@@ -239,6 +272,7 @@ class GermanNounRepo {
 
   // clean up
   void dispose() {
+    _connectivitySubscription?.cancel();
     _syncController.close();
   }
 }

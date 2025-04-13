@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 
@@ -34,41 +35,57 @@ class _ModeMenuState extends State<ModeMenu> {
   // navigate to turn selection
   int? _pressedNeuButtonIndex;
 
-  void _handleMenuButtonTap(int index) async {
-    if (_pressedNeuButtonIndex != index) {
-      setState(() {
-        _pressedNeuButtonIndex = index;
-      });
+  Future<void> _handleMenuButtonTap(int index) async {
+    if (_pressedNeuButtonIndex == index) return;
 
+    setState(() => _pressedNeuButtonIndex = index);
+    if (!mounted) return;
+
+    try {
+      final GameMode selectedGameMode = gameModeIcons[index]['gameMode'];
+      await _navigateToSelectedGameMode(selectedGameMode);
+    } finally {
+      // single point for resetting button state
       if (mounted) {
-        if (gameModeIcons[index]['gameMode'] == GameMode.wordle) {
-          await Navigator.pushNamed(context, RouteNames.wordle);
-        } else if (gameModeIcons[index]['gameMode'] == GameMode.online) {
-          final authService = AuthService();
-
-          if (authService.isAuthenticated) {
-            await Navigator.pushNamed(context, RouteNames.deviceScan);
-          } else {
-            await Navigator.pushNamed(context, RouteNames.login);
-          }
-        } else {
-          await Future.delayed(const Duration(milliseconds: 200));
-
-          await Navigator.pushNamed(
-            context,
-            RouteNames.turnSelection,
-
-            // pass selected game mode
-            arguments: {'gameMode': gameModeIcons[index]['gameMode']},
-          );
-        }
-
-        if (mounted) {
-          setState(() {
-            _pressedNeuButtonIndex = null;
-          });
-        }
+        setState(() => _pressedNeuButtonIndex = null);
       }
+    }
+  }
+
+  Future<void> _navigateToSelectedGameMode(GameMode gameMode) async {
+    if (!mounted) return;
+
+    switch (gameMode) {
+      case GameMode.wordle:
+        await Navigator.pushNamed(context, RouteNames.wordle);
+        break;
+
+      case GameMode.online:
+        final connectivityResult = await Connectivity().checkConnectivity();
+        if (!mounted) return;
+
+        final isConnected =
+            !connectivityResult.contains(ConnectivityResult.none);
+        if (!isConnected) {
+          _showSnackBar('Keine Interneverbindung!');
+          return;
+        }
+
+        // determine route based on auth
+        final authService = AuthService();
+        final route = authService.isAuthenticated
+            ? RouteNames.deviceScan
+            : RouteNames.login;
+
+        await Navigator.pushNamed(context, route);
+        break;
+
+      default:
+        await Future.delayed(const Duration(milliseconds: 200));
+        if (!mounted) return;
+
+        await Navigator.pushNamed(context, RouteNames.turnSelection,
+            arguments: {'gameMode': gameMode});
     }
   }
 
@@ -80,7 +97,6 @@ class _ModeMenuState extends State<ModeMenu> {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: EdgeInsets.only(
-          bottom: kToolbarHeight * 2,
           left: 40,
           right: 40,
         ),
@@ -90,13 +106,6 @@ class _ModeMenuState extends State<ModeMenu> {
             decoration: BoxDecoration(
               color: Colors.black87,
               borderRadius: BorderRadius.all(Radius.circular(9)),
-              boxShadow: [
-                BoxShadow(
-                  color: colorGrey300,
-                  blurRadius: 7,
-                  offset: Offset(7, 7),
-                ),
-              ],
             ),
             child: Center(
               child: Text(

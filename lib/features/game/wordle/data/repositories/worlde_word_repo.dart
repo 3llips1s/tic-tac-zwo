@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 
 import '../../../online/data/models/german_noun_hive.dart';
 
