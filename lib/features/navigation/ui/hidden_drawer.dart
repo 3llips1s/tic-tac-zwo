@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 
@@ -16,22 +18,45 @@ class HiddenDrawer extends StatefulWidget {
 
 class _HiddenDrawerState extends State<HiddenDrawer> {
   final authService = AuthService();
-  String displayName = 'User${Random().nextInt(100000)}';
-  String countryCode = '';
+
+  final String _defaultDisplayName = 'User${Random().nextInt(100000)}';
+  final String _defaultCountryCode = '';
+
+  late String displayName;
+  late String countryCode;
+  late StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
+
+    displayName = _defaultDisplayName;
+    countryCode = _defaultCountryCode;
+
     _loadUserProfile();
+
+    // listen to auth changes
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+      (data) {
+        if (data.event == AuthChangeEvent.signedIn) {
+          _loadUserProfile();
+        } else if (data.event == AuthChangeEvent.signedOut) {
+          setState(() {
+            displayName = _defaultDisplayName;
+            countryCode = _defaultCountryCode;
+          });
+        }
+      },
+    );
   }
 
   void _logout() async {
-    if (authService.isAuthenticated) {
-      await authService.signOut();
-    }
     if (mounted) {
       Navigator.pushNamed(context, RouteNames.home);
       _showSnackBar('Du wurdest ausgeloggt.');
+    }
+    if (authService.isAuthenticated) {
+      await authService.signOut();
     }
   }
 
@@ -87,10 +112,16 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
       });
     } else {
       setState(() {
-        displayName = 'User${Random().nextInt(100000)}';
-        countryCode = '';
+        displayName = _defaultDisplayName;
+        countryCode = _defaultCountryCode;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -191,7 +222,7 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

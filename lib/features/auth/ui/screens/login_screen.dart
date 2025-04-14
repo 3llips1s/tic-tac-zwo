@@ -474,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (!isAvailable) {
           setState(() {
-            _usernameError = 'Username bereits vergeben';
+            _usernameError = 'Name schon vergeben';
           });
           return;
         }
