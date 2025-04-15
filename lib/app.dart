@@ -67,13 +67,16 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Stack(
-        children: [
-          HiddenDrawer(),
-          HomeScreen(),
-        ],
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Material(
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            HiddenDrawer(),
+            HomeScreen(),
+          ],
+        ),
       ),
     );
   }

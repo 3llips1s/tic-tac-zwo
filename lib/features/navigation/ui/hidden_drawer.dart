@@ -90,7 +90,7 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colorWhite,
                   ),

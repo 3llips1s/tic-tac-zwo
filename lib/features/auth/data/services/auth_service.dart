@@ -58,14 +58,6 @@ class AuthService {
   // Returns true if OTP was sent successfully
   Future<bool> signUpWithOTP(String email) async {
     try {
-      // Check if user exists first
-      bool exists = await checkUserExists(email);
-      if (exists) {
-        print('User already exists with this email');
-        return false;
-      }
-
-      // If user doesn't exist, proceed with OTP sign-up
       await _supabase.auth.signInWithOtp(
         email: email,
         shouldCreateUser: true,
