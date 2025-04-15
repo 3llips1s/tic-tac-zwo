@@ -1,4 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
+
+import '../../logic/wordle_logic.dart';
 
 enum GameStatus {
   playing,
@@ -50,3 +53,49 @@ class WordleGameState {
   bool get canGuess => !isGameOver && guesses.length < maxAttempts;
   int get remainingAttempts => maxAttempts - guesses.length;
 }
+
+// loading game state
+final wordleLoadingProvider = FutureProvider<WordleGameState>((ref) async {
+  final gameLogic = ref.watch(wordleLogicProvider);
+  return await gameLogic.createNewGame();
+});
+
+// state notifier for game state
+class WordleGameNotifier extends StateNotifier<WordleGameState?> {
+  final WordleLogic _gameLogic;
+
+  WordleGameNotifier(this._gameLogic) : super(null) {
+    _initializeGame();
+  }
+
+  Future<void> _initializeGame() async {
+    state = await _gameLogic.createNewGame();
+  }
+
+  Future<void> newGame() async {
+    state = await _gameLogic.createNewGame();
+  }
+
+  Future<void> makeGuess(String guess) async {
+    if (state == null) return;
+    state = await _gameLogic.makeGuess(state!, guess);
+  }
+
+  Future<bool> checkArticle(String article) async {
+    if (state == null) return false;
+    return await _gameLogic.checkArticle(state!, article);
+  }
+
+  String getWinFeedback() {
+    if (state == null) return 'Sehr gut!';
+    return _gameLogic.winFeedback(state!);
+  }
+}
+
+final wordleGameStateProvider =
+    StateNotifierProvider<WordleGameNotifier, WordleGameState?>(
+  (ref) {
+    final gameLogic = ref.watch(wordleLogicProvider);
+    return WordleGameNotifier(gameLogic);
+  },
+);

@@ -43,7 +43,7 @@ void main() async {
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   // global key for scaffold messenger
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -51,14 +51,16 @@ class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: appTheme,
-      home: Scaffold(body: const App()),
       onGenerateRoute: AppRouter.generateRoute,
       initialRoute: RouteNames.home,
       scaffoldMessengerKey: scaffoldMessengerKey,
+      home: DataInitializationWrapper(
+        child: const App(),
+      ),
     );
   }
 }

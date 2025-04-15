@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_providers.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../../routes/route_names.dart';
 import '../../../core/ui/widgets/glassmorphic_dialog.dart';
 import '../../data/models/wordle_game_state.dart';
+import '../../data/repositories/worlde_word_repo.dart';
 
 class GameResultDialog extends ConsumerStatefulWidget {
   final WordleGameState gameState;

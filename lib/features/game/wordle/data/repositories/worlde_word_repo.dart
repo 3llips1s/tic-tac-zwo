@@ -1,25 +1,33 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:tic_tac_zwo/features/game/core/data/services/data_initialization_service.dart';
 
 import '../../../online/data/models/german_noun_hive.dart';
 
 class WorldeWordRepo {
   final Box<GermanNounHive> _nounsBox;
+  final DataInitializationService _dataService;
   List<Map<String, String>> _cachedWords = [];
   bool _isInitialized = false;
 
   final _wordleWordsReadyCompleter = Completer<void>();
   Future<void> get ready => _wordleWordsReadyCompleter.future;
 
-  WorldeWordRepo({required Box<GermanNounHive> nounsBox})
-      : _nounsBox = nounsBox;
+  WorldeWordRepo({
+    required Box<GermanNounHive> nounsBox,
+    required DataInitializationService dataService,
+  })  : _nounsBox = nounsBox,
+        _dataService = dataService;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
+      await _dataService.ready;
+
       await _loadFromLocalDb();
       _isInitialized = true;
 
@@ -41,10 +49,15 @@ class WorldeWordRepo {
     // clear cached words
     _cachedWords = [];
 
+    int totalNouns = 0;
+    int fiveLetterNouns = 0;
+
     // convert hive object to wordle word repo
     _nounsBox.values.forEach(
       (hiveNoun) {
+        totalNouns++;
         if (hiveNoun.noun.length == 5) {
+          fiveLetterNouns++;
           _cachedWords.add({
             'word': hiveNoun.noun,
             'article': hiveNoun.article,
@@ -54,6 +67,10 @@ class WorldeWordRepo {
         }
       },
     );
+
+    print('Total nouns in box: $totalNouns');
+    print('Five letter nouns detected: $fiveLetterNouns');
+    print('cached words: ${_cachedWords.length} nouns');
 
     if (_cachedWords.isEmpty) {
       throw Exception('No words found in local DB');
@@ -70,7 +87,7 @@ class WorldeWordRepo {
     await initialize();
 
     if (_cachedWords.isEmpty) {
-      _getFallbackWords();
+      _cachedWords = _getFallbackWords();
     }
 
     final random = Random();
@@ -152,3 +169,23 @@ class WorldeWordRepo {
     ];
   }
 }
+
+final worldeWordRepoProvider = Provider<WorldeWordRepo>((ref) {
+  final nounsBox = ref.watch(nounsBoxProvider);
+  final dataService = ref.watch(dataInitializationServiceProvider);
+
+  final repo = WorldeWordRepo(
+    nounsBox: nounsBox,
+    dataService: dataService,
+  );
+
+  repo.initialize();
+
+  return repo;
+});
+
+final wordleRepoReadyProvider = FutureProvider<bool>((ref) async {
+  final repo = ref.watch(worldeWordRepoProvider);
+  await repo.ready;
+  return true;
+});

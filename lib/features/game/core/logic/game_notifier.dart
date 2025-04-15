@@ -228,9 +228,12 @@ class GameNotifier extends StateNotifier<GameState> {
     }
   }
 
+  // start here to fix the rematch issue
+
   void rematch() {
     _timer?.cancel();
     _usedNouns.clear();
+    _nounsList = null;
 
     // swap symbols between players
     final newPlayers = [
@@ -254,6 +257,8 @@ class GameNotifier extends StateNotifier<GameState> {
         player2Score: player2Score,
         gamesPlayed: gamesPlayed,
         winningCells: null);
+
+    _ensureNounsLoaded();
   }
 
   @override

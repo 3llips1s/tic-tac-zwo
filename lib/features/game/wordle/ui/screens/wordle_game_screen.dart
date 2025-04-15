@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
-import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_providers.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/game_result_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../../routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
+import '../../data/repositories/worlde_word_repo.dart';
 import '../widgets/wordle_keyboard.dart';
 
 class WordleGameScreen extends ConsumerStatefulWidget {

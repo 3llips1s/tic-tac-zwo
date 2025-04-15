@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
@@ -129,3 +130,9 @@ class WordleLogic {
     return selectedArticle == correctArticle;
   }
 }
+
+// provider
+final wordleLogicProvider = Provider<WordleLogic>((ref) {
+  final repository = ref.watch(worldeWordRepoProvider);
+  return WordleLogic(repository: repository);
+});

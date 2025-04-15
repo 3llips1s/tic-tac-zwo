@@ -288,7 +288,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                         )
                       ],
                     ),
-                    SizedBox(width: hasWrongArticle ? 15 : 10),
+                    SizedBox(width: hasWrongArticle ? 15 : 12.5),
                   ],
                 ),
               ),

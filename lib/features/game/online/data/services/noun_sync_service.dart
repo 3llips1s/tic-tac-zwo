@@ -10,21 +10,34 @@ class NounSyncService {
     DateTime? since,
     int? lastVersions,
   }) async {
-    var query = client.from('german_nouns').select();
+    List<Map<String, dynamic>> allData = [];
+    int batchSize = 1000;
+    int offset = 0;
 
-    // only fetch nouns updated since last sync date
-    if (since != null) {
-      query = query.gte('updated_at', since.toIso8601String());
+    while (true) {
+      var query = client.from('german_nouns').select();
+
+      // Apply filters if provided
+      if (since != null) {
+        query = query.gte('updated_at', since.toIso8601String());
+      }
+      if (lastVersions != null) {
+        query = query.gt('version', lastVersions);
+      }
+
+      // Fetch the data
+      final data = await query.range(offset, offset + batchSize - 1);
+
+      if (data.isEmpty) {
+        break; // Exit the loop if no more data is returned
+      }
+
+      allData.addAll(List<Map<String, dynamic>>.from(data));
+      offset += batchSize; // Increment the offset for the next batch
     }
 
-    // or fetch nouns with higher version number
-    if (lastVersions != null) {
-      query = query.gt('version', lastVersions);
-    }
-
-    final data = await query;
-
-    return List<Map<String, dynamic>>.from(data);
+    print('Total fetched: ${allData.length} nouns');
+    return allData;
   }
 
   Future<int> getLatestVersion() async {
