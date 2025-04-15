@@ -28,12 +28,20 @@ class NounRepository {
 
   NounRepository(this._germanNounRepo);
 
-  Future<List<GermanNoun>> loadNouns() async {
-    return _germanNounRepo.loadNouns();
+  Future<List<GermanNoun>> getGameBatch({int batchSize = 18}) async {
+    return _germanNounRepo.getGameBatch(batchSize: batchSize);
   }
 
   void removeUsedNoun(GermanNoun noun) {
-    _germanNounRepo.removeUsedNoun(noun);
+    _germanNounRepo.markNounAsGloballyUsed(noun);
+  }
+
+  void markNounAsUsedInCurrentGame(GermanNoun noun) {
+    _germanNounRepo.markNounAsUsedInCurrentGame(noun);
+  }
+
+  void prepareForNewGame() {
+    _germanNounRepo.resetNounsForNewGame();
   }
 
   Future<GermanNoun> loadRandomNoun() async {
@@ -43,6 +51,10 @@ class NounRepository {
   void resetNouns() {
     _germanNounRepo.resetNouns();
   }
+
+  void resetAllNounTracking() {
+    _germanNounRepo.resetAllNounTracking();
+  }
 }
 
 final nounRepositoryProvider = Provider((ref) {
@@ -50,7 +62,7 @@ final nounRepositoryProvider = Provider((ref) {
   return NounRepository(nounRepo);
 });
 final nounsProvider = FutureProvider<List<GermanNoun>>((ref) {
-  return ref.read(nounRepositoryProvider).loadNouns();
+  return ref.read(nounRepositoryProvider).getGameBatch();
 });
 final randomNounProvider = FutureProvider<GermanNoun>((ref) {
   return ref.read(nounRepositoryProvider).loadRandomNoun();

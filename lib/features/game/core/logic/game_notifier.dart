@@ -14,6 +14,7 @@ class GameNotifier extends StateNotifier<GameState> {
   final Ref ref;
   Timer? _timer;
   List<GermanNoun>? _nounsList;
+  bool _isFirstGame = true;
 
   // track scores
   int player1Score = 0;
@@ -21,20 +22,35 @@ class GameNotifier extends StateNotifier<GameState> {
   int gamesPlayed = 0;
 
   GameNotifier(this.ref, List<Player> players, Player startingPlayer)
-      : super(GameState.initial(players, startingPlayer));
+      : super(GameState.initial(players, startingPlayer)) {
+    _loadGameNouns();
+  }
 
-  Future<void> _ensureNounsLoaded() async {
-    if (_nounsList == null) {
-      try {
-        final nounsRepository = ref.read(nounRepositoryProvider);
-        _nounsList = await nounsRepository.loadNouns();
-      } catch (e) {
-        _nounsList = [];
+  Future<void> _loadGameNouns() async {
+    try {
+      final nounsRepository = ref.read(nounRepositoryProvider);
+
+      if (_isFirstGame) {
+        // get a fresh batch for first game
+        _nounsList = await nounsRepository.getGameBatch();
+        _isFirstGame = false;
+      } else {
+        nounsRepository.prepareForNewGame();
+        _nounsList = await nounsRepository.getGameBatch();
       }
+    } catch (e) {
+      _nounsList = [];
     }
   }
 
-  final Set<String> _usedNouns = {};
+  Future<void> _ensureNounsLoaded() async {
+    if (_nounsList == null || _nounsList!.isEmpty) {
+      await _loadGameNouns();
+    }
+  }
+
+  // track only nouns used in current game session
+  final Set<String> _currentGameUsedNouns = {};
 
   void loadTurnNoun() async {
     try {
@@ -46,23 +62,42 @@ class GameNotifier extends StateNotifier<GameState> {
         // filter used nouns
         final availableNouns = _nounsList!
             .where(
-              (noun) => !_usedNouns.contains(noun.noun),
+              (noun) => !_currentGameUsedNouns.contains(noun.noun),
             )
             .toList();
 
         if (availableNouns.isEmpty) {
-          // reset used nouns if exhausted
-          _usedNouns.clear();
-          // reshuffle original list
-          _nounsList!.shuffle();
+          await _loadGameNouns();
+
+          if (_nounsList == null || _nounsList!.isEmpty) {
+            state = state.copyWith(
+              currentNoun: GermanNoun(
+                article: 'das',
+                noun: 'Fehler',
+                english: 'Error',
+                plural: 'Fehler',
+              ),
+            );
+            return;
+          }
+
+          final randomNoun = _nounsList![Random().nextInt(_nounsList!.length)];
+          _currentGameUsedNouns.add(randomNoun.noun);
+
+          state = state.copyWith(
+            currentNoun: randomNoun,
+          );
+          return;
         }
 
-        final randomNoun = availableNouns.isNotEmpty
-            ? availableNouns[Random().nextInt(availableNouns.length)]
-            : _nounsList![Random().nextInt(_nounsList!.length)];
+        final randomNoun =
+            availableNouns[Random().nextInt(availableNouns.length)];
 
         // track used noun
-        _usedNouns.add(randomNoun.noun);
+        _currentGameUsedNouns.add(randomNoun.noun);
+
+        final nounsRepository = ref.read(nounRepositoryProvider);
+        nounsRepository.markNounAsUsedInCurrentGame(randomNoun);
 
         state = state.copyWith(
           currentNoun: randomNoun,
@@ -135,7 +170,7 @@ class GameNotifier extends StateNotifier<GameState> {
 
     final germanNounsRepository = ref.read(germanNounRepoProvider);
     if (state.currentNoun != null) {
-      germanNounsRepository.removeUsedNoun(state.currentNoun!);
+      germanNounsRepository.markNounAsGloballyUsed(state.currentNoun!);
     }
 
     if (isCorrect) {
@@ -232,8 +267,13 @@ class GameNotifier extends StateNotifier<GameState> {
 
   void rematch() {
     _timer?.cancel();
-    _usedNouns.clear();
+    _currentGameUsedNouns.clear();
     _nounsList = null;
+
+    final nounsRepository = ref.read(nounRepositoryProvider);
+    nounsRepository.prepareForNewGame();
+
+    _loadGameNouns();
 
     // swap symbols between players
     final newPlayers = [
@@ -257,8 +297,6 @@ class GameNotifier extends StateNotifier<GameState> {
         player2Score: player2Score,
         gamesPlayed: gamesPlayed,
         winningCells: null);
-
-    _ensureNounsLoaded();
   }
 
   @override

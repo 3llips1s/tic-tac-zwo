@@ -15,7 +15,14 @@ class GermanNounRepo {
   final _nounsReadyCompleter = Completer<void>();
   Future<void> get ready => _nounsReadyCompleter.future;
 
+  // main pool of available nouns
   List<GermanNoun> _availableNouns = [];
+
+  // nouns used in current session
+  final Set<String> _globallyUsedNouns = {};
+
+  // nouns used in the current game
+  final Set<String> _currentGameUsedNouns = {};
 
   GermanNounRepo({
     required Box<GermanNounHive> nounsBox,
@@ -61,24 +68,50 @@ class GermanNounRepo {
     );
   }
 
-  //fetch 9 nouns for a game
-  Future<List<GermanNoun>> loadNouns() async {
+  // fetch a batch of nouns for a new game
+  Future<List<GermanNoun>> getGameBatch({int batchSize = 18}) async {
     await ready;
 
-    final int nounBatchSize = 18;
-
-    if (_availableNouns.isEmpty || _availableNouns.length < nounBatchSize) {
+    // refresh pool if running low on nouns
+    if (_availableNouns.isEmpty ||
+        _availableNouns.length < batchSize + _globallyUsedNouns.length) {
       _refreshAvailableNouns();
+      _globallyUsedNouns.clear();
     }
 
-    final fetchedNouns = _availableNouns.take(nounBatchSize).toList();
+    // filter out globally used nouns
+    final unusedNouns = _availableNouns
+        .where((noun) => !_globallyUsedNouns.contains(noun.noun))
+        .toList();
 
-    return fetchedNouns;
+    // if we still have enough unique nouns
+    if (unusedNouns.length >= batchSize) {
+      unusedNouns.shuffle();
+      return unusedNouns.take(batchSize).toList();
+    } else {
+      // reset tracking and use any available if running low
+      _globallyUsedNouns.clear();
+      _availableNouns.shuffle();
+      return _availableNouns.take(batchSize).toList();
+    }
   }
 
-  // mark used nouns
-  void markNounAsUsed(GermanNoun noun) {
-    _availableNouns.removeWhere((n) => n.noun == noun.noun);
+  // mark noun as used in current game
+  void markNounAsUsedInCurrentGame(GermanNoun noun) {
+    _currentGameUsedNouns.add(noun.noun);
+  }
+
+  // mark noun as globally used == remove from available pool
+  void markNounAsGloballyUsed(GermanNoun noun) {
+    _globallyUsedNouns.add(noun.noun);
+  }
+
+  // handle noun transition for new game
+  void resetNounsForNewGame() {
+    for (final noun in _currentGameUsedNouns) {
+      _globallyUsedNouns.add(noun);
+    }
+    _currentGameUsedNouns.clear();
   }
 
   Future<GermanNoun> loadRandomNoun() async {
@@ -86,9 +119,18 @@ class GermanNounRepo {
 
     if (_availableNouns.isEmpty) {
       _refreshAvailableNouns();
+      _globallyUsedNouns.clear();
     }
 
-    if (_availableNouns.isNotEmpty) {
+    // get an unused noun
+    final unusedNouns = _availableNouns
+        .where((noun) => !_globallyUsedNouns.contains(noun.noun))
+        .toList();
+
+    if (unusedNouns.isNotEmpty) {
+      return unusedNouns[Random().nextInt(unusedNouns.length)];
+    } else if (_availableNouns.isNotEmpty) {
+      // if all are used, pick a random one
       return _availableNouns[Random().nextInt(_availableNouns.length)];
     } else {
       return GermanNoun(
@@ -100,19 +142,20 @@ class GermanNounRepo {
     }
   }
 
-  // manual sync
-  Future<void> triggerRefresh() async {
-    return _dataService.syncWithRemote();
+  void resetAllNounTracking() {
+    _globallyUsedNouns.clear();
+    _currentGameUsedNouns.clear();
   }
 
   // reset available nouns pool
   void resetNouns() {
     _refreshAvailableNouns();
+    resetAllNounTracking();
   }
 
-  // remove a specific noun from available pool
-  void removeUsedNoun(GermanNoun noun) {
-    _availableNouns.removeWhere((n) => n.noun == noun.noun);
+  // manual sync
+  Future<void> triggerRefresh() async {
+    return _dataService.syncWithRemote();
   }
 }
 
