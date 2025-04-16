@@ -33,6 +33,9 @@ class GameScreen extends ConsumerWidget {
     final halfSpace = SizedBox(height: kToolbarHeight / 2);
     final quarterSpace = SizedBox(height: kToolbarHeight / 4);
 
+    final bool activateSaveButton =
+        gameState.selectedCellIndex != null && gameState.isTimerActive;
+
     if (gameState.isGameOver) {
       showGameOverDialog(
         context,
@@ -98,13 +101,25 @@ class GameScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.only(right: 50),
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: activateSaveButton ? () {} : () {},
                   child: Container(
                     height: 40,
                     width: 40,
                     color: Colors.transparent,
                     child: Center(
-                        child: SvgPicture.asset('assets/images/bookmark.svg')),
+                      child: SvgPicture.asset(
+                        'assets/images/bookmark.svg',
+                        colorFilter: activateSaveButton
+                            ? ColorFilter.mode(
+                                colorBlack,
+                                BlendMode.srcIn,
+                              )
+                            : ColorFilter.mode(
+                                colorBlack,
+                                BlendMode.srcIn,
+                              ),
+                      ),
+                    ),
                   ),
                 ),
               ),

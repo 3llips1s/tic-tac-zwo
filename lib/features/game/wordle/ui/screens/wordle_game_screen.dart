@@ -10,6 +10,7 @@ import '../../../../../config/game_config/constants.dart';
 import '../../../../../routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
 import '../../data/repositories/worlde_word_repo.dart';
+import '../widgets/wordle_instructions_dialog.dart';
 import '../widgets/wordle_keyboard.dart';
 
 class WordleGameScreen extends ConsumerStatefulWidget {
@@ -27,10 +28,53 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
 
+  bool _showInstructions = true;
+
   @override
   void initState() {
     super.initState();
     _initHoverAnimation();
+
+    /* 
+    for hive later
+    _checkAndShowInstructions();
+     */
+
+    _showInstructionsDialog();
+  }
+
+  Future<void> _checkAndShowInstructions() async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (mounted) {
+      WordleInstructionsManager.showInstructionsDialog(context);
+    }
+  }
+
+  void _showInstructionsDialog() {
+    if (_showInstructions) {
+      Future.delayed(
+        const Duration(seconds: 1),
+        () {
+          if (mounted) {
+            showCustomDialog(
+              context: context,
+              barrierDismissible: false,
+              width: 300,
+              height: 500,
+              child: WordleInstructionsDialog(
+                onClose: () {
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _showInstructions = false;
+                  });
+                },
+              ),
+            );
+          }
+        },
+      );
+    }
   }
 
   void _showGameResultDialog(WordleGameState state) async {

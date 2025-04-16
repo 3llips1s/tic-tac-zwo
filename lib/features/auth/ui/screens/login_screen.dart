@@ -51,19 +51,13 @@ class _LoginScreenState extends State<LoginScreen>
 
   String _selectedCountryCode = '';
 
+  Timer? _debounceTimer;
+
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    _checkAuthStatus();
     _isLoading = false;
-  }
-
-  Future<void> _checkAuthStatus() async {
-    final isAuthenticated = AuthService().isAuthenticated;
-    setState(() {
-      _isExistingUser = isAuthenticated;
-    });
   }
 
   @override
@@ -80,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     usernameController.dispose();
     _resendTimer?.cancel();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -337,27 +332,27 @@ class _LoginScreenState extends State<LoginScreen>
   void _submitEmail() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
-    if (!_agreeToTerms) {
-      _showSnackBar('Bitte akzeptiere die Nutzungsbedingungen!');
-      return;
-    }
-
     if (_validateEmail(emailController.text)) {
       try {
         setState(() {
-          // Show loading indicator or disable UI
           _isLoading = true;
         });
 
         final authService = AuthService();
-
-        // Check if the user already exists
         final userExists =
             await authService.checkUserExists(emailController.text);
 
         setState(() {
           _isExistingUser = userExists;
         });
+
+        if (!_isExistingUser && !_agreeToTerms) {
+          _showSnackBar('Bitte akzeptiere die Nutzungsbedingungen!');
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
 
         // Send OTP for either sign in or sign up
         bool success;
@@ -625,8 +620,19 @@ class _LoginScreenState extends State<LoginScreen>
           TextField(
             controller: emailController,
             onChanged: (value) {
-              if (_emailError != null) {
-                _validateEmail(value);
+              _debounceTimer?.cancel();
+
+              if (_validateEmail(value)) {
+                _debounceTimer = Timer(
+                  Duration(milliseconds: 500),
+                  () async {
+                    final authService = AuthService();
+                    final userExists = await authService.checkUserExists(value);
+                    setState(() {
+                      _isExistingUser = userExists;
+                    });
+                  },
+                );
               }
             },
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
