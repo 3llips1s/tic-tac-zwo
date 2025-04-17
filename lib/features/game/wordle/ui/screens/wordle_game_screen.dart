@@ -335,7 +335,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
             ),
           ),
 
-          const SizedBox(height: kToolbarHeight / 1.5),
+          const SizedBox(height: kToolbarHeight / 1.3),
 
           // keyboard
           WordleKeyboard(

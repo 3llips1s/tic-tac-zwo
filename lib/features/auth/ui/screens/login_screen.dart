@@ -53,6 +53,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   Timer? _debounceTimer;
 
+  bool _showEmailError = false;
+
   @override
   void initState() {
     super.initState();
@@ -254,13 +256,20 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  bool _validateEmail(String email) {
+  bool _validateEmail(String email, {bool showError = true}) {
     // Trim the email to remove leading and trailing whitespace
     email = email.trim();
     if (email.isEmpty) {
-      setState(() {
-        _emailError = 'Email erforderlich';
-      });
+      if (showError) {
+        setState(() {
+          _emailError = 'Email erforderlich';
+        });
+      } else {
+        setState(() {
+          _emailError = null;
+        });
+      }
+
       return false;
     }
 
@@ -270,9 +279,15 @@ class _LoginScreenState extends State<LoginScreen>
             .hasMatch(email);
 
     if (!validEmail) {
-      setState(() {
-        _emailError = 'Ungültige Email-Adresse';
-      });
+      if (showError) {
+        setState(() {
+          _emailError = 'Ungültige Email-Adresse';
+        });
+      } else {
+        setState(() {
+          _emailError = null;
+        });
+      }
       return false;
     }
 
@@ -332,7 +347,11 @@ class _LoginScreenState extends State<LoginScreen>
   void _submitEmail() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
-    if (_validateEmail(emailController.text)) {
+    setState(() {
+      _showEmailError = true;
+    });
+
+    if (_validateEmail(emailController.text, showError: true)) {
       try {
         setState(() {
           _isLoading = true;
@@ -622,7 +641,9 @@ class _LoginScreenState extends State<LoginScreen>
             onChanged: (value) {
               _debounceTimer?.cancel();
 
-              if (_validateEmail(value)) {
+              bool isValid = _validateEmail(value, showError: _showEmailError);
+
+              if (isValid) {
                 _debounceTimer = Timer(
                   Duration(milliseconds: 500),
                   () async {
@@ -633,6 +654,15 @@ class _LoginScreenState extends State<LoginScreen>
                     });
                   },
                 );
+              }
+            },
+            onSubmitted: (value) {
+              setState(() {
+                _showEmailError = true;
+              });
+
+              if (_validateEmail(value, showError: true)) {
+                _submitEmail();
               }
             },
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
