@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_name_dialog.dart';
-import 'package:tic_tac_zwo/routes/route_names.dart';
+import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';

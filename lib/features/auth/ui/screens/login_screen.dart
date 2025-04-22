@@ -11,7 +11,7 @@ import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/otp_input_field.dart';
 
-import '../../../../routes/route_names.dart';
+import '../../../navigation/routes/route_names.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

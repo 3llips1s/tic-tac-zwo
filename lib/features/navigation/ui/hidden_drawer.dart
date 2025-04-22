@@ -7,7 +7,7 @@ import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 
 import '../../../config/game_config/constants.dart';
-import '../../../routes/route_names.dart';
+import '../routes/route_names.dart';
 
 class HiddenDrawer extends StatefulWidget {
   const HiddenDrawer({super.key});

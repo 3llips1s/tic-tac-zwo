@@ -4,7 +4,7 @@ import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
-import '../../../../../routes/route_names.dart';
+import '../../../../navigation/routes/route_names.dart';
 import 'neu_button.dart';
 
 class ModeMenu extends StatefulWidget {
@@ -74,7 +74,7 @@ class _ModeMenuState extends State<ModeMenu> {
         // determine route based on auth
         final authService = AuthService();
         final route = authService.isAuthenticated
-            ? RouteNames.deviceScan
+            ? RouteNames.matchmaking
             : RouteNames.login;
 
         await Navigator.pushNamed(context, route);

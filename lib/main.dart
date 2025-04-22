@@ -12,8 +12,8 @@ import 'package:tic_tac_zwo/hive/hive_registrar.g.dart';
 
 import 'config/game_config/theme.dart';
 import 'features/game/online/data/models/german_noun_hive.dart';
-import 'routes/app_router.dart';
-import 'routes/route_names.dart';
+import 'features/navigation/routes/app_router.dart';
+import 'features/navigation/routes/route_names.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

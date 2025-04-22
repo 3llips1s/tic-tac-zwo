@@ -3,7 +3,7 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 
-import '../../../../../routes/route_names.dart';
+import '../../../../navigation/routes/route_names.dart';
 import '../../logic/game_state.dart';
 
 class GameOverDialog extends StatelessWidget {

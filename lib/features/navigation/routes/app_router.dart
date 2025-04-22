@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/auth/ui/screens/login_screen.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
-import 'package:tic_tac_zwo/features/game/online/ui/screens/device_scan_screen.dart';
+import 'package:tic_tac_zwo/features/game/online/ui/screens/matchmaking_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
 
-import '../config/game_config/config.dart';
-import '../features/game/core/ui/screens/game_screen.dart';
-import '../features/game/core/ui/screens/home_screen.dart';
-import '../features/game/core/ui/screens/turn_selection_screen.dart';
+import '../../../config/game_config/config.dart';
+import '../../game/core/ui/screens/game_screen.dart';
+import '../../game/core/ui/screens/home_screen.dart';
+import '../../game/core/ui/screens/turn_selection_screen.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -31,10 +31,10 @@ class AppRouter {
         );
 
       // device scan
-      case RouteNames.deviceScan:
+      case RouteNames.matchmaking:
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              DeviceScanScreen(),
+              MatchmakingScreen(),
           transitionDuration: const Duration(milliseconds: 600),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(

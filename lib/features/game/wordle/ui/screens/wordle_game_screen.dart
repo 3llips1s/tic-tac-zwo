@@ -7,7 +7,7 @@ import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/game_result_dialog.d
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dart';
 
 import '../../../../../config/game_config/constants.dart';
-import '../../../../../routes/route_names.dart';
+import '../../../../navigation/routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
 import '../../data/repositories/worlde_word_repo.dart';
 import '../widgets/wordle_instructions_dialog.dart';

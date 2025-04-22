@@ -13,7 +13,7 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
-import '../../../../../routes/route_names.dart';
+import '../../../../navigation/routes/route_names.dart';
 
 class GameScreen extends ConsumerWidget {
   final GameConfig gameConfig;
