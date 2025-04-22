@@ -4,6 +4,7 @@ class RouteNames {
 
   static const String home = '/';
   static const String turnSelection = '/turn-selection';
+  static const String onlineTurnSelection = '/online-turn-selection';
   static const String gameBoard = '/game-board';
   static const String deviceScan = '/device-scan';
   static const String wordle = '/wordle';

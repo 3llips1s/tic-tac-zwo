@@ -82,6 +82,42 @@ class AppRouter {
           },
         );
 
+      case RouteNames.onlineTurnSelection:
+        final arguments = settings.arguments as Map<String, dynamic>?;
+        final gameMode = arguments?['gameMode'] as GameMode?;
+
+        // check
+        if (gameMode == null) {
+          return PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const HomeScreen(),
+            transitionDuration: const Duration(milliseconds: 600),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+          );
+        }
+
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              TurnSelectionScreen(gameMode: gameMode),
+          transitionDuration: const Duration(milliseconds: 600),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
       // game board
       case RouteNames.gameBoard:
         final gameConfig = settings.arguments as GameConfig;

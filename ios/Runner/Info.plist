@@ -45,16 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>We need Bluetooth access to discover and connect to nearby devices.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location is required for scanning nearby Bluetooth devices.</string>
-	<key>NSBonjourServices</key>
-	<array>
-    <string>_mp-connection._tcp</string>
-	</array>
-	<key>UIRequiresPersistentWiFi</key>
-	<true/>
+	<string>We need location access to discover and connect to nearby devices.</string>
 </dict>
 </plist>

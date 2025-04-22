@@ -109,68 +109,23 @@ class OfflineNotifier extends GameNotifier {
 
   // random move
   bool _shouldMakeRandomMove() {
-    return _random.nextDouble() < 0.3;
+    return _random.nextDouble() < 0.1;
   }
 
   // best move
   int? _selectBestMove() {
-    final availableCells = List.generate(9, (i) => i)
+    final Cells = List.generate(9, (i) => i)
         .where((i) => state.board[i] == null)
         .toList();
 
-    if (availableCells.isEmpty) return null;
+    if (Cells.isEmpty) return null;
 
     final opponentSymbol =
         state.currentPlayer.symbol == PlayerSymbol.X ? 'Ö' : 'X';
     final currentSymbol = state.currentPlayer.symbolString;
 
-    // block opponent's winning move
-    final winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-      [0, 4, 8], [2, 4, 6], // diagonals
-    ];
-
-    for (final pattern in winPatterns) {
-      // get symbols in the pattern
-      final patternSymbols = pattern.map((e) => state.board[e]).toList();
-
-      // count opponent symbols and empty spaces
-      final opponentSymbolCount =
-          patternSymbols.where((symbol) => symbol == opponentSymbol).length;
-      final emptyCount =
-          patternSymbols.where((symbol) => symbol == null).length;
-
-      // standard block (2 in a row, empty space on one end)
-      if (opponentSymbolCount == 2 && emptyCount == 1) {
-        return pattern[patternSymbols.indexWhere((symbol) => symbol == null)];
-      }
-
-      // check for separated threats
-      if (emptyCount == 1) {
-        final firstIndex = 0;
-        final middleIndex = 1;
-        final lastIndex = 2;
-
-        if (patternSymbols[firstIndex] == opponentSymbol &&
-            patternSymbols[lastIndex] == opponentSymbol &&
-            patternSymbols[middleIndex] == null) {
-          return pattern[middleIndex];
-        }
-      }
-
-      // check for diagonal threats
-      if (pattern.length == 3 && pattern.contains(4)) {
-        final corners = [pattern[0], pattern[2]];
-        if (corners.every((i) =>
-            state.board[i] == opponentSymbol && state.board[4] == null)) {
-          return 4;
-        }
-      }
-    }
-
-    // check if AI can win
-    for (final cell in availableCells) {
+    // check if ai can win in one move
+    for (final cell in Cells) {
       final boardCopy = List<String?>.from(state.board);
       boardCopy[cell] = currentSymbol;
       if (_isWinningMove(boardCopy, currentSymbol)) {
@@ -178,32 +133,49 @@ class OfflineNotifier extends GameNotifier {
       }
     }
 
-    // take center if available
-    if (state.board[4] == null) return 4;
+    // block opponents winning move
+    for (final cell in Cells) {
+      final boardCopy = List<String?>.from(state.board);
+      boardCopy[cell] = opponentSymbol;
+      if (_isWinningMove(boardCopy, opponentSymbol)) {
+        return cell;
+      }
+    }
+
+    // take centre if
+    if (state.board[4] == null) {
+      return 4;
+    }
 
     // take corners
     final corners = [0, 2, 6, 8].where((i) => state.board[i] == null).toList();
-    if (corners.isNotEmpty) {
-      return corners[_random.nextInt(corners.length)];
+    if (corners.isEmpty) {
+      final corner = corners[_random.nextInt(corners.length)];
+      return corner;
     }
 
     // take edges
     final edges = [1, 3, 5, 7].where((i) => state.board[i] == null).toList();
-    if (edges.isNotEmpty) {
-      return edges[_random.nextInt(edges.length)];
+    if (edges.isEmpty) {
+      final edge = corners[_random.nextInt(corners.length)];
+      return edge;
     }
 
-    // fall back to minimax if no better move was found
+    // use minimax as last resort
     int? bestMove = -1;
     int bestScore = -1000;
 
-    // evaluate each available move
-    for (final cell in availableCells) {
+    for (final cell in Cells) {
       final boardCopy = List<String?>.from(state.board);
       boardCopy[cell] = currentSymbol;
 
-      final score =
-          _miniMax(boardCopy, 0, false, currentSymbol, opponentSymbol);
+      final score = _miniMax(
+        boardCopy,
+        0,
+        false,
+        currentSymbol,
+        opponentSymbol,
+      );
 
       if (score > bestScore) {
         bestScore = score;
@@ -223,13 +195,13 @@ class OfflineNotifier extends GameNotifier {
 
     int bestScore = isMaximizing ? -1000 : 1000;
 
-    final availableMoves =
+    final Moves =
         List.generate(9, (i) => i).where((i) => board[i] == null).toList();
 
-    for (final move in availableMoves) {
+    for (final move in Moves) {
       board[move] = isMaximizing ? aiSymbol : opponentSymbol;
       int score =
-          _miniMax(board, depth + 1, isMaximizing, aiSymbol, opponentSymbol);
+          _miniMax(board, depth + 1, !isMaximizing, aiSymbol, opponentSymbol);
       board[move] = null;
 
       bestScore = isMaximizing ? max(bestScore, score) : min(bestScore, score);
@@ -238,10 +210,7 @@ class OfflineNotifier extends GameNotifier {
   }
 
   // check winning move
-  bool _isWinningMove(
-    List<String?> board,
-    String symbol,
-  ) {
+  bool _isWinningMove(List<String?> board, String symbol) {
     final winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns

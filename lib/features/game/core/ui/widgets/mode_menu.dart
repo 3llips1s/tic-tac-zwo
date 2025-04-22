@@ -67,7 +67,7 @@ class _ModeMenuState extends State<ModeMenu> {
         final isConnected =
             !connectivityResult.contains(ConnectivityResult.none);
         if (!isConnected) {
-          _showSnackBar('Keine Interneverbindung!');
+          _showSnackBar('Keine Internetverbindung!');
           return;
         }
 
