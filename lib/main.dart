@@ -30,7 +30,7 @@ void main() async {
 
   await Hive.openBox<GermanNounHive>('german_nouns');
   await Hive.openBox('sync_info');
-  // await Hive.openBox('user_preferences');
+  await Hive.openBox('user_preferences');
 
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.edgeToEdge,

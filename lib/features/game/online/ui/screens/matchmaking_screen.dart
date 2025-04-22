@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
 import '../../data/services/matchmaking_service.dart';
+
+// Preference constants
+const String preferencesBoxName = 'user_preferences';
+const String hasSeenMatchmakingSelectionKey = 'has_seen_matchmaking_selection';
 
 class MatchmakingScreen extends ConsumerStatefulWidget {
   const MatchmakingScreen({super.key});
@@ -17,40 +22,57 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   bool _isNearbySearch = false;
+  bool _isLoading = false;
+  bool _hasSeenModeSelection = false;
 
   @override
   void initState() {
     super.initState();
     _initAnimations();
 
-    // listen for match success and navigate to turn selection
-    Future.delayed(
-      Duration.zero,
-      () {
-        ref.listen<AsyncValue<String?>>(
-          matchedGameIdProvider,
-          (_, next) {
-            next.whenData(
-              (gameId) {
-                if (gameId != null) {
-                  _navigateToTurnSelection(gameId);
-                }
-              },
-            );
-          },
-        );
-      },
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Check if user has seen mode selection before
+      _hasSeenModeSelection = await _checkIfSeenModeSelection();
+
+      if (!_hasSeenModeSelection) {
+        // First time user: Show mode selection UI
+        await _markModeSelectionAsSeen();
+      } else {
+        // Returning user: Start global matchmaking automatically
+        _startGlobalMatchMaking();
+      }
+    });
+  }
+
+  Future<bool> _checkIfSeenModeSelection() async {
+    try {
+      final box = await Hive.openBox(preferencesBoxName);
+      return box.get(hasSeenMatchmakingSelectionKey, defaultValue: false);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _markModeSelectionAsSeen() async {
+    try {
+      final box = await Hive.openBox(preferencesBoxName);
+      await box.put(hasSeenMatchmakingSelectionKey, true);
+      setState(() {
+        _hasSeenModeSelection = true;
+      });
+    } catch (e) {
+      // continue without setting the flag if there's an error
+    }
   }
 
   void _initAnimations() {
     _pulseController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 1),
+      duration: Duration(seconds: 2),
     );
 
     _pulseAnimation =
-        Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(
+        Tween<double>(begin: 1.0, end: 1.3).animate(CurvedAnimation(
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
@@ -68,15 +90,23 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     }
   }
 
-  void _startNearbyMatchmaking() {
+  Future<void> _startNearbyMatchmaking() async {
     setState(() {
+      _isLoading = true;
       _isNearbySearch = true;
     });
-    ref.read(matchmakingServiceProvider).startNearbyMatchmaking();
 
-    if (!_pulseController.isAnimating) {
-      _pulseController.repeat(reverse: true);
-    }
+    ref.read(matchmakingServiceProvider).startNearbyMatchmaking().then(
+      (_) {
+        setState(() {
+          _isNearbySearch = true;
+          _isLoading = false;
+        });
+        if (!_pulseController.isAnimating) {
+          _pulseController.repeat(reverse: true);
+        }
+      },
+    );
   }
 
   void _cancelMatchmaking() {
@@ -100,6 +130,20 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     final matchmakingState = ref.watch(matchmakingStateProvider);
     final nearbyPlayers = ref.watch(nearbyPlayersProvider);
 
+    // set up match listener and navigate to turn selection
+    ref.listen<AsyncValue<String?>>(
+      matchedGameIdProvider,
+      (_, next) {
+        next.whenData(
+          (gameId) {
+            if (gameId != null) {
+              _navigateToTurnSelection(gameId);
+            }
+          },
+        );
+      },
+    );
+
     if (matchmakingState.value == MatchmakingState.searching &&
         !_pulseController.isAnimating) {
       _pulseController.repeat(reverse: true);
@@ -113,6 +157,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
+        if (isSearching) {
+          _cancelMatchmaking();
+        }
         if (_pulseController.isAnimating) {
           _pulseController.stop();
         }
@@ -132,7 +179,6 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   child: Align(
                     alignment: Alignment.center,
                     child: Text(
-                      // todo: might need to change this down the line
                       'online',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 28,
@@ -143,7 +189,30 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 ),
               ),
 
-              if (isSearching) ...[
+              if (!_isLoading) SizedBox(height: kToolbarHeight),
+
+              if (_isLoading)
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                          color: _isNearbySearch ? colorRed : colorYellowAccent,
+                          strokeWidth: 1),
+                      SizedBox(height: kToolbarHeight),
+                      Text(
+                        _isNearbySearch
+                            ? 'Nähe wird gesucht...'
+                            : 'Online wird gesucht...',
+                        style: TextStyle(
+                          color: colorBlack,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (isSearching) ...[
                 Center(
                   child: AnimatedBuilder(
                     animation: _pulseAnimation,
@@ -151,18 +220,20 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                       return Transform.scale(
                         scale: _pulseAnimation.value,
                         child: Container(
-                          width: 120,
-                          height: 120,
+                          width: 150,
+                          height: 150,
                           decoration: BoxDecoration(
-                            color: _isNearbySearch ? colorYellow : colorRed,
+                            color: _isNearbySearch
+                                ? colorRed.withOpacity(0.5)
+                                : colorYellowAccent.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             _isNearbySearch
-                                ? Icons.wifi_tethering_rounded
-                                : Icons.public_rounded,
-                            color: _isNearbySearch ? colorBlack : colorWhite,
-                            size: 60,
+                                ? Icons.wifi_tethering
+                                : Icons.travel_explore_rounded,
+                            color: _isNearbySearch ? colorWhite : colorBlack,
+                            size: 50,
                           ),
                         ),
                       );
@@ -170,15 +241,19 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   ),
                 ),
 
+                SizedBox(height: kToolbarHeight * 1.5),
+
                 Text(
                   _isNearbySearch
                       ? 'Suche nach Spielern in der Nähe'
                       : 'Suche nach Spielern online',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 20,
+                        fontSize: 18,
+                        color: Colors.black26,
                       ),
                 ),
+
+                SizedBox(height: 24),
 
                 // cancel button
                 OutlinedButton(
@@ -205,13 +280,15 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   ),
                 ),
 
+                SizedBox(height: 16),
+
                 // show found players for nearby search
                 if (_isNearbySearch) ...[
                   nearbyPlayers.when(
                     data: (players) {
                       if (players.isEmpty) {
                         return Text(
-                          'Keine Spieler in der Nähe gefunden.',
+                          'Keine Spieler*in in der Nähe gefunden.',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: colorBlack,
@@ -252,47 +329,50 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                     error: (error, stackTrace) =>
                         Text('Fehler beim Laden der Spieler'),
                     loading: () => CircularProgressIndicator(
-                      color: colorBlack,
+                      color: colorRed,
                       strokeWidth: 1,
                     ),
                   ),
                 ],
               ] else ...[
-                // mode selection
+                // mode selection for first-time users or when not searching
                 _buildModeButton(
-                  icon: Icons.public_rounded,
-                  title: 'Online Spielen',
-                  subtitle: 'Gegen globale Spieler',
+                  icon: Icons.wifi_tethering,
+                  title: 'in der Nähe spielen',
+                  subtitle: 'gegen Spieler in deiner Umgebung',
                   color: colorRed,
                   textColor: colorWhite,
+                  onTap: _startNearbyMatchmaking,
+                ),
+
+                SizedBox(),
+
+                _buildModeButton(
+                  icon: Icons.travel_explore_rounded,
+                  title: 'online spielen',
+                  subtitle: 'gegen globale Spieler',
+                  color: colorYellowAccent,
+                  textColor: colorBlack,
                   onTap: _startGlobalMatchMaking,
                 ),
 
-                SizedBox(height: kTextTabBarHeight),
-
-                _buildModeButton(
-                  icon: Icons.wifi_tethering_rounded,
-                  title: 'In der Nähe spielen',
-                  subtitle: 'Gegen Spieler in deiner Umgebung',
-                  color: colorYellowAccent,
-                  textColor: colorBlack,
-                  onTap: _startNearbyMatchmaking,
-                ),
+                SizedBox(height: kToolbarHeight)
               ],
 
               // home
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 20),
-                  child: Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Center(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  // Back button
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, top: 20),
+                    child: Container(
+                      height: 40,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
                       child: IconButton(
                         onPressed: () {
                           if (isSearching) {
@@ -309,7 +389,41 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                       ),
                     ),
                   ),
-                ),
+
+                  // Push content to edges
+                  Spacer(),
+
+                  // Conditional nearby players link
+                  if (!_isNearbySearch && isSearching)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 30, top: 20),
+                      child: GestureDetector(
+                        onTap: () {
+                          _cancelMatchmaking();
+                          _startNearbyMatchmaking();
+                        },
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Spieler in deiner Nähe finden?',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: colorRed.withOpacity(0.5),
+                              ),
+                            ),
+                            Container(
+                              width: 190,
+                              height: 1,
+                              decoration: BoxDecoration(
+                                color: colorRed.withOpacity(0.5),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -329,23 +443,27 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: double.infinity,
         padding: EdgeInsets.all(24),
+        width: 300,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
-              offset: Offset(3, 3),
+              offset: Offset(5, 5),
               blurRadius: 5,
             ),
           ],
         ),
         child: Column(
           children: [
-            Icon(icon, size: 40, color: textColor),
-            SizedBox(height: 16),
+            Icon(
+              icon,
+              size: 40,
+              color: textColor,
+            ),
+            SizedBox(height: 20),
             Text(
               title,
               style: TextStyle(
@@ -354,7 +472,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 color: textColor,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 10),
             Text(
               subtitle,
               style: TextStyle(
