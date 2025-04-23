@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/game/online/ui/widgets/display_ripple_icon.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
 import '../../data/services/matchmaking_service.dart';
@@ -19,8 +20,6 @@ class MatchmakingScreen extends ConsumerStatefulWidget {
 
 class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
   bool _isNearbySearch = false;
   bool _isLoading = false;
   bool _hasSeenModeSelection = false;
@@ -28,7 +27,6 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   @override
   void initState() {
     super.initState();
-    _initAnimations();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Check if user has seen mode selection before
@@ -65,29 +63,11 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     }
   }
 
-  void _initAnimations() {
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
-
-    _pulseAnimation =
-        Tween<double>(begin: 1.0, end: 1.3).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-  }
-
   void _startGlobalMatchMaking() {
     setState(() {
       _isNearbySearch = false;
     });
     ref.read(matchmakingServiceProvider).startGlobalMatchmaking();
-
-    // start animation only when searching
-    if (!_pulseController.isAnimating) {
-      _pulseController.repeat(reverse: true);
-    }
   }
 
   Future<void> _startNearbyMatchmaking() async {
@@ -102,19 +82,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
           _isNearbySearch = true;
           _isLoading = false;
         });
-        if (!_pulseController.isAnimating) {
-          _pulseController.repeat(reverse: true);
-        }
       },
     );
   }
 
   void _cancelMatchmaking() {
     ref.read(matchmakingServiceProvider).cancelMatchmaking();
-
-    if (_pulseController.isAnimating) {
-      _pulseController.stop();
-    }
   }
 
   void _navigateToTurnSelection(String gameId) {
@@ -144,14 +117,6 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
       },
     );
 
-    if (matchmakingState.value == MatchmakingState.searching &&
-        !_pulseController.isAnimating) {
-      _pulseController.repeat(reverse: true);
-    } else if (matchmakingState.value != MatchmakingState.searching &&
-        _pulseController.isAnimating) {
-      _pulseController.stop();
-    }
-
     final isSearching = matchmakingState.value == MatchmakingState.searching;
 
     return PopScope(
@@ -159,9 +124,6 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
       onPopInvokedWithResult: (didPop, result) {
         if (isSearching) {
           _cancelMatchmaking();
-        }
-        if (_pulseController.isAnimating) {
-          _pulseController.stop();
         }
       },
       child: Scaffold(
@@ -214,39 +176,25 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 )
               else if (isSearching) ...[
                 Center(
-                  child: AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _pulseAnimation.value,
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: _isNearbySearch
-                                ? colorRed.withOpacity(0.5)
-                                : colorYellowAccent.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _isNearbySearch
-                                ? Icons.wifi_tethering
-                                : Icons.travel_explore_rounded,
-                            color: _isNearbySearch ? colorWhite : colorBlack,
-                            size: 50,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child: DisplayRippleIcon(
+                      icon: Icon(
+                        _isNearbySearch
+                            ? Icons.wifi_tethering
+                            : Icons.travel_explore_rounded,
+                        color: _isNearbySearch ? colorWhite : colorBlack,
+                        size: 50,
+                      ),
+                      rippleColor:
+                          _isNearbySearch ? colorRed : colorYellowAccent,
+                      shadowScale: 3),
                 ),
 
                 SizedBox(height: kToolbarHeight * 1.5),
 
                 Text(
                   _isNearbySearch
-                      ? 'Suche nach Spielern in der Nähe'
-                      : 'Suche nach Spielern online',
+                      ? 'Suche nach Spielern in der Nähe...'
+                      : 'Suche nach Spielern weltweit...',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 18,
                         color: Colors.black26,
@@ -377,9 +325,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                         onPressed: () {
                           if (isSearching) {
                             _cancelMatchmaking();
-                          } else {
-                            Navigator.pop(context);
                           }
+                          Navigator.pop(context);
                         },
                         icon: Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -390,10 +337,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                     ),
                   ),
 
-                  // Push content to edges
                   Spacer(),
 
-                  // Conditional nearby players link
+                  // conditional nearby players link
                   if (!_isNearbySearch && isSearching)
                     Padding(
                       padding: const EdgeInsets.only(right: 30, top: 20),
@@ -402,24 +348,25 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                           _cancelMatchmaking();
                           _startNearbyMatchmaking();
                         },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Spieler in deiner Nähe finden?',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: colorRed.withOpacity(0.5),
+                        child: IntrinsicWidth(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Spieler in deiner Nähe finden?',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: colorRed.withOpacity(0.5),
+                                ),
                               ),
-                            ),
-                            Container(
-                              width: 190,
-                              height: 1,
-                              decoration: BoxDecoration(
-                                color: colorRed.withOpacity(0.5),
-                              ),
-                            )
-                          ],
+                              Container(
+                                height: 1,
+                                decoration: BoxDecoration(
+                                  color: colorRed.withOpacity(0.5),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -485,11 +432,5 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
   }
 }
