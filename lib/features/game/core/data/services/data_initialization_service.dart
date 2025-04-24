@@ -80,7 +80,7 @@ class DataInitializationService {
       for (var i = 0; i < nouns.length; i++) {
         final noun = nouns[i];
         final hiveNoun = GermanNounHive(
-          id: 'local_$i',
+          id: noun.id,
           noun: noun.noun,
           article: noun.article,
           plural: noun.plural,
@@ -89,7 +89,7 @@ class DataInitializationService {
           updatedAt: DateTime.now(),
           version: 1,
         );
-        await _nounsBox.put(noun.noun, hiveNoun);
+        await _nounsBox.put(noun.id, hiveNoun);
       }
 
       _syncController
@@ -151,7 +151,7 @@ class DataInitializationService {
           version: nounData['version'],
         );
 
-        await _nounsBox.put(hiveNoun.noun, hiveNoun);
+        await _nounsBox.put(hiveNoun.id, hiveNoun);
         updateCount++;
       }
 

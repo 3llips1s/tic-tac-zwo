@@ -28,19 +28,12 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
 
-  bool _showInstructions = true;
-
   @override
   void initState() {
     super.initState();
     _initHoverAnimation();
 
-    /* 
-    for hive later
     _checkAndShowInstructions();
-     */
-
-    _showInstructionsDialog();
   }
 
   Future<void> _checkAndShowInstructions() async {
@@ -48,32 +41,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
 
     if (mounted) {
       WordleInstructionsManager.showInstructionsDialog(context);
-    }
-  }
-
-  void _showInstructionsDialog() {
-    if (_showInstructions) {
-      Future.delayed(
-        const Duration(seconds: 1),
-        () {
-          if (mounted) {
-            showCustomDialog(
-              context: context,
-              barrierDismissible: false,
-              width: 300,
-              height: 500,
-              child: WordleInstructionsDialog(
-                onClose: () {
-                  Navigator.of(context).pop();
-                  setState(() {
-                    _showInstructions = false;
-                  });
-                },
-              ),
-            );
-          }
-        },
-      );
     }
   }
 

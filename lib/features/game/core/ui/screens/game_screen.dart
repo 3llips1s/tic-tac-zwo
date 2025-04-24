@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
-import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
-import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_over_dialog.dart';
@@ -11,8 +9,8 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_info.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/timer_display.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart';
 
-import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
+import '../../../../../config/game_config/game_providers.dart';
 import '../../../../navigation/routes/route_names.dart';
 
 class GameScreen extends ConsumerWidget {
@@ -25,9 +23,8 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameState = ref.watch(gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(gameConfig)
-        : gameStateProvider(gameConfig));
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, gameConfig));
 
     final space = SizedBox(height: kToolbarHeight);
     final halfSpace = SizedBox(height: kToolbarHeight / 2);
@@ -42,11 +39,10 @@ class GameScreen extends ConsumerWidget {
         gameConfig,
         gameState,
         () {
-          final notifier = gameConfig.gameMode == GameMode.offline
-              ? ref.read(offlineStateProvider(gameConfig).notifier)
-              : ref.read(gameStateProvider(gameConfig).notifier);
+          final gameNotifier = ref
+              .read(GameProviders.getStateProvider(ref, gameConfig).notifier);
 
-          notifier.rematch();
+          gameNotifier.rematch();
         },
       );
     }

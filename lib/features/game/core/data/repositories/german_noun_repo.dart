@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/game/core/data/services/data_initialization_service.dart';
 
 import '../../../online/data/models/german_noun_hive.dart';
@@ -61,6 +62,7 @@ class GermanNounRepo {
   // convert hive noun to german noun
   GermanNoun _hiveNounToGermanNoun(GermanNounHive hiveNoun) {
     return GermanNoun(
+      id: hiveNoun.id,
       article: hiveNoun.article,
       noun: hiveNoun.noun,
       english: hiveNoun.english,
@@ -134,11 +136,50 @@ class GermanNounRepo {
       return _availableNouns[Random().nextInt(_availableNouns.length)];
     } else {
       return GermanNoun(
+        id: '',
         article: 'das',
         noun: 'Fehler',
         english: 'Error',
         plural: 'Fehler',
       );
+    }
+  }
+
+  Future<GermanNoun?> getNounById(String id) async {
+    try {
+      final Box<GermanNounHive> nounsBox =
+          Hive.box<GermanNounHive>('german_nouns');
+
+      GermanNounHive? hiveNoun = nounsBox.get(id);
+
+      if (hiveNoun != null) {
+        return hiveNoun.toGermanNoun();
+      }
+
+      // fetch from sb if not found locally
+      final supabase = Supabase.instance.client;
+      final response =
+          await supabase.from('german_nouns').select().eq('id', id).single();
+
+      if (response.isEmpty) return null;
+
+      final fetchedNoun = GermanNounHive(
+        id: response['id'],
+        noun: response['noun'],
+        article: response['article'],
+        plural: response['plural'] ?? '',
+        english: response['english'] ?? '',
+        difficulty: response['difficulty'] ?? 1,
+        updatedAt: DateTime.parse(response['updated_at']),
+        version: response['version'],
+      );
+
+      await nounsBox.put(fetchedNoun.id, fetchedNoun);
+
+      return fetchedNoun.toGermanNoun();
+    } catch (e) {
+      print('error fetching noun by id: $e');
+      return null;
     }
   }
 

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 
-import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/game_config.dart';
-import '../../../offline/logic/offline_notifier.dart';
 
 class TimerDisplay extends ConsumerWidget {
   final GameConfig gameConfig;
@@ -14,11 +12,8 @@ class TimerDisplay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gameState = ref.watch(gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(gameConfig)
-        : gameStateProvider(gameConfig));
-
-    // if (!gameState.isTimerActive) return SizedBox.shrink();
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, gameConfig));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

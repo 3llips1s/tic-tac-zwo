@@ -72,11 +72,6 @@ class OnlineGameService {
         .single()
         .then(
       (gameSession) {
-        if (gameSession == null) {
-          controller.add(false);
-          return;
-        }
-
         final isPlayerOne = gameSession['player1_id'] == _currentUserId;
 
         // listen to opp ready state
@@ -101,7 +96,10 @@ class OnlineGameService {
               controller.add(false);
             });
       },
-    );
+    ).catchError((error) {
+      print('error fetching game sessions: $error');
+      controller.add(false);
+    });
 
     return controller.stream;
   }

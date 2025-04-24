@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive.dart';
 // import 'package:hive/hive.dart';
 import '../../../../../config/game_config/constants.dart';
 import '../../../core/ui/widgets/glassmorphic_dialog.dart';
@@ -162,25 +163,15 @@ class WordleInstructionsManager {
   static const String _preferencesBoxName = 'user_preferences';
   static const String _hasSeenInstructionsKey = 'has_seen_wordle_instructions';
 
-  static bool _hasSeenInstructionsTest = false;
-
   // check if use has seen instructions
   static Future<bool> hasSeenInstructions() async {
-    return _hasSeenInstructionsTest;
-
-    /* 
     final box = await Hive.openBox(_preferencesBoxName);
     return box.get(_hasSeenInstructionsKey, defaultValue: false);
-     */
   }
 
   static Future<void> markInstructionsAsSeen() async {
-    _hasSeenInstructionsTest = true;
-
-    /* 
     final box = await Hive.openBox(_preferencesBoxName);
     await box.put(_hasSeenInstructionsKey, true);
-     */
   }
 
   // show dialog

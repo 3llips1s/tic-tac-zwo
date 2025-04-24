@@ -187,6 +187,7 @@ class GameState {
           : null,
       currentNoun: json['currentNoun'] != null
           ? GermanNoun(
+              id: json['currentNoun']['id'],
               article: json['currentNoun']['article'],
               noun: json['currentNoun']['noun'],
               english: json['currentNoun']['english'],

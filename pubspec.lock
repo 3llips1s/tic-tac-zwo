@@ -233,14 +233,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
-  device_scan_animation:
-    dependency: "direct main"
-    description:
-      name: device_scan_animation
-      sha256: "68390c8699d56d8ae57033dc45c01a2134e676de44db836f7fd2c9e2e75950af"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.6"
   fake_async:
     dependency: transitive
     description:

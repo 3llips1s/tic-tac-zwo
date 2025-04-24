@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/auth/ui/screens/login_screen.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/matchmaking_screen.dart';
+import 'package:tic_tac_zwo/features/game/online/ui/screens/online_turn_selection_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
 
 import '../../../config/game_config/config.dart';
@@ -82,9 +83,11 @@ class AppRouter {
           },
         );
 
+      // online turn selection
       case RouteNames.onlineTurnSelection:
         final arguments = settings.arguments as Map<String, dynamic>?;
         final gameMode = arguments?['gameMode'] as GameMode?;
+        final gameSessionId = arguments?['gameSessionId'] as String;
 
         // check
         if (gameMode == null) {
@@ -104,7 +107,10 @@ class AppRouter {
 
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              TurnSelectionScreen(gameMode: gameMode),
+              OnlineTurnSelectionScreen(
+            gameMode: gameMode,
+            gameSessionId: gameSessionId,
+          ),
           transitionDuration: const Duration(milliseconds: 600),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

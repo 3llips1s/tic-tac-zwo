@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
-import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
+import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/game_config.dart';
-import '../../logic/game_notifier.dart';
 
 class ArticleButtons extends ConsumerStatefulWidget {
   final GameConfig gameConfig;
@@ -22,13 +20,10 @@ class ArticleButtons extends ConsumerStatefulWidget {
 class _ArticleButtonsState extends ConsumerState<ArticleButtons> {
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(widget.gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(widget.gameConfig)
-        : gameStateProvider(widget.gameConfig));
-
-    final gameNotifier = ref.read(widget.gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(widget.gameConfig).notifier
-        : gameStateProvider(widget.gameConfig).notifier);
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+    final gameNotifier = ref
+        .read(GameProviders.getStateProvider(ref, widget.gameConfig).notifier);
 
     // button should only be enabled when a cell is selected and timer is active
     final bool buttonEnabled =

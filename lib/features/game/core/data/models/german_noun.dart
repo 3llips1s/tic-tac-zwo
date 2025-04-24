@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/german_noun_repo.dart';
 
 class GermanNoun {
+  final String id;
   final String article;
   final String noun;
   final String english;
   final String plural;
 
   const GermanNoun({
+    required this.id,
     required this.article,
     required this.noun,
     required this.english,
@@ -16,6 +18,7 @@ class GermanNoun {
   });
 
   factory GermanNoun.fromJson(Map<String, dynamic> json) => GermanNoun(
+        id: json['id'] ?? 'default_${json['noun']}',
         article: json['article'] as String,
         noun: json['noun'] as String,
         english: json['english'] as String,
@@ -27,6 +30,10 @@ class NounRepository {
   final GermanNounRepo _germanNounRepo;
 
   NounRepository(this._germanNounRepo);
+
+  Future<GermanNoun?> getNounById(String id) async {
+    return _germanNounRepo.getNounById(id);
+  }
 
   Future<List<GermanNoun>> getGameBatch({int batchSize = 18}) async {
     return _germanNounRepo.getGameBatch(batchSize: batchSize);

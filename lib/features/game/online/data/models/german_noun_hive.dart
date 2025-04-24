@@ -55,9 +55,10 @@ class GermanNounHive extends HiveObject {
     );
   }
 
-  // convert to existing noun model
+  // convert to noun model
   GermanNoun toGermanNoun() {
     return GermanNoun(
+      id: id,
       article: article,
       noun: noun,
       english: english,

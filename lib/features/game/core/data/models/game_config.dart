@@ -6,10 +6,12 @@ class GameConfig {
   final List<Player> players;
   final Player startingPlayer;
   final GameMode gameMode;
+  final String? gameSessionId;
 
   const GameConfig({
     required this.players,
     required this.startingPlayer,
     required this.gameMode,
+    this.gameSessionId,
   });
 }

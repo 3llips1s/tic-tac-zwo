@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
-import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
-import 'package:tic_tac_zwo/features/game/offline/logic/offline_notifier.dart';
 
-import '../../../../../config/game_config/config.dart';
+import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/german_noun.dart';
 import '../../data/models/player.dart';
 
@@ -115,9 +113,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   @override
   void didUpdateWidget(TurnNounDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final gameState = ref.read(widget.gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(widget.gameConfig)
-        : gameStateProvider(widget.gameConfig));
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
     // reset and player article animation when a move is made
     if (gameState.lastPlayedPlayer != null && !gameState.isTimerActive) {
@@ -133,9 +130,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(widget.gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(widget.gameConfig)
-        : gameStateProvider(widget.gameConfig));
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
     final currentPlayer = gameState.currentPlayer;
     final currentNoun = gameState.currentNoun;
@@ -206,9 +202,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     Animation<Offset> slideAnimation,
     bool shouldArticleAnimate,
   ) {
-    final gameState = ref.read(widget.gameConfig.gameMode == GameMode.offline
-        ? offlineStateProvider(widget.gameConfig)
-        : gameStateProvider(widget.gameConfig));
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
     final wrongArticle = gameState.wrongSelectedArticle;
     final hasWrongArticle = wrongArticle != null &&

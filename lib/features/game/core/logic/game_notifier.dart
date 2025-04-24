@@ -72,6 +72,7 @@ class GameNotifier extends StateNotifier<GameState> {
           if (_nounsList == null || _nounsList!.isEmpty) {
             state = state.copyWith(
               currentNoun: GermanNoun(
+                id: '',
                 article: 'das',
                 noun: 'Fehler',
                 english: 'Error',
