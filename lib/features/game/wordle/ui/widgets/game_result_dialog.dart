@@ -76,7 +76,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
       children: [
         // game result message
         Padding(
-          padding: const EdgeInsets.only(top: 20),
+          padding: const EdgeInsets.only(top: 45),
           child: AnimatedBuilder(
             animation: widget.hoverAnimation,
             builder: (context, child) {
@@ -122,7 +122,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           ),
         ),
 
-        const SizedBox(height: kToolbarHeight * 1.5),
+        const SizedBox(height: kToolbarHeight * 1.1),
 
         // target word display
         Row(
@@ -166,7 +166,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           ],
         ),
 
-        const SizedBox(height: kToolbarHeight / 1.5),
+        const SizedBox(height: kToolbarHeight / 1.2),
 
         // article selection buttons
         Row(
@@ -239,66 +239,74 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
         const SizedBox(height: kToolbarHeight * 0.75),
 
         // word with article + translation
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            if (_isCorrect)
-              Text(
-                '$_selectedArticle  ${widget.gameState.targetWord} ',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 28,
-                      color: colorBlack,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            if (!_isCorrect)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // incorrect article
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_isCorrect)
                   Text(
-                    _selectedArticle,
+                    '$_selectedArticle  ${widget.gameState.targetWord} ',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 28,
-                          fontStyle: FontStyle.italic,
-                          color: colorRed,
-                          decoration: TextDecoration.lineThrough,
-                          decorationThickness: 1,
-                        ),
-                  ),
-                  const SizedBox(width: 10),
-                  // correct article
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
+                          fontSize: 30,
                           color: colorBlack,
-                          width: 2,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                if (!_isCorrect)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // incorrect article
+                      Text(
+                        _selectedArticle,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontSize: 30,
+                              fontStyle: FontStyle.italic,
+                              color: colorRed,
+                              decoration: TextDecoration.lineThrough,
+                              decorationThickness: 1,
+                            ),
+                      ),
+                      const SizedBox(width: 20),
+                      // correct article
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: colorBlack,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          _correctArticle,
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontSize: 30,
+                                    color: Color.fromARGB(255, 0, 97, 0),
+                                  ),
                         ),
                       ),
-                    ),
-                    child: Text(
-                      _correctArticle,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontSize: 28,
-                            color: Color(0xFF32CD32),
-                          ),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
+                      const SizedBox(width: 10),
 
-                  // word itself
-                  Text(
-                    ' ${widget.gameState.targetWord}',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 28,
-                          color: colorBlack,
-                        ),
+                      // word itself
+                      Text(
+                        ' ${widget.gameState.targetWord}',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontSize: 30,
+                              color: colorBlack,
+                            ),
+                      ),
+                    ],
                   ),
+              ],
+            ),
 
-                  const SizedBox(width: 5),
-                ],
-              ),
+            SizedBox(height: _isCorrect ? 5 : 10),
+
             // translation
             Text(
               ' - $_englishTranslation',

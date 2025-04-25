@@ -53,7 +53,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
       context: context,
       barrierDismissible: false,
       width: 300,
-      height: 300,
+      height: 330,
       child: GameResultDialog(
         gameState: state,
         hoverAnimation: _hoverAnimation,
@@ -169,8 +169,8 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     );
 
     _hoverAnimation = Tween<double>(
-      begin: 3,
-      end: 15,
+      begin: 0,
+      end: 5,
     ).animate(
       CurvedAnimation(
         parent: _hoverController,
