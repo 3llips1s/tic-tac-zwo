@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -161,11 +162,8 @@ class OnlineGameNotifier extends GameNotifier {
         if (isGameOver && !state.isGameOver) {
           final winnerId = gameSessionData['winner_id'];
           final winningPlayer = winnerId != null
-
-              // TODO: figure out if we can equate player.username to winnerid
-              ? state.players.firstWhere(
-                  (player) => player.userName == winnerId,
-                  orElse: () => state.players[0])
+              ? state.players.firstWhere((player) => player.userId == winnerId,
+                  orElse: () => state.players[Random().nextInt(2)])
               : null;
 
           state = state.copyWith(

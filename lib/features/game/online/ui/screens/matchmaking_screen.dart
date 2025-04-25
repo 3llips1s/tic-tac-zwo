@@ -5,14 +5,20 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/widgets/display_ripple_icon.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
+import '../../../../../config/game_config/config.dart';
 import '../../data/services/matchmaking_service.dart';
 
-// Preference constants
+// preference constants
 const String preferencesBoxName = 'user_preferences';
 const String hasSeenMatchmakingSelectionKey = 'has_seen_matchmaking_selection';
 
 class MatchmakingScreen extends ConsumerStatefulWidget {
-  const MatchmakingScreen({super.key});
+  final GameMode gameMode;
+
+  const MatchmakingScreen({
+    super.key,
+    this.gameMode = GameMode.online,
+  });
 
   @override
   ConsumerState<MatchmakingScreen> createState() => _MatchmakingScreenState();
@@ -90,12 +96,11 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     ref.read(matchmakingServiceProvider).cancelMatchmaking();
   }
 
-  void _navigateToTurnSelection(String gameId) {
+  void _navigateToOnlineTurnSelection(String gameId) {
     _cancelMatchmaking();
 
-    Navigator.of(context).pushNamed(
-      RouteNames.onlineTurnSelection,
-    );
+    Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
+        arguments: {'gameSessionId': gameId});
   }
 
   @override
@@ -110,7 +115,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
         next.whenData(
           (gameId) {
             if (gameId != null) {
-              _navigateToTurnSelection(gameId);
+              _navigateToOnlineTurnSelection(gameId);
             }
           },
         );
@@ -141,7 +146,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   child: Align(
                     alignment: Alignment.center,
                     child: Text(
-                      'online',
+                      widget.gameMode.string,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,

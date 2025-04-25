@@ -16,8 +16,8 @@ class OnlineTurnSelectionScreen extends ConsumerStatefulWidget {
 
   const OnlineTurnSelectionScreen({
     super.key,
-    required this.gameMode,
     required this.gameSessionId,
+    this.gameMode = GameMode.online,
   });
 
   @override
@@ -152,11 +152,13 @@ class _OnlineTurnSelectionScreenState
 
           final player1 = Player(
             userName: gameSession['player1']['username'] ?? 'Spieler 1',
+            userId: gameSession['player1']['id'] ?? '',
             symbol: PlayerSymbol.X,
           );
 
           final player2 = Player(
             userName: gameSession['player2']['username'] ?? 'Spieler 2',
+            userId: gameSession['player2']['id'] ?? '',
             symbol: PlayerSymbol.O,
           );
 

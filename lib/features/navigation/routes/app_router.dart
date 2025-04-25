@@ -31,21 +31,6 @@ class AppRouter {
           },
         );
 
-      // device scan
-      case RouteNames.matchmaking:
-        return PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              MatchmakingScreen(),
-          transitionDuration: const Duration(milliseconds: 600),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity:
-                  CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-              child: child,
-            );
-          },
-        );
-
       // turn selection
       case RouteNames.turnSelection:
         final arguments = settings.arguments as Map<String, dynamic>?;
@@ -83,14 +68,28 @@ class AppRouter {
           },
         );
 
+      // match making
+      case RouteNames.matchmaking:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              MatchmakingScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity:
+                  CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+              child: child,
+            );
+          },
+        );
+
       // online turn selection
       case RouteNames.onlineTurnSelection:
         final arguments = settings.arguments as Map<String, dynamic>?;
-        final gameMode = arguments?['gameMode'] as GameMode?;
-        final gameSessionId = arguments?['gameSessionId'] as String;
+        final gameSessionId = arguments?['gameSessionId'] as String?;
 
         // check
-        if (gameMode == null) {
+        if (gameSessionId == null) {
           return PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
                 const HomeScreen(),
@@ -108,7 +107,6 @@ class AppRouter {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               OnlineTurnSelectionScreen(
-            gameMode: gameMode,
             gameSessionId: gameSessionId,
           ),
           transitionDuration: const Duration(milliseconds: 600),

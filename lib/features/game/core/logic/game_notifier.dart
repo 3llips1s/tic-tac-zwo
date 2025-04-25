@@ -264,8 +264,6 @@ class GameNotifier extends StateNotifier<GameState> {
     }
   }
 
-  // start here to fix the rematch issue
-
   void rematch() {
     _timer?.cancel();
     _currentGameUsedNouns.clear();
@@ -294,10 +292,11 @@ class GameNotifier extends StateNotifier<GameState> {
         newPlayers.firstWhere((player) => player.symbol == PlayerSymbol.X);
 
     state = GameState.initial(newPlayers, newStartingPlayer).copyWith(
-        player1Score: player1Score,
-        player2Score: player2Score,
-        gamesPlayed: gamesPlayed,
-        winningCells: null);
+      player1Score: player1Score,
+      player2Score: player2Score,
+      gamesPlayed: gamesPlayed,
+      winningCells: null,
+    );
   }
 
   @override
