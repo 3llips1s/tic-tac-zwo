@@ -184,7 +184,10 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
                 ),
                 child: Center(
                   child: IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pushReplacementNamed(
+                      context,
+                      RouteNames.home,
+                    ),
                     icon: Icon(
                       Icons.arrow_back_ios_new_rounded,
                       color: colorWhite,

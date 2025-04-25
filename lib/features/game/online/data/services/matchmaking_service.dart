@@ -52,6 +52,8 @@ class MatchmakingService {
 
   // global match making
   Future<void> startGlobalMatchmaking() async {
+    await _cleanupStaleEntries();
+
     final userId = _userId;
 
     if (userId == null) {
@@ -87,6 +89,7 @@ class MatchmakingService {
         Duration(seconds: 5),
         (_) {
           _checkForMatch();
+          debugCheckQueueStatus();
         },
       );
     } catch (e) {
@@ -97,6 +100,8 @@ class MatchmakingService {
 
   // nearby matchmaking
   Future<void> startNearbyMatchmaking() async {
+    await _cleanupStaleEntries();
+
     final userId = _userId;
 
     if (userId == null) {
@@ -167,11 +172,14 @@ class MatchmakingService {
     }
 
     _matchSubscription?.cancel();
+
+    // subscribe to channel for realtime updates
     _matchSubscription = _supabase
         .from('matchmaking_queue')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
+          print('received match data: $data');
           if (data.isNotEmpty) {
             final matchData = data.first;
             if (matchData['is_matched'] == true &&
@@ -224,35 +232,28 @@ class MatchmakingService {
     if (userId == null) return;
 
     try {
-      // queue entries excluding current user
-      final result = await _supabase
-          .from('matchmaking_queue')
-          .select()
-          .eq('is_matched', false)
-          .neq('user_id', userId);
-
-      if (result.isEmpty) return;
-
-      // get current user entry
+      // get current user first to determine matching criteria
       final localUserEntry = await _supabase
           .from('matchmaking_queue')
           .select()
           .eq('user_id', userId)
           .maybeSingle();
 
-      // Check if we got a valid response
       if (localUserEntry == null) return;
 
-      // find a match with compatible criteria (same type of matchmaking)
-      Map<String, dynamic>? match;
-      for (var entry in result) {
-        if (entry['is_nearby_match'] == localUserEntry['is_nearby_match']) {
-          match = entry;
-          break;
-        }
-      }
+      // find a match with compatible criteria
+      final result = await _supabase
+          .from('matchmaking_queue')
+          .select()
+          .eq('is_matched', false)
+          .eq('is_nearby_match', localUserEntry['is_nearby_match'])
+          .neq('user_id', userId)
+          .order('created_at', ascending: true) // first come first served?
+          .limit(1);
 
-      if (match == null) return;
+      if (result.isEmpty) return;
+
+      final match = result[0];
 
       // create game session
       final gameId = Uuid().v4();
@@ -263,16 +264,22 @@ class MatchmakingService {
         localUserEntry['is_nearby_match'],
       );
 
-      // update both players' matchmaking entries
-      await _supabase.from('matchmaking_queue').update({
-        'is_matched': true,
-        'game_id': gameId,
-      }).eq('user_id', userId);
+      // update/transact both players matchmaking entries
+      await Future.wait([
+        // local player
+        _supabase.from('matchmaking_queue').update({
+          'is_matched': true,
+          'game_id': gameId,
+        }).eq('user_id', userId),
 
-      await _supabase.from('matchmaking_queue').update({
-        'is_matched': true,
-        'game_id': gameId,
-      }).eq('user_id', match['user_id']);
+        // remote plater
+        _supabase.from('matchmaking_queue').update({
+          'is_matched': true,
+          'game_id': gameId,
+        }).eq('user_id', match['user_id']),
+      ]);
+
+      print('match found. game id: $gameId');
     } catch (e) {
       _errorController.add('error checking for match: $e');
     }
@@ -358,6 +365,20 @@ class MatchmakingService {
     _queueTimer?.cancel();
   }
 
+  // clean up stale entries
+  Future<void> _cleanupStaleEntries() async {
+    try {
+      final cutoffTime = DateTime.now().subtract(Duration(minutes: 5));
+      await _supabase
+          .from('matchmaking_queue')
+          .delete()
+          .lt('created_at', cutoffTime.toIso8601String())
+          .eq('is_matched', false);
+    } catch (e) {
+      print('error cleaning up stale entries: $e');
+    }
+  }
+
   // directly initiate a match with a specific (nearby) player
   Future<void> initiateDirectMatch(String targetUserId) async {
     if (_userId == null) {
@@ -392,6 +413,30 @@ class MatchmakingService {
       _matchedGameIdController.add(gameId);
     } catch (e) {
       _errorController.add('error initiating direct match: $e');
+    }
+  }
+
+  Future<void> debugCheckQueueStatus() async {
+    try {
+      final userId = _userId;
+      if (userId == null) return;
+
+      final myEntry = await _supabase
+          .from('matchmaking_queue')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      print('my queue entry: $myEntry');
+
+      final allEntries = await _supabase
+          .from('matchmaking_queue')
+          .select()
+          .eq('is_matched', false);
+
+      print('my queue entry: $allEntries');
+    } catch (e) {
+      print('debug queue check error: $e');
     }
   }
 

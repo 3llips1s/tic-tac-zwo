@@ -299,6 +299,16 @@ class _OnlineTurnSelectionScreenState
                             ref
                                 .read(matchmakingServiceProvider)
                                 .cancelMatchmaking();
+
+                            /* 
+                            TODO: determine whether this should be changed to:
+
+                            Navigator.pushReplacementNamed(
+                            context,
+                            RouteNames.home,
+                          );
+                          
+                             */
                             Navigator.pop(context);
                           },
                           icon: Icon(
