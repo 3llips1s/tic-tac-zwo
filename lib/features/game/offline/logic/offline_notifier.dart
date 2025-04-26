@@ -114,18 +114,18 @@ class OfflineNotifier extends GameNotifier {
 
   // best move
   int? _selectBestMove() {
-    final Cells = List.generate(9, (i) => i)
+    final availableCells = List.generate(9, (i) => i)
         .where((i) => state.board[i] == null)
         .toList();
 
-    if (Cells.isEmpty) return null;
+    if (availableCells.isEmpty) return null;
 
     final opponentSymbol =
         state.currentPlayer.symbol == PlayerSymbol.X ? 'Ö' : 'X';
     final currentSymbol = state.currentPlayer.symbolString;
 
     // check if ai can win in one move
-    for (final cell in Cells) {
+    for (final cell in availableCells) {
       final boardCopy = List<String?>.from(state.board);
       boardCopy[cell] = currentSymbol;
       if (_isWinningMove(boardCopy, currentSymbol)) {
@@ -134,7 +134,7 @@ class OfflineNotifier extends GameNotifier {
     }
 
     // block opponents winning move
-    for (final cell in Cells) {
+    for (final cell in availableCells) {
       final boardCopy = List<String?>.from(state.board);
       boardCopy[cell] = opponentSymbol;
       if (_isWinningMove(boardCopy, opponentSymbol)) {
@@ -142,7 +142,33 @@ class OfflineNotifier extends GameNotifier {
       }
     }
 
-    // take centre if
+    // use minimax for optimal move
+    if (availableCells.length <= 7) {
+      int? bestMove = -1;
+      int bestScore = -1000;
+
+      for (final cell in availableCells) {
+        final boardCopy = List<String?>.from(state.board);
+        boardCopy[cell] = currentSymbol;
+
+        final score = _miniMax(
+          boardCopy,
+          0,
+          false,
+          currentSymbol,
+          opponentSymbol,
+        );
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = cell;
+        }
+      }
+
+      if (bestMove != -1) return bestMove;
+    }
+
+    // take centre
     if (state.board[4] == null) {
       return 4;
     }
@@ -150,40 +176,17 @@ class OfflineNotifier extends GameNotifier {
     // take corners
     final corners = [0, 2, 6, 8].where((i) => state.board[i] == null).toList();
     if (corners.isEmpty) {
-      final corner = corners[_random.nextInt(corners.length)];
-      return corner;
+      return corners[_random.nextInt(corners.length)];
     }
 
     // take edges
     final edges = [1, 3, 5, 7].where((i) => state.board[i] == null).toList();
     if (edges.isEmpty) {
-      final edge = corners[_random.nextInt(corners.length)];
-      return edge;
+      return edges[_random.nextInt(corners.length)];
     }
 
-    // use minimax as last resort
-    int? bestMove = -1;
-    int bestScore = -1000;
-
-    for (final cell in Cells) {
-      final boardCopy = List<String?>.from(state.board);
-      boardCopy[cell] = currentSymbol;
-
-      final score = _miniMax(
-        boardCopy,
-        0,
-        false,
-        currentSymbol,
-        opponentSymbol,
-      );
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = cell;
-      }
-    }
-
-    return bestMove;
+    // random move
+    return availableCells[_random.nextInt(availableCells.length)];
   }
 
   int _miniMax(List<String?> board, int depth, bool isMaximizing,
