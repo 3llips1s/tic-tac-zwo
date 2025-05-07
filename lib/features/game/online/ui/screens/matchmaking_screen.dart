@@ -408,35 +408,47 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             'Keine Spieler*in in der Nähe gefunden.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorBlack,
-                  fontSize: 20,
+                  fontSize: 14,
                 ),
           );
         }
 
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ...players.map(
-              (player) => ListTile(
-                title: Text(player['username'] ?? 'Unbekannt'),
-                subtitle: Text(
-                    '${player['distance_meters'].toStringAsFixed(1)}m entfernt'),
-                trailing: ElevatedButton(
-                  onPressed: () {
-                    ref
-                        .read(matchmakingServiceProvider)
-                        .initiateDirectMatch(player['user_id']);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorYellowAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              (player) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Text(
+                    player['username'] ?? 'Unbekannt',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 22,
+                          color: colorBlack,
+                        ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () {
+                      ref
+                          .read(matchmakingServiceProvider)
+                          .initiateDirectMatch(player['user_id']);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      overlayColor: colorRed,
+                      side: BorderSide(
+                        color: Colors.black26,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      size: 24,
+                      color: colorRed,
                     ),
                   ),
-                  child: Icon(
-                    Icons.double_arrow_rounded,
-                  ),
-                ),
+                ],
               ),
             ),
           ],

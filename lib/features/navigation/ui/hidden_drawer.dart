@@ -154,10 +154,10 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   const SizedBox(width: 15),
                   Text(
                     displayName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(color: colorYellowAccent, fontSize: 20.0),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: colorYellowAccent,
+                          fontSize: 20.0,
+                        ),
                   ),
                   const SizedBox(width: 10),
                   Flag(

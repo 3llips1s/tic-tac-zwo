@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]
               : []),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 0, top: 10),
+        padding: const EdgeInsets.only(top: 10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// TODO: ensure that fallbacknouns are not updated twice
+
 class NounSyncService {
   final SupabaseClient client;
 

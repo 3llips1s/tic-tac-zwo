@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
@@ -26,7 +27,8 @@ class OnlineTurnSelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _OnlineTurnSelectionScreenState
-    extends ConsumerState<OnlineTurnSelectionScreen> {
+    extends ConsumerState<OnlineTurnSelectionScreen>
+    with SingleTickerProviderStateMixin {
   bool _isReady = false;
   late Future<Map<String, dynamic>> _gameSessionFuture;
 
@@ -34,10 +36,33 @@ class _OnlineTurnSelectionScreenState
   late Player player2;
   bool isPlayerOne = false;
 
+  late AnimationController _hoverController;
+  late Animation<double> _hoverAnimation;
+
   @override
   void initState() {
     super.initState();
     _loadGameSession();
+    _initHoverAnimation();
+  }
+
+  void _initHoverAnimation() {
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _hoverAnimation = Tween<double>(
+      begin: 0,
+      end: 5,
+    ).animate(
+      CurvedAnimation(
+        parent: _hoverController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _hoverController.repeat(reverse: true);
   }
 
   void _loadGameSession() {
@@ -153,12 +178,14 @@ class _OnlineTurnSelectionScreenState
           final player1 = Player(
             userName: gameSession['player1']['username'] ?? 'Spieler 1',
             userId: gameSession['player1']['id'] ?? '',
+            countryCode: gameSession['player1']['country_code'],
             symbol: PlayerSymbol.X,
           );
 
           final player2 = Player(
             userName: gameSession['player2']['username'] ?? 'Spieler 2',
             userId: gameSession['player2']['id'] ?? '',
+            countryCode: gameSession['player2']['country_code'],
             symbol: PlayerSymbol.O,
           );
 
@@ -213,23 +240,24 @@ class _OnlineTurnSelectionScreenState
                 // Player 2
                 _buildPlayerRow(player2, alignRight: true),
 
-                SizedBox(height: kToolbarHeight * 2),
+                SizedBox(height: kToolbarHeight),
 
                 // Ready button
                 GestureDetector(
                   onTap: _toggleReady,
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    height: 70,
-                    width: 200,
+                    duration: Duration(milliseconds: 450),
+                    height: 75,
+                    width: _isReady ? 175 : 75,
                     decoration: BoxDecoration(
                       color: _isReady ? Colors.green : Colors.black87,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(40),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
-                          offset: Offset(3, 3),
+                          offset: Offset(5, 5),
                           blurRadius: 5,
+                          spreadRadius: 1,
                         ),
                       ],
                     ),
@@ -239,20 +267,22 @@ class _OnlineTurnSelectionScreenState
                         children: [
                           Icon(
                             _isReady
-                                ? Icons.check_circle
+                                ? Icons.check_circle_rounded
                                 : Icons.play_arrow_rounded,
                             color: colorWhite,
-                            size: 32,
+                            size: _isReady ? 40 : 50,
                           ),
-                          SizedBox(width: 10),
-                          Text(
-                            _isReady ? "Bereit!" : "Spielen",
-                            style: TextStyle(
-                              color: colorWhite,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                          if (_isReady) ...[
+                            SizedBox(width: 16),
+                            Text(
+                              'Bereit!',
+                              style: TextStyle(
+                                color: colorWhite,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                          ]
                         ],
                       ),
                     ),
@@ -260,24 +290,32 @@ class _OnlineTurnSelectionScreenState
                 ),
 
                 // Opponent status
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: isOpponentReady
-                      ? Text(
-                          "Gegner ist bereit!",
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        )
-                      : Text(
-                          "Warten auf Gegner...",
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 16,
-                          ),
-                        ),
+                AnimatedBuilder(
+                  animation: _hoverAnimation,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _hoverAnimation.value),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 40.0),
+                        child: isOpponentReady
+                            ? Text(
+                                "Gegner ist bereit!",
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              )
+                            : Text(
+                                "Warten auf Gegner...",
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
+                    );
+                  },
                 ),
 
                 // Back button
@@ -300,16 +338,10 @@ class _OnlineTurnSelectionScreenState
                                 .read(matchmakingServiceProvider)
                                 .cancelMatchmaking();
 
-                            /* 
-                            TODO: determine whether this should be changed to:
-
                             Navigator.pushReplacementNamed(
-                            context,
-                            RouteNames.home,
-                          );
-                          
-                             */
-                            Navigator.pop(context);
+                              context,
+                              RouteNames.home,
+                            );
                           },
                           icon: Icon(
                             Icons.arrow_back_ios_new_rounded,
@@ -357,14 +389,27 @@ class _OnlineTurnSelectionScreenState
       ),
     );
 
-    const space = SizedBox(width: 30);
+    const space = SizedBox(width: 16);
+    const flagSpace = SizedBox(width: 8);
 
-    final playerName = Text(
-      player.userName,
-      style: TextStyle(
-        fontSize: 20,
-        color: colorBlack,
-      ),
+    final playerInfo = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          player.userName,
+          style: TextStyle(
+            fontSize: 20,
+            color: colorBlack,
+          ),
+        ),
+        flagSpace,
+        if (player.countryCode != null && player.countryCode!.isNotEmpty)
+          Flag(
+            countryCode: player.countryCode!,
+            height: 15,
+            width: 22.5,
+          )
+      ],
     );
 
     return Padding(
@@ -373,17 +418,18 @@ class _OnlineTurnSelectionScreenState
       child: alignRight
           ? Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [playerName, space, playerSymbol],
+              children: [playerInfo, space, playerSymbol],
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.start,
-              children: [playerSymbol, space, playerName],
+              children: [playerSymbol, space, playerInfo],
             ),
     );
   }
 
   @override
   void dispose() {
+    _hoverController.dispose();
     super.dispose();
   }
 }

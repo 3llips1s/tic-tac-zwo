@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -35,8 +36,8 @@ class MatchmakingService {
   Stream<String> get errorStream => _errorController.stream;
 
   String? _userId;
-  Timer? _queueTimer;
   bool _isInQueue = false;
+  String? _currentQueueEntryId;
 
   MatchmakingService(this._supabase) {
     _init();
@@ -46,24 +47,43 @@ class MatchmakingService {
     _userId = _supabase.auth.currentUser?.id;
     if (_userId == null) {
       _errorController.add('user not authenticated');
+      if (kDebugMode) {
+        print('[MatchmakingService] Error:  user not authenticated');
+      }
       return;
+    }
+    if (kDebugMode) {
+      print('[MatchmakingService] initialized for user:$_userId');
     }
   }
 
   // global match making
   Future<void> startGlobalMatchmaking() async {
-    await _cleanupStaleEntries();
-
     final userId = _userId;
 
     if (userId == null) {
       _errorController.add('user not authenticated.');
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Error starting global:  user not authenticated');
+      }
+      return;
+    }
+
+    if (_isInQueue) {
+      if (kDebugMode) {
+        print('[MatchmakingService] already in queue, cannot start global');
+      }
       return;
     }
 
     // update state
     _matchStateController.add(MatchmakingState.searching);
     _isInQueue = true;
+
+    if (kDebugMode) {
+      print('[MatchmakingService] start global match for user: $_userId');
+    }
 
     try {
       // delete existing entries for user
@@ -72,40 +92,58 @@ class MatchmakingService {
           .delete()
           .eq('user_id', userId)
           .eq('is_nearby_match', false);
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] deleted previous queue entries for user:$_userId');
+      }
 
       // insert new entry into queue
-      await _supabase.from('matchmaking_queue').insert({
+      final response = await _supabase.from('matchmaking_queue').insert({
         'user_id': userId,
         'is_nearby_match': false,
         'is_matched': false,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      }).select('id');
+
+      if (response.isEmpty || response[0]['id'] == null) {
+        throw Exception('failed to insert into queue or retrieve entry id');
+      }
+
+      _currentQueueEntryId = response[0]['id'];
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] added to global queue. entry id: $_currentQueueEntryId');
+      }
 
       // start listening for matches
       _startMatchListener();
-
-      // check for matches periodically
-      _queueTimer = Timer.periodic(
-        Duration(seconds: 5),
-        (_) {
-          _checkForMatch();
-          debugCheckQueueStatus();
-        },
-      );
     } catch (e) {
       _errorController.add('failed to start matchmaking: $e');
       _matchStateController.add(MatchmakingState.error);
+      _isInQueue = false;
+      _currentQueueEntryId = null;
+      if (kDebugMode) {
+        print('[MatchmakingService] Error starting global:$e');
+      }
     }
   }
 
   // nearby matchmaking
   Future<void> startNearbyMatchmaking() async {
-    await _cleanupStaleEntries();
-
     final userId = _userId;
 
     if (userId == null) {
       _errorController.add('user not authenticated.');
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Error starting nearby:  user not authenticated');
+      }
+      return;
+    }
+
+    if (_isInQueue) {
+      if (kDebugMode) {
+        print('[MatchmakingService] already in queue. cannot start nearby');
+      }
       return;
     }
 
@@ -113,32 +151,51 @@ class MatchmakingService {
     bool hasPermission = await _requestLocationPermission();
     if (!hasPermission) {
       _errorController.add('location permission denied');
+      if (kDebugMode) {
+        print('[MatchmakingService] location permission denied');
+      }
       return;
     }
 
     try {
       Position position = await Geolocator.getCurrentPosition();
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] got location:  ${position.latitude} : ${position.longitude}');
+      }
 
       // update state
       _matchStateController.add(MatchmakingState.searching);
       _isInQueue = true;
+      if (kDebugMode) {
+        print('[MatchmakingService] starting nearby match for user:$_userId');
+      }
 
       // delete existing entries for the user
-      await _supabase
-          .from('matchmaking_queue')
-          .delete()
-          .eq('user_id', userId)
-          .eq('is_nearby_match', true);
+      await _supabase.from('matchmaking_queue').delete().eq('user_id', userId);
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] deleted previous queue entries for user:$_userId');
+      }
 
       // insert new entry in matchmaking queue with location
-      await _supabase.from('matchmaking_queue').insert({
+      final response = await _supabase.from('matchmaking_queue').insert({
         'user_id': userId,
         'is_nearby_match': true,
         'lat': position.latitude,
         'lng': position.longitude,
         'is_matched': false,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+      }).select('id');
+
+      if (response.isEmpty || response[0]['id'] == null) {
+        throw Exception('failed to insert into queue or retrieve entry id');
+      }
+
+      _currentQueueEntryId = response[0]['id'];
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] added to nearby queue. entry id:$_currentQueueEntryId');
+      }
 
       // update user location in user table
       await _supabase.from('users').update({
@@ -152,160 +209,171 @@ class MatchmakingService {
       _startMatchListener();
 
       _startNearbyPlayersListener(position.latitude, position.longitude);
-
-      _queueTimer = Timer.periodic(Duration(seconds: 5), (_) {
-        _checkForMatch();
-      });
     } catch (e) {
       _errorController.add('failed to start nearby matchmaking: $e');
       _matchStateController.add(MatchmakingState.error);
+      _isInQueue = false;
+      _currentQueueEntryId = null;
+      if (kDebugMode) {
+        print('[MatchmakingService] Error starting nearby match: $e');
+      }
     }
   }
 
   // listen for match updates
   void _startMatchListener() {
     final userId = _userId;
+    final entryId = _currentQueueEntryId;
 
-    if (userId == null) {
-      _errorController.add('user not authenticated.');
+    if (userId == null || entryId == null) {
+      _errorController
+          .add('cannot start listener: user or queue entry id missing.');
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Error:  cannot start listener. user or entry id missing');
+      }
       return;
     }
 
     _matchSubscription?.cancel();
+    if (kDebugMode) {
+      print(
+          '[MatchmakingService] starting match listener for entry id: $entryId');
+    }
 
     // subscribe to channel for realtime updates
     _matchSubscription = _supabase
         .from('matchmaking_queue')
         .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .listen((data) {
-          print('received match data: $data');
-          if (data.isNotEmpty) {
-            final matchData = data.first;
-            if (matchData['is_matched'] == true &&
-                matchData['game_id'] != null) {
-              _matchStateController.add(MatchmakingState.matched);
-              _matchedGameIdController.add(matchData['game_id']);
-              _cleanupQueue();
+        .eq('id', entryId)
+        .listen(
+          (data) {
+            if (kDebugMode) {
+              print(
+                  '[MatchmakingService] received data on match stream: $data');
             }
-          }
-        }, onError: (error) {
-          _errorController.add('match listener error: $error');
-        });
+            if (data.isNotEmpty) {
+              final matchData = data.first;
+              final bool isMatched = matchData['is_matched'] ?? false;
+              final String? gameId = matchData['game_id'];
+
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] processing queue entry update: is_matched=$isMatched, game_id=$gameId');
+              }
+
+              if (isMatched && gameId != null) {
+                if (kDebugMode) {
+                  print(
+                      '[MatchmakingService] match found! game id: $gameId. updating state.');
+                }
+                _matchStateController.add(MatchmakingState.matched);
+                _matchedGameIdController.add(gameId);
+                _cleanupListener();
+              } else {
+                if (kDebugMode) {
+                  print('queue entry updated, but not matched yet.');
+                }
+              }
+            } else {
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] received empty data for entry id $entryId. entry might have been deleted.');
+              }
+              if (_isInQueue) {
+                cancelMatchmaking();
+              }
+            }
+          },
+          onError: (error) {
+            if (kDebugMode) {
+              print('[MatchmakingService] match listener error: $error');
+            }
+            _errorController.add('match listener error: $error');
+            // TODO: what to do with listener errors (maybe retry?)
+            _matchStateController.add(MatchmakingState.error);
+            _cleanupListener();
+            _isInQueue = false;
+            _currentQueueEntryId = null;
+          },
+          onDone: () {
+            if (kDebugMode) {
+              print('[MatchmakingService] match listener done (closed).');
+            }
+          },
+        );
   }
 
   // listen for nearby players
   void _startNearbyPlayersListener(double lat, double lng) {
     _nearbySubscription?.cancel();
+    if (kDebugMode) {
+      print('[MatchmakingService] starting nearby players listener.');
+    }
 
     // listen to user status changes
     _nearbySubscription = _supabase
         .from('users')
         .stream(primaryKey: ['id'])
         .eq('is_online', true)
-        .listen((data) async {
-          try {
-            // rpc call to find nearby player
-            final userId = _userId;
-            if (userId == null) return;
+        .listen(
+          (data) async {
+            try {
+              // rpc call to find nearby player
+              final userId = _userId;
+              if (userId == null) return;
 
-            final response = await _supabase.rpc('find_nearby_players',
-                params: {
-                  'p_user_id': userId,
-                  'p_lat': lat,
-                  'p_lng': lng,
-                  'p_radius_meters': 20
-                });
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] user stream update detected, fetching nearby players...');
+              }
 
-            _nearbyPlayersController.add(response);
-          } catch (e) {
-            _errorController.add('error finding nearby players: $e');
-          }
-        });
-  }
+              final response = await _supabase.rpc('find_nearby_players',
+                  params: {
+                    'p_user_id': userId,
+                    'p_lat': lat,
+                    'p_lng': lng,
+                    'p_radius_meters': 20
+                  });
 
-  // check for available matches
-  Future<void> _checkForMatch() async {
-    if (!_isInQueue) return;
-
-    final userId = _userId;
-    if (userId == null) return;
-
-    try {
-      // get current user first to determine matching criteria
-      final localUserEntry = await _supabase
-          .from('matchmaking_queue')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (localUserEntry == null) return;
-
-      // find a match with compatible criteria
-      final result = await _supabase
-          .from('matchmaking_queue')
-          .select()
-          .eq('is_matched', false)
-          .eq('is_nearby_match', localUserEntry['is_nearby_match'])
-          .neq('user_id', userId)
-          .order('created_at', ascending: true) // first come first served?
-          .limit(1);
-
-      if (result.isEmpty) return;
-
-      final match = result[0];
-
-      // create game session
-      final gameId = Uuid().v4();
-      await _createGameSession(
-        gameId,
-        userId,
-        match['user_id'],
-        localUserEntry['is_nearby_match'],
-      );
-
-      // update/transact both players matchmaking entries
-      await Future.wait([
-        // local player
-        _supabase.from('matchmaking_queue').update({
-          'is_matched': true,
-          'game_id': gameId,
-        }).eq('user_id', userId),
-
-        // remote plater
-        _supabase.from('matchmaking_queue').update({
-          'is_matched': true,
-          'game_id': gameId,
-        }).eq('user_id', match['user_id']),
-      ]);
-
-      print('match found. game id: $gameId');
-    } catch (e) {
-      _errorController.add('error checking for match: $e');
-    }
-  }
-
-  // create a new game session
-  Future<void> _createGameSession(String gameId, String player1Id,
-      String player2Id, bool isNearbyMatch) async {
-    try {
-      // randomize who starts first
-      final playerIds = [player1Id, player2Id];
-      playerIds.shuffle();
-      final startingPlayerId = playerIds[0];
-
-      await _supabase.from('game_sessions').insert({
-        'id': gameId,
-        'player1_id': player1Id,
-        'player2_id': player2Id,
-        'current_player_id': startingPlayerId,
-        'is_nearby_match': isNearbyMatch,
-        'created_at': DateTime.now().toIso8601String(),
-        'last_activity': DateTime.now().toIso8601String(),
-      });
-    } catch (e) {
-      _errorController.add('error creating game session: $e');
-    }
+              if (response is List) {
+                final List<Map<String, dynamic>> players =
+                    List<Map<String, dynamic>>.from(
+                        response.map((item) => item as Map<String, dynamic>));
+                if (kDebugMode) {
+                  print(
+                      '[MatchmakingService] found nearby players: ${players.length}');
+                }
+                _nearbyPlayersController.add(players);
+              } else {
+                if (kDebugMode) {
+                  print(
+                      '[MatchmakingService] unexpected response type from find_nearby players rpc: ${response.runtimeType}');
+                }
+                _nearbyPlayersController.add([]);
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] error finding nearby players via rpc: $e');
+              }
+              _errorController.add('error finding nearby players: $e');
+            }
+          },
+          onError: (error) {
+            if (kDebugMode) {
+              print(
+                  '[MatchmakingService] nearby players listener error: $error');
+            }
+            _errorController.add('nearby players listener error: $error');
+          },
+          onDone: () {
+            if (kDebugMode) {
+              print(
+                  '[MatchmakingService] nearby players listener done/ closed');
+            }
+          },
+        );
   }
 
   // request location permission
@@ -316,6 +384,9 @@ class MatchmakingService {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _errorController.add('location services are disabled');
+      if (kDebugMode) {
+        print('[MatchmakingService] location services disabled');
+      }
       return false;
     }
 
@@ -324,95 +395,175 @@ class MatchmakingService {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         _errorController.add('location permissions are denied');
+        if (kDebugMode) {
+          print('[MatchmakingService] location permissions denied');
+        }
         return false;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
       _errorController.add('location permissions are permanently denied');
+      if (kDebugMode) {
+        print('[MatchmakingService] location permissions denied forever');
+      }
       return false;
     }
 
+    if (kDebugMode) {
+      print('[MatchmakingService] location permissions granted');
+    }
     return true;
   }
 
   // cancel matchmaking
   Future<void> cancelMatchmaking() async {
     final userId = _userId;
+    final entryId = _currentQueueEntryId;
 
     if (userId == null) {
       _errorController.add('user not authenticated.');
+      if (kDebugMode) {
+        print('[MatchmakingService] cannot cancel, user not auth\'d');
+      }
       return;
     }
 
+    if (!_isInQueue) {
+      if (kDebugMode) {
+        print('[MatchmakingService] Cannot cancel: Not in queue.');
+      }
+      return; // Nothing to cancel
+    }
+
+    if (kDebugMode) {
+      print(
+          '[MatchmakingService] Canceling matchmaking for user $userId, entry $entryId');
+    }
+
     _isInQueue = false;
-    _queueTimer?.cancel();
+    _currentQueueEntryId = null;
     _matchSubscription?.cancel();
     _nearbySubscription?.cancel();
 
     try {
-      await _supabase.from('matchmaking_queue').delete().eq('user_id', userId);
+      if (entryId != null) {
+        await _supabase.from('matchmaking_queue').delete().eq('id', entryId);
+        if (kDebugMode) {
+          print('[MatchmakingService] Deleted queue entry $entryId.');
+        } else {
+          // delete any user entries as fallback
+          await _supabase
+              .from('matchmaking_queue')
+              .delete()
+              .eq('user_id', userId);
+          if (kDebugMode) {
+            print(
+                '[MatchmakingService] Deleted queue entries by user ID (fallback).');
+          }
+        }
+      }
 
       _matchStateController.add(MatchmakingState.idle);
+      if (kDebugMode) {
+        print('[MatchmakingService] Matchmaking cancelled. State set to idle.');
+      }
     } catch (e) {
       _errorController.add('error canceling matchmaking: $e');
+      _matchStateController.add(MatchmakingState.idle);
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Error cancelling matchmaking: $e. State set to idle.');
+      }
     }
   }
 
-  // clean up queue after successful match
-  void _cleanupQueue() {
-    _isInQueue = false;
-    _queueTimer?.cancel();
-  }
-
-  // clean up stale entries
-  Future<void> _cleanupStaleEntries() async {
-    try {
-      final cutoffTime = DateTime.now().subtract(Duration(minutes: 5));
-      await _supabase
-          .from('matchmaking_queue')
-          .delete()
-          .lt('created_at', cutoffTime.toIso8601String())
-          .eq('is_matched', false);
-    } catch (e) {
-      print('error cleaning up stale entries: $e');
-    }
+  void _cleanupListener() {
+    if (kDebugMode) print('[MatchmakingService] Cleaning up match listener.');
+    _matchSubscription?.cancel();
+    _matchSubscription = null;
   }
 
   // directly initiate a match with a specific (nearby) player
   Future<void> initiateDirectMatch(String targetUserId) async {
     if (_userId == null) {
       _errorController.add('user not authenticated');
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] cannot initiate direct match: user not authenticated');
+      }
       return;
+    }
+
+    if (kDebugMode) {
+      print('[MatchmakingService] Initiating direct match with $targetUserId');
     }
 
     try {
       // create game session
       final gameId = Uuid().v4();
-      await _createGameSession(gameId, _userId!, targetUserId, true);
+      await _createDirectGameSession(gameId, _userId!, targetUserId, true);
+
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Direct match game session created: $gameId');
+      }
 
       // add entries to matchmaking queue for both players
-      await _supabase.from('matchmaking_queue').insert([
+      await _supabase.from('matchmaking_queue').upsert([
         {
           'user_id': _userId,
           'is_nearby_match': true,
           'is_matched': true,
           'game_id': gameId,
-          'created_at': DateTime.now().toIso8601String(),
         },
         {
           'user_id': targetUserId,
           'is_nearby_match': true,
           'is_matched': true,
           'game_id': gameId,
-          'created_at': DateTime.now().toIso8601String(),
         }
-      ]);
+      ], onConflict: 'user_id');
 
+      if (kDebugMode) {
+        print('[MatchmakingService] upserted queue entries for direct match');
+      }
+
+      // TODO: trigger update manually for current user
       _matchStateController.add(MatchmakingState.matched);
       _matchedGameIdController.add(gameId);
     } catch (e) {
       _errorController.add('error initiating direct match: $e');
+      if (kDebugMode) {
+        print('[MatchmakingService] error initiating direct match: $e');
+      }
+    }
+  }
+
+  Future<void> _createDirectGameSession(String gameId, String player1Id,
+      String player2Id, bool isNearbyMatch) async {
+    try {
+      final playerIds = [player1Id, player2Id];
+      playerIds.shuffle();
+      final startingPlayerId = playerIds[0];
+
+      await _supabase.from('game_sessions').insert({
+        'id': gameId,
+        'player1_id': player1Id,
+        'player2_id': player2Id,
+        'current_player_id': startingPlayerId,
+        'is_nearby_match': isNearbyMatch,
+      });
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] _createGameSessionDirect successful for game $gameId');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[MatchmakingService] Error in _createGameSessionDirect: $e');
+      }
+      _errorController.add('error creating direct game session: $e');
+      throw Exception('failed to create direct game session: $e');
     }
   }
 
@@ -441,9 +592,9 @@ class MatchmakingService {
   }
 
   void dispose() {
+    if (kDebugMode) print('[MatchmakingService] Disposing service.');
     _matchSubscription?.cancel();
     _nearbySubscription?.cancel();
-    _queueTimer?.cancel();
     _matchStateController.close();
     _matchedGameIdController.close();
     _nearbyPlayersController.close();

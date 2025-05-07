@@ -8,12 +8,14 @@ class Player {
   final String userName;
   PlayerSymbol symbol;
   String? userId;
+  String? countryCode;
   final bool isAI;
 
   Player({
     required this.userName,
     required this.symbol,
     this.isAI = false,
+    this.countryCode,
     this.userId,
   });
 
