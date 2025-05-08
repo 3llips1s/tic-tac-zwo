@@ -214,7 +214,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       width: 70,
       decoration: BoxDecoration(
         color: player.symbol == PlayerSymbol.X ? colorRed : colorYellow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           // bottom right
           BoxShadow(

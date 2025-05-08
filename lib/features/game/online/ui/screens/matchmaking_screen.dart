@@ -439,7 +439,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                       ),
                       overlayColor: colorRed,
                       side: BorderSide(
-                        color: Colors.black26,
+                        color: Colors.black38,
                       ),
                     ),
                     child: Icon(

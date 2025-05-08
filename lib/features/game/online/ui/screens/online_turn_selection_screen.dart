@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/ripple_icon.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
 
@@ -75,6 +77,8 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _toggleReady() {
+    HapticFeedback.mediumImpact();
+
     setState(() {
       _isReady = !_isReady;
     });
@@ -201,7 +205,7 @@ class _OnlineTurnSelectionScreenState
               children: [
                 // title
                 Padding(
-                  padding: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(top: 30),
                   child: SizedBox(
                     height: kToolbarHeight * 2,
                     child: Align(
@@ -216,8 +220,6 @@ class _OnlineTurnSelectionScreenState
                     ),
                   ),
                 ),
-
-                SizedBox(height: kToolbarHeight / 1.5),
 
                 // Player 1
                 _buildPlayerRow(player1),
@@ -240,53 +242,12 @@ class _OnlineTurnSelectionScreenState
                 // Player 2
                 _buildPlayerRow(player2, alignRight: true),
 
-                SizedBox(height: kToolbarHeight),
+                SizedBox(height: kToolbarHeight / 1.5),
 
                 // Ready button
                 GestureDetector(
-                  onTap: _toggleReady,
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 450),
-                    height: 75,
-                    width: _isReady ? 175 : 75,
-                    decoration: BoxDecoration(
-                      color: _isReady ? Colors.green : Colors.black87,
-                      borderRadius: BorderRadius.circular(40),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          offset: Offset(5, 5),
-                          blurRadius: 5,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isReady
-                                ? Icons.check_circle_rounded
-                                : Icons.play_arrow_rounded,
-                            color: colorWhite,
-                            size: _isReady ? 40 : 50,
-                          ),
-                          if (_isReady) ...[
-                            SizedBox(width: 16),
-                            Text(
-                              'Bereit!',
-                              style: TextStyle(
-                                color: colorWhite,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
+                  onTap: _isReady ? _toggleReady : null,
+                  child: _buildReadyButton(),
                 ),
 
                 // Opponent status
@@ -296,23 +257,8 @@ class _OnlineTurnSelectionScreenState
                     return Transform.translate(
                       offset: Offset(0, _hoverAnimation.value),
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 40.0),
-                        child: isOpponentReady
-                            ? Text(
-                                "Gegner ist bereit!",
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              )
-                            : Text(
-                                "Warten auf Gegner...",
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 16,
-                                ),
-                              ),
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: _showReadyStatus(isOpponentReady),
                       ),
                     );
                   },
@@ -368,7 +314,7 @@ class _OnlineTurnSelectionScreenState
       width: 70,
       decoration: BoxDecoration(
         color: player.symbol == PlayerSymbol.X ? colorRed : colorYellow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
@@ -389,8 +335,8 @@ class _OnlineTurnSelectionScreenState
       ),
     );
 
-    const space = SizedBox(width: 16);
-    const flagSpace = SizedBox(width: 8);
+    const space = SizedBox(width: 24);
+    const flagSpace = SizedBox(width: 12);
 
     final playerInfo = Row(
       mainAxisSize: MainAxisSize.min,
@@ -406,8 +352,8 @@ class _OnlineTurnSelectionScreenState
         if (player.countryCode != null && player.countryCode!.isNotEmpty)
           Flag(
             countryCode: player.countryCode!,
-            height: 15,
-            width: 22.5,
+            height: 12,
+            width: 18,
           )
       ],
     );
@@ -425,6 +371,72 @@ class _OnlineTurnSelectionScreenState
               children: [playerSymbol, space, playerInfo],
             ),
     );
+  }
+
+  Widget _buildReadyButton() {
+    if (_isReady) {
+      return Icon(
+        Icons.check_circle_rounded,
+        color: Colors.green,
+        size: 90,
+        shadows: [
+          BoxShadow(
+            color: colorGrey400,
+            offset: Offset(5, 5),
+            blurRadius: 15,
+          )
+        ],
+      );
+    } else {
+      return RippleIcon(
+        includeShadows: false,
+        icon: Icon(
+          Icons.play_arrow_rounded,
+          color: colorBlack,
+          size: 90,
+        ),
+        onTap: _toggleReady,
+      );
+    }
+  }
+
+  Widget _showReadyStatus(bool isOpponentReady) {
+    if (_isReady && isOpponentReady) {
+      return Text(
+        'Spiel startet...',
+        style: TextStyle(
+          color: Colors.green,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      );
+    } else if (_isReady && !isOpponentReady) {
+      return Text(
+        "Warten auf Gegner...",
+        style: TextStyle(
+          color: Colors.amber.shade700,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      );
+    } else if (!_isReady && isOpponentReady) {
+      return Text(
+        "Gegner ist bereit. Drücke Play!",
+        style: TextStyle(
+          color: colorRed.withOpacity(0.5),
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      );
+    } else {
+      return Text(
+        "Warten auf Spielbeginn...",
+        style: TextStyle(
+          color: Colors.black38,
+          fontSize: 16,
+        ),
+      );
+    }
   }
 
   @override

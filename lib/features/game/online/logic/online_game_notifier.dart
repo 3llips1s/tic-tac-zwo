@@ -78,7 +78,9 @@ class OnlineGameNotifier extends GameNotifier {
     if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
     if (state.selectedCellIndex == null ||
         !state.isTimerActive ||
-        gameSessionId.isEmpty) return;
+        gameSessionId.isEmpty) {
+      return;
+    }
 
     bool isCorrect = state.currentNoun?.article == selectedArticle;
 
