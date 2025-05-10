@@ -5,7 +5,7 @@ class DisplayRippleIcon extends StatefulWidget {
     super.key,
     required this.icon,
     required this.rippleColor,
-    this.shadowScale = 4.0, // Larger default shadow scale
+    this.shadowScale = 4.0, //
   });
 
   final Icon icon;

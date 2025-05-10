@@ -159,7 +159,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
           children: [
             SizedBox(
               width: MediaQuery.of(context).size.width,
-              height: kToolbarHeight * 1.25,
+              height: kToolbarHeight * 1.4,
               child: AnimatedCrossFade(
                 firstChild: AnimatedBuilder(
                   animation: _hoverAnimation,

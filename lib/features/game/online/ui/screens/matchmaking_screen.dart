@@ -417,39 +417,33 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
         return Column(
           children: [
             ...players.map(
-              (player) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(
-                    player['username'] ?? 'Unbekannt',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 22,
-                          color: colorBlack,
-                        ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {
-                      ref
-                          .read(matchmakingServiceProvider)
-                          .initiateDirectMatch(player['user_id']);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9),
+              (player) => GestureDetector(
+                onTap: () {
+                  ref
+                      .read(matchmakingServiceProvider)
+                      .initiateDirectMatch(player['user_id']);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 75),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Text(
+                        player['username'] ?? 'Unbekannt',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 20,
+                              color: Colors.black87,
+                            ),
                       ),
-                      overlayColor: colorRed,
-                      side: BorderSide(
-                        color: Colors.black38,
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 40,
+                        color: Colors.green,
                       ),
-                    ),
-                    child: Icon(
-                      Icons.play_arrow_rounded,
-                      size: 24,
-                      color: Colors.green,
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],
