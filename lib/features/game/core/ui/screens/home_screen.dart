@@ -48,41 +48,43 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 ]
               : []),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // app title
-            AppTitle(),
+      child:
+          // Padding(
+          //   padding: const EdgeInsets.only(top: 10),
+          //   child:
+          Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // app title
+          AppTitle(),
 
-            // mode menu
-            ModeMenu(),
+          // mode menu
+          ModeMenu(),
 
-            // menu icon
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 20, bottom: 20, top: 10),
-                child: IconButton(
-                  onPressed: toggleDrawer,
-                  icon: _isDrawerOpen
-                      ? const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: Colors.black45,
-                          size: 28,
-                        )
-                      : const Icon(
-                          Icons.filter_none_rounded,
-                          color: Colors.black45,
-                          size: 24,
-                        ),
-                ),
+          // menu icon
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20, bottom: 20),
+              child: IconButton(
+                onPressed: toggleDrawer,
+                icon: _isDrawerOpen
+                    ? const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.black45,
+                        size: 28,
+                      )
+                    : const Icon(
+                        Icons.filter_none_rounded,
+                        color: Colors.black45,
+                        size: 24,
+                      ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+      // ),
     );
   }
 }

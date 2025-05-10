@@ -53,6 +53,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
         });
       } else {
         // Returning user: Start global matchmaking automatically
+        Future.delayed(const Duration(milliseconds: 1500));
         _startGlobalMatchMaking();
       }
     });
@@ -101,12 +102,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   }
 
   void _switchToNearbySearch() {
-    _cancelMatchmaking();
+    ref.read(matchmakingServiceProvider).cancelMatchmaking();
     _startNearbyMatchmaking();
   }
 
   void _navigateToOnlineTurnSelection(String gameId) {
-    _cancelMatchmaking();
+    ref.read(matchmakingServiceProvider).cancelMatchmaking();
     Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
         arguments: {'gameSessionId': gameId});
   }
@@ -445,7 +446,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                     child: Icon(
                       Icons.play_arrow_rounded,
                       size: 24,
-                      color: colorRed,
+                      color: Colors.green,
                     ),
                   ),
                 ],

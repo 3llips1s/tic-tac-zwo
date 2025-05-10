@@ -34,9 +34,10 @@ class _OnlineTurnSelectionScreenState
   bool _isReady = false;
   late Future<Map<String, dynamic>> _gameSessionFuture;
 
-  late Player player1;
-  late Player player2;
-  bool isPlayerOne = false;
+  Player? _player1;
+  Player? _player2;
+  bool _isPlayerOne = false;
+  String? _localUserId;
 
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
@@ -46,11 +47,13 @@ class _OnlineTurnSelectionScreenState
     super.initState();
     _loadGameSession();
     _initHoverAnimation();
+
+    _localUserId = ref.read(supabaseProvider).auth.currentUser?.id;
   }
 
   void _initHoverAnimation() {
     _hoverController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
@@ -74,6 +77,31 @@ class _OnlineTurnSelectionScreenState
         .select('*, player1:player1_id(*), player2:player2_id(*)')
         .eq('id', widget.gameSessionId)
         .single();
+
+    _gameSessionFuture.then(
+      (gameSession) {
+        setState(() {
+          _player1 = Player(
+            userName: gameSession['player1']['username'] ?? 'Spieler 1',
+            userId: gameSession['player1']['id'] ?? '',
+            countryCode: gameSession['player1']['country_code'] ?? '',
+            symbol: PlayerSymbol.X,
+          );
+
+          _player2 = Player(
+            userName: gameSession['player2']['username'] ?? 'Spieler 2',
+            userId: gameSession['player2']['id'] ?? '',
+            countryCode: gameSession['player2']['country_code'] ?? '',
+            symbol: PlayerSymbol.O,
+          );
+
+          _isPlayerOne = gameSession['player1']['id'] == _localUserId;
+          print('Is player one: $_isPlayerOne');
+        });
+      },
+    ).catchError((error) {
+      print('error loading game session: $error');
+    });
   }
 
   void _toggleReady() {
@@ -93,9 +121,18 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _startGame() {
+    // todo: remove after testing
+    if (_player1 == null || _player2 == null) {
+      print('player not initialized');
+      return;
+    }
+
+    print(
+        'starting game with players: ${_player1!.userName} vs ${_player2!.userName}');
+
     final gameConfig = GameConfig(
-      players: [player1, player2],
-      startingPlayer: player1,
+      players: [_player1!, _player2!],
+      startingPlayer: _player1!,
       gameMode: GameMode.online,
       gameSessionId: widget.gameSessionId,
     );
@@ -114,10 +151,14 @@ class _OnlineTurnSelectionScreenState
     // set up ready listener to start game
     ref.listen<AsyncValue<bool>>(
       opponentReadyProvider(widget.gameSessionId),
-      (_, next) {
+      (previous, next) {
         next.whenData(
           (isOpponentReady) {
+            print(
+                'opp ready state changed: $isOpponentReady, my ready state: $_isReady');
+
             if (isOpponentReady && _isReady) {
+              print('both player ready. starting game...');
               _startGame();
             }
           },
@@ -179,24 +220,34 @@ class _OnlineTurnSelectionScreenState
 
           final gameSession = snapshot.data!;
 
-          final player1 = Player(
+          _player1 ??= Player(
             userName: gameSession['player1']['username'] ?? 'Spieler 1',
             userId: gameSession['player1']['id'] ?? '',
             countryCode: gameSession['player1']['country_code'],
             symbol: PlayerSymbol.X,
           );
 
-          final player2 = Player(
+          _player2 ??= Player(
             userName: gameSession['player2']['username'] ?? 'Spieler 2',
             userId: gameSession['player2']['id'] ?? '',
             countryCode: gameSession['player2']['country_code'],
             symbol: PlayerSymbol.O,
           );
 
+          if (_localUserId != null) {
+            _isPlayerOne = gameSession['player1']['id'] == _localUserId;
+          }
+
           // Check opponent's ready state
-          final isOpponentReady =
-              ref.watch(opponentReadyProvider(widget.gameSessionId)).value ??
-                  false;
+          final opponentReadyState =
+              ref.watch(opponentReadyProvider(widget.gameSessionId));
+          final isOpponentReady = opponentReadyState.value ?? false;
+
+          // todo: remove after testing
+          //  check database directly for debugging purposes
+          final player1Ready = gameSession['player1_ready'] ?? false;
+          final player2Ready = gameSession['player2_ready'] ?? false;
+          print('DB states - P1 ready: $player1Ready, P2 ready: $player2Ready');
 
           return Container(
             padding: EdgeInsets.only(top: 10),
@@ -222,7 +273,7 @@ class _OnlineTurnSelectionScreenState
                 ),
 
                 // Player 1
-                _buildPlayerRow(player1),
+                _buildPlayerRow(_player1!),
 
                 SizedBox(height: kToolbarHeight * 1.2),
 
@@ -240,7 +291,7 @@ class _OnlineTurnSelectionScreenState
                 SizedBox(height: kToolbarHeight * 1.2),
 
                 // Player 2
-                _buildPlayerRow(player2, alignRight: true),
+                _buildPlayerRow(_player2!, alignRight: true),
 
                 SizedBox(height: kToolbarHeight / 1.5),
 
@@ -257,7 +308,7 @@ class _OnlineTurnSelectionScreenState
                     return Transform.translate(
                       offset: Offset(0, _hoverAnimation.value),
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 30.0),
+                        padding: const EdgeInsets.only(top: 20.0),
                         child: _showReadyStatus(isOpponentReady),
                       ),
                     );
@@ -375,27 +426,35 @@ class _OnlineTurnSelectionScreenState
 
   Widget _buildReadyButton() {
     if (_isReady) {
-      return Icon(
-        Icons.check_circle_rounded,
-        color: Colors.green,
-        size: 90,
-        shadows: [
-          BoxShadow(
-            color: colorGrey400,
-            offset: Offset(5, 5),
-            blurRadius: 15,
-          )
-        ],
+      return SizedBox(
+        height: 90,
+        width: 90,
+        child: Icon(
+          Icons.check_circle_rounded,
+          color: Colors.green,
+          size: 75,
+          shadows: [
+            BoxShadow(
+              color: colorGrey400,
+              offset: Offset(5, 5),
+              blurRadius: 15,
+            )
+          ],
+        ),
       );
     } else {
-      return RippleIcon(
-        includeShadows: false,
-        icon: Icon(
-          Icons.play_arrow_rounded,
-          color: colorBlack,
-          size: 90,
+      return SizedBox(
+        height: 90,
+        width: 90,
+        child: RippleIcon(
+          includeShadows: false,
+          icon: Icon(
+            Icons.play_arrow_rounded,
+            color: colorBlack,
+            size: 90,
+          ),
+          onTap: _toggleReady,
         ),
-        onTap: _toggleReady,
       );
     }
   }
@@ -414,7 +473,7 @@ class _OnlineTurnSelectionScreenState
       return Text(
         "Warten auf Gegner...",
         style: TextStyle(
-          color: Colors.amber.shade700,
+          color: Colors.amber,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
