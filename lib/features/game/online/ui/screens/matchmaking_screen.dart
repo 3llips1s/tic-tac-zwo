@@ -96,9 +96,11 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
 
   void _cancelMatchmaking() {
     ref.read(matchmakingServiceProvider).cancelMatchmaking();
-    setState(() {
-      _uiState = MatchmakingUIState.modeSelection;
-    });
+    if (mounted) {
+      setState(() {
+        _uiState = MatchmakingUIState.modeSelection;
+      });
+    }
   }
 
   void _switchToNearbySearch() {
@@ -107,9 +109,10 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   }
 
   void _navigateToOnlineTurnSelection(String gameId) {
-    ref.read(matchmakingServiceProvider).cancelMatchmaking();
-    Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
-        arguments: {'gameSessionId': gameId});
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
+          arguments: {'gameSessionId': gameId});
+    }
   }
 
   @override
@@ -122,21 +125,26 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     ref.listen<AsyncValue<String?>>(
       matchedGameIdProvider,
       (_, next) {
-        next.whenData(
-          (gameId) {
-            if (gameId != null) {
-              _navigateToOnlineTurnSelection(gameId);
-            }
-          },
-        );
+        final gameId = next.value;
+        if (gameId != null) {
+          if (_uiState == MatchmakingUIState.globalSearching ||
+              _uiState == MatchmakingUIState.nearbySearching ||
+              ref.read(matchmakingStateProvider).value ==
+                  MatchmakingState.matched) {
+            _navigateToOnlineTurnSelection(gameId);
+          }
+        }
       },
     );
 
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (isSearching) {
-          _cancelMatchmaking();
+        if (didPop) {
+          final currentState = ref.read(matchmakingStateProvider).value;
+          if (currentState == MatchmakingState.searching) {
+            ref.read(matchmakingServiceProvider).cancelMatchmaking();
+          }
         }
       },
       child: Scaffold(
@@ -184,10 +192,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                       ),
                       child: IconButton(
                         onPressed: () {
-                          if (isSearching) {
-                            ref
-                                .read(matchmakingServiceProvider)
-                                .cancelMatchmaking();
+                          final matchmakingService =
+                              ref.read(matchmakingServiceProvider);
+                          final currentState =
+                              ref.read(matchmakingStateProvider).value;
+                          if (currentState == MatchmakingState.searching) {
+                            matchmakingService.cancelMatchmaking();
                           }
                           if (mounted) {
                             Navigator.pushReplacementNamed(
@@ -403,8 +413,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   Widget _buildNearbyPlayersList(
       AsyncValue<List<Map<String, dynamic>>> nearbyPlayers) {
     return nearbyPlayers.when(
-      data: (players) {
-        if (players.isEmpty) {
+      data: (remotePlayers) {
+        if (remotePlayers.isEmpty) {
           return Text(
             'Keine Spieler*in in der Nähe gefunden.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -414,39 +424,41 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
           );
         }
 
-        return Column(
-          children: [
-            ...players.map(
-              (player) => GestureDetector(
-                onTap: () {
-                  ref
-                      .read(matchmakingServiceProvider)
-                      .initiateDirectMatch(player['user_id']);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 75),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Text(
-                        player['username'] ?? 'Unbekannt',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 20,
-                              color: Colors.black87,
-                            ),
+        final player = remotePlayers.first;
+
+        return GestureDetector(
+          onTap: () {
+            final targetUserId = player['user_id'] as String?;
+
+            if (targetUserId != null) {
+              ref
+                  .read(matchmakingServiceProvider)
+                  .initiateDirectMatch(targetUserId);
+            } else {
+              print('error: nearby player user_id is null');
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 75),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Text(
+                  player['username'] as String? ?? 'Unbekannt',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 20,
+                        color: Colors.black87,
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 40,
-                        color: Colors.green,
-                      ),
-                    ],
-                  ),
                 ),
-              ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 40,
+                  color: Colors.green,
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
       error: (error, stackTrace) => Text('Fehler beim Laden der Spieler'),

@@ -23,6 +23,7 @@ class MatchmakingService {
   // stream controllers for state management
   final _matchStateController = StreamController<MatchmakingState>.broadcast();
   final _matchedGameIdController = StreamController<String?>.broadcast();
+
   final _nearbyPlayersController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
   final _errorController = StreamController<String>.broadcast();
@@ -263,13 +264,7 @@ class MatchmakingService {
               }
 
               if (isMatched && gameId != null) {
-                if (kDebugMode) {
-                  print(
-                      '[MatchmakingService] match found! game id: $gameId. updating state.');
-                }
-                _matchStateController.add(MatchmakingState.matched);
-                _matchedGameIdController.add(gameId);
-                _cleanupListener();
+                _onMatchFound(gameId);
               } else {
                 if (kDebugMode) {
                   print('queue entry updated, but not matched yet.');
@@ -280,21 +275,35 @@ class MatchmakingService {
                 print(
                     '[MatchmakingService] received empty data for entry id $entryId. entry might have been deleted.');
               }
-              if (_isInQueue) {
+              if (_isInQueue && _currentQueueEntryId == entryId) {
+                if (kDebugMode) {
+                  print(
+                      '[MatchmakingService] Queue entry $entryId disappeared. Cancelling matchmaking.');
+                }
                 cancelMatchmaking();
               }
             }
           },
           onError: (error) {
             if (kDebugMode) {
-              print('[MatchmakingService] match listener error: $error');
+              print(
+                  '[MatchmakingService] match listener error for entry $entryId: $error');
             }
             _errorController.add('match listener error: $error');
-            // TODO: what to do with listener errors (maybe retry?)
-            _matchStateController.add(MatchmakingState.error);
-            _cleanupListener();
-            _isInQueue = false;
-            _currentQueueEntryId = null;
+
+            if (_isInQueue && _currentQueueEntryId == entryId) {
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] Error on active match listener for $entryId. Cancelling matchmaking.');
+              }
+              cancelMatchmaking();
+              _matchStateController.add(MatchmakingState.error);
+            } else {
+              if (kDebugMode) {
+                print(
+                    '[MatchmakingService] Match listener error for an old/inactive entry $entryId. Ignoring cancellation for current queue.');
+              }
+            }
           },
           onDone: () {
             if (kDebugMode) {
@@ -307,6 +316,7 @@ class MatchmakingService {
   // listen for nearby players
   void _startNearbyPlayersListener(double lat, double lng) {
     _nearbySubscription?.cancel();
+    _nearbyPlayersController.add([]);
     if (kDebugMode) {
       print('[MatchmakingService] starting nearby players listener.');
     }
@@ -445,6 +455,7 @@ class MatchmakingService {
     _currentQueueEntryId = null;
     _matchSubscription?.cancel();
     _nearbySubscription?.cancel();
+    _nearbyPlayersController.add([]);
 
     try {
       if (entryId != null) {
@@ -478,6 +489,24 @@ class MatchmakingService {
     }
   }
 
+  void _onMatchFound(String gameId) {
+    if (kDebugMode) {
+      print(
+          '[MatchmakingService] Match found! Game ID: $gameId. Cleaning up and notifying.');
+    }
+    _matchStateController.add(MatchmakingState.matched);
+
+    _nearbySubscription?.cancel();
+    _nearbyPlayersController.add([]);
+
+    _matchedGameIdController.add(gameId);
+
+    _cleanupListener();
+
+    _isInQueue = false;
+    _currentQueueEntryId = null;
+  }
+
   void _cleanupListener() {
     if (kDebugMode) print('[MatchmakingService] Cleaning up match listener.');
     _matchSubscription?.cancel();
@@ -486,7 +515,9 @@ class MatchmakingService {
 
   // directly initiate a match with a specific (nearby) player
   Future<void> initiateDirectMatch(String targetUserId) async {
-    if (_userId == null) {
+    final localUserId = _userId;
+
+    if (localUserId == null) {
       _errorController.add('user not authenticated');
       if (kDebugMode) {
         print(
@@ -499,10 +530,16 @@ class MatchmakingService {
       print('[MatchmakingService] Initiating direct match with $targetUserId');
     }
 
+    if (_isInQueue) {
+      await cancelMatchmaking();
+    }
+
+    _matchStateController.add(MatchmakingState.searching);
+
     try {
       // create game session
       final gameId = Uuid().v4();
-      await _createDirectGameSession(gameId, _userId!, targetUserId, true);
+      await _createDirectGameSession(gameId, localUserId, targetUserId, true);
 
       if (kDebugMode) {
         print(
@@ -510,33 +547,27 @@ class MatchmakingService {
       }
 
       // add entries to matchmaking queue for both players
-      await _supabase.from('matchmaking_queue').upsert([
-        {
-          'user_id': _userId,
-          'is_nearby_match': true,
-          'is_matched': true,
-          'game_id': gameId,
+      await _supabase.rpc(
+        'create_direct_match_queue_entries',
+        params: {
+          'p_initiator_id': localUserId,
+          'p_target_id': targetUserId,
+          'p_game_id': gameId,
         },
-        {
-          'user_id': targetUserId,
-          'is_nearby_match': true,
-          'is_matched': true,
-          'game_id': gameId,
-        }
-      ], onConflict: 'user_id');
+      );
 
       if (kDebugMode) {
-        print('[MatchmakingService] upserted queue entries for direct match');
+        print('[MatchmakingService] added both queue entries for direct match');
       }
 
-      // TODO: trigger update manually for current user
-      _matchStateController.add(MatchmakingState.matched);
-      _matchedGameIdController.add(gameId);
+      _onMatchFound(gameId);
     } catch (e) {
       _errorController.add('error initiating direct match: $e');
+      _matchStateController.add(MatchmakingState.error);
       if (kDebugMode) {
         print('[MatchmakingService] error initiating direct match: $e');
       }
+      _isInQueue = false;
     }
   }
 
