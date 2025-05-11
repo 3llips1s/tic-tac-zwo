@@ -30,14 +30,14 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 
   // dynamic font scaling
   double _calculateDynamicFontSize(String noun) {
-    const baseFontSize = 33.0;
-    const minFontSize = 22.0;
+    const baseFontSize = 30.0;
+    const minFontSize = 20.0;
 
     if (noun.length <= 12) return baseFontSize;
-    if (noun.length <= 14) return 31.0;
-    if (noun.length <= 16) return 29.0;
-    if (noun.length <= 18) return 27.0;
-    if (noun.length <= 20) return 25.0;
+    if (noun.length <= 14) return 28.0;
+    if (noun.length <= 16) return 26.0;
+    if (noun.length <= 18) return 24.0;
+    if (noun.length <= 20) return 22.0;
 
     return minFontSize;
   }
@@ -56,8 +56,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     );
 
     _hoverAnimation = Tween<double>(
-      begin: 5,
-      end: 15,
+      begin: 15,
+      end: 20,
     ).animate(
       CurvedAnimation(
         parent: _hoverController,
@@ -159,7 +159,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
           children: [
             SizedBox(
               width: MediaQuery.of(context).size.width,
-              height: kToolbarHeight * 1.4,
+              height: kToolbarHeight * 1.25,
               child: AnimatedCrossFade(
                 firstChild: AnimatedBuilder(
                   animation: _hoverAnimation,

@@ -58,8 +58,9 @@ class GameScreen extends ConsumerWidget {
             space,
 
             Align(
-                alignment: Alignment.center,
-                child: TimerDisplay(gameConfig: gameConfig)),
+              alignment: Alignment.center,
+              child: TimerDisplay(gameConfig: gameConfig),
+            ),
 
             halfSpace,
 
@@ -95,7 +96,7 @@ class GameScreen extends ConsumerWidget {
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(right: 50),
+                padding: const EdgeInsets.only(right: 35),
                 child: GestureDetector(
                   onTap: activateSaveButton ? () {} : () {},
                   child: Container(
@@ -111,7 +112,7 @@ class GameScreen extends ConsumerWidget {
                                 BlendMode.srcIn,
                               )
                             : ColorFilter.mode(
-                                colorBlack,
+                                Colors.black87,
                                 BlendMode.srcIn,
                               ),
                       ),

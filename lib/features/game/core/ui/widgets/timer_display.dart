@@ -18,9 +18,13 @@ class TimerDisplay extends ConsumerWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: gameState.isTimerActive ? Colors.black87 : colorGrey400,
+        color: !gameState.isTimerActive
+            ? colorGrey400
+            : gameState.remainingSeconds <= 3
+                ? Color(0xFFC21807)
+                : colorDarkGreen,
         shape: BoxShape.circle,
         boxShadow: gameState.isTimerActive
             ? [
@@ -37,7 +41,7 @@ class TimerDisplay extends ConsumerWidget {
       child: Text(
         gameState.isTimerActive ? '0${gameState.remainingSeconds}' : '09',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 18,
+              fontSize: 14,
               fontFamily: 'monospace',
               color: colorWhite,
             ),
