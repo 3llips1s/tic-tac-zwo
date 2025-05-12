@@ -71,6 +71,9 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _loadGameSession() {
+    final playerSymbols = <PlayerSymbol>[PlayerSymbol.X, PlayerSymbol.O];
+    playerSymbols.shuffle();
+
     _gameSessionFuture = ref
         .read(supabaseProvider)
         .from('game_sessions')
@@ -85,14 +88,14 @@ class _OnlineTurnSelectionScreenState
             userName: gameSession['player1']['username'] ?? 'Spieler 1',
             userId: gameSession['player1']['id'] ?? '',
             countryCode: gameSession['player1']['country_code'] ?? '',
-            symbol: PlayerSymbol.X,
+            symbol: playerSymbols[0],
           );
 
           _player2 = Player(
             userName: gameSession['player2']['username'] ?? 'Spieler 2',
             userId: gameSession['player2']['id'] ?? '',
             countryCode: gameSession['player2']['country_code'] ?? '',
-            symbol: PlayerSymbol.O,
+            symbol: playerSymbols[1],
           );
 
           _isPlayerOne = gameSession['player1']['id'] == _localUserId;
@@ -377,11 +380,11 @@ class _OnlineTurnSelectionScreenState
       child: Center(
         child: Text(
           player.symbol == PlayerSymbol.X ? 'X' : 'Ö',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: player.symbol == PlayerSymbol.X ? colorWhite : colorBlack,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 28,
+                color:
+                    player.symbol == PlayerSymbol.X ? colorWhite : colorBlack,
+              ),
         ),
       ),
     );

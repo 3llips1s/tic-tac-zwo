@@ -316,7 +316,6 @@ class MatchmakingService {
   // listen for nearby players
   void _startNearbyPlayersListener(double lat, double lng) {
     _nearbySubscription?.cancel();
-    _nearbyPlayersController.add([]);
     if (kDebugMode) {
       print('[MatchmakingService] starting nearby players listener.');
     }
@@ -343,7 +342,7 @@ class MatchmakingService {
                     'p_user_id': userId,
                     'p_lat': lat,
                     'p_lng': lng,
-                    'p_radius_meters': 20
+                    'p_radius_meters': 30
                   });
 
               if (response is List) {
@@ -455,7 +454,6 @@ class MatchmakingService {
     _currentQueueEntryId = null;
     _matchSubscription?.cancel();
     _nearbySubscription?.cancel();
-    _nearbyPlayersController.add([]);
 
     try {
       if (entryId != null) {
@@ -497,7 +495,6 @@ class MatchmakingService {
     _matchStateController.add(MatchmakingState.matched);
 
     _nearbySubscription?.cancel();
-    _nearbyPlayersController.add([]);
 
     _matchedGameIdController.add(gameId);
 

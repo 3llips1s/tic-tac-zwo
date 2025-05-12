@@ -20,6 +20,7 @@ enum MatchmakingUIState {
   modeSelection,
   globalSearching,
   nearbySearching,
+  directMatchInitiating,
 }
 
 class MatchmakingScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     with SingleTickerProviderStateMixin {
   MatchmakingUIState _uiState = MatchmakingUIState.loading;
   bool _hasSeenModeSelection = false;
+
+  List<Map<String, dynamic>> _cachedNearbyPlayers = [];
 
   late final MatchmakingService _matchmakingService;
 
@@ -439,13 +442,108 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             ],
           ),
         );
+
+      case MatchmakingUIState.directMatchInitiating:
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              SizedBox(height: 24),
+              DisplayRippleIcon(
+                icon: Icon(
+                  Icons.sports_esports_rounded,
+                  color: colorWhite,
+                  size: 50,
+                ),
+                rippleColor: Colors
+                    .green, // Use green to indicate connection in progress
+                shadowScale: 3,
+              ),
+              SizedBox(height: kToolbarHeight * 2),
+              Text(
+                'Verbindung wird hergestellt...', // "Connection is being established..."
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 18,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              SizedBox(height: 12),
+              _buildNearbyPlayersList(nearbyPlayers),
+              SizedBox(height: 8),
+            ],
+          ),
+        );
     }
   }
 
   Widget _buildNearbyPlayersList(
       AsyncValue<List<Map<String, dynamic>>> nearbyPlayers) {
+    if (_uiState == MatchmakingUIState.directMatchInitiating) {
+      if (_cachedNearbyPlayers.isEmpty) {
+        return Center(
+          child: CircularProgressIndicator(
+            color: colorRed,
+            strokeWidth: 1,
+          ),
+        );
+      }
+
+      final itemHeight = 60.0;
+      final calculatedHeight = math.min(
+        _cachedNearbyPlayers.length * itemHeight,
+        2 * itemHeight,
+      );
+
+      return SizedBox(
+        height: math.max(kToolbarHeight, calculatedHeight),
+        width: 300,
+        child: ListView.builder(
+          itemCount: _cachedNearbyPlayers.length,
+          padding: EdgeInsets.symmetric(horizontal: 40),
+          physics: _cachedNearbyPlayers.length > 2
+              ? AlwaysScrollableScrollPhysics()
+              : NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            final player = _cachedNearbyPlayers[index];
+            final username = player['username'] as String? ?? 'Unbekannt';
+
+            // Show loading indicator inside each item (or you could highlight just the selected one)
+            return SizedBox(
+              height: itemHeight,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Text(
+                    username,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 18,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  // Replace arrow with loading indicator
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.green,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     return nearbyPlayers.when(
       data: (remotePlayers) {
+        if (remotePlayers.isNotEmpty) {
+          _cachedNearbyPlayers = List.from(remotePlayers);
+        }
         if (remotePlayers.isEmpty) {
           return Text(
             'Keine Spieler gefunden.',
@@ -456,7 +554,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
           );
         }
 
-        final itemHeight = 30.0;
+        final itemHeight = 60.0;
         final calculatedHeight = math.min(
           remotePlayers.length * itemHeight,
           2 * itemHeight,
@@ -483,6 +581,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   child: InkWell(
                     onTap: () {
                       if (userId != null) {
+                        setState(() {
+                          _uiState = MatchmakingUIState.directMatchInitiating;
+                        });
                         ref
                             .read(matchmakingServiceProvider)
                             .initiateDirectMatch(userId);
