@@ -68,7 +68,7 @@ class GameOverDialog extends StatelessWidget {
                 ),
           ),
         ),
-        const SizedBox(height: kToolbarHeight / 2),
+        const SizedBox(height: kToolbarHeight / 3),
       ],
     );
   }

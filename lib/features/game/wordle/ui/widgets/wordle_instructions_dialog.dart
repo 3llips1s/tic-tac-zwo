@@ -8,9 +8,9 @@ class WordleInstructionsDialog extends StatelessWidget {
   final VoidCallback onClose;
 
   const WordleInstructionsDialog({
-    Key? key,
+    super.key,
     required this.onClose,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +183,7 @@ class WordleInstructionsManager {
         context: context,
         barrierDismissible: false,
         width: 300,
-        height: 500,
+        height: 550,
         child: WordleInstructionsDialog(
           onClose: () {
             Navigator.of(context).pop();

@@ -30,7 +30,7 @@ class UserProfileRepo {
       'games_won': 0,
       'games_drawn': 0,
       'last_online': DateTime.now().toIso8601String(),
-      'is_online': true,
+      'is_online': false,
       'total_article_attempts': 0,
       'total_correct_articles': 0
     };

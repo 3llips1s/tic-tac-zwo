@@ -622,6 +622,29 @@ class MatchmakingService {
     }
   }
 
+  // online status
+  Future<void> _updateOnlineStatus(bool isOnline) async {
+    try {
+      final userId = _userId;
+      if (userId == null) return;
+
+      await _supabase.from('users').update({
+        'is_online': isOnline,
+        'last_online': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+    } catch (e) {
+      print('error updating online status: $e');
+    }
+  }
+
+  Future<void> goOnline() async {
+    await _updateOnlineStatus(true);
+  }
+
+  Future<void> goOffline() async {
+    await _updateOnlineStatus(false);
+  }
+
   void dispose() {
     if (kDebugMode) print('[MatchmakingService] Disposing service.');
     _matchSubscription?.cancel();

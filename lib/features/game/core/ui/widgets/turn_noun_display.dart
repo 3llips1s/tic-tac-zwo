@@ -303,7 +303,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         Text(
           '- ${currentNoun.english}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 17,
+                fontSize: shouldArticleAnimate ? 15 : 16,
                 color: Colors.black45,
               ),
         ),
