@@ -17,10 +17,12 @@ import '../../../../navigation/routes/route_names.dart';
 class OnlineTurnSelectionScreen extends ConsumerStatefulWidget {
   final GameMode gameMode;
   final String gameSessionId;
+  final String matchMode;
 
   const OnlineTurnSelectionScreen({
     super.key,
     required this.gameSessionId,
+    required this.matchMode,
     this.gameMode = GameMode.online,
   });
 
@@ -72,9 +74,6 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _loadGameSession() {
-    final playerSymbols = <PlayerSymbol>[PlayerSymbol.X, PlayerSymbol.O];
-    playerSymbols.shuffle();
-
     _gameSessionFuture = ref
         .read(supabaseProvider)
         .from('game_sessions')
@@ -89,14 +88,14 @@ class _OnlineTurnSelectionScreenState
             userName: gameSession['player1']['username'] ?? 'Spieler 1',
             userId: gameSession['player1']['id'] ?? '',
             countryCode: gameSession['player1']['country_code'] ?? '',
-            symbol: playerSymbols[0],
+            symbol: PlayerSymbol.X,
           );
 
           _player2 = Player(
             userName: gameSession['player2']['username'] ?? 'Spieler 2',
             userId: gameSession['player2']['id'] ?? '',
             countryCode: gameSession['player2']['country_code'] ?? '',
-            symbol: playerSymbols[1],
+            symbol: PlayerSymbol.O,
           );
 
           _isPlayerOne = gameSession['player1']['id'] == _localUserId;
@@ -204,6 +203,8 @@ class _OnlineTurnSelectionScreenState
                         color: Colors.black87,
                         borderRadius: BorderRadius.circular(9),
                       ),
+
+                      // todo: add leave match to button + functionality on other clients side
                       child: IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: Icon(
@@ -257,13 +258,13 @@ class _OnlineTurnSelectionScreenState
               children: [
                 // title
                 Padding(
-                  padding: const EdgeInsets.only(top: 30),
+                  padding: const EdgeInsets.only(top: 20),
                   child: SizedBox(
                     height: kToolbarHeight * 2,
                     child: Align(
                       alignment: Alignment.center,
                       child: Text(
-                        GameMode.online.string,
+                        widget.matchMode,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,

@@ -60,6 +60,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
           _uiState = MatchmakingUIState.modeSelection;
         });
       } else {
+        setState(() {
+          _uiState = MatchmakingUIState.globalSearching;
+        });
         _initializeMatchmaking();
       }
     });
@@ -69,7 +72,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     try {
       await ref.read(matchmakingServiceProvider).goOnline();
       await Future.delayed(Duration(milliseconds: 700));
-      _startGlobalMatchMaking();
+
+      if (_uiState != MatchmakingUIState.globalSearching) {
+        _startGlobalMatchMaking();
+      } else {
+        ref.read(matchmakingServiceProvider).startGlobalMatchmaking();
+      }
     } catch (e) {
       print('matchmaking initialization error: $e');
 
@@ -134,7 +142,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     if (mounted) {
       ref.read(matchmakingServiceProvider).goOffline();
       Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
-          arguments: {'gameSessionId': gameId});
+          arguments: {'gameSessionId': gameId, 'matchMode': _getModeTitle()});
     }
   }
 
@@ -215,7 +223,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                     child: Text(
                       _getModeTitle(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -349,8 +357,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SizedBox(height: 24),
-              DualProgressIndicator(),
-              /* DisplayRippleIcon(
+              DisplayRippleIcon(
                 icon: Icon(
                   Icons.travel_explore_rounded,
                   color: colorBlack,
@@ -358,7 +365,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 ),
                 rippleColor: colorYellowAccent,
                 shadowScale: 3,
-              ), */
+              ),
               SizedBox(height: kToolbarHeight),
               Text(
                 'Suche nach Spielern weltweit...',

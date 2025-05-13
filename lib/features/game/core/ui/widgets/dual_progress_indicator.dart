@@ -20,8 +20,8 @@ class DualProgressIndicator extends StatefulWidget {
     this.innerCircleColors = const [colorRed, colorYellowAccent],
     this.outerStrokeWidth = 2,
     this.innerStrokeWidth = 2,
-    this.outerRotationDuration = const Duration(seconds: 2),
-    this.innerRotationDuration = const Duration(seconds: 2),
+    this.outerRotationDuration = const Duration(seconds: 3),
+    this.innerRotationDuration = const Duration(seconds: 3),
     this.circleGap = 0.8,
     this.animationCurve = Curves.easeInOut,
     this.colorCurve = Curves.easeInOut,
@@ -103,7 +103,7 @@ class _DualProgressIndicatorState extends State<DualProgressIndicator>
       CurvedAnimation(
         parent: _outerController!,
         curve: Interval(
-          0.7,
+          0.9,
           1.0,
           curve: widget.colorCurve,
         ),
@@ -123,7 +123,7 @@ class _DualProgressIndicatorState extends State<DualProgressIndicator>
       CurvedAnimation(
         parent: _innerController!,
         curve: Interval(
-          0.75,
+          0.9,
           1.0,
           curve: widget.colorCurve,
         ),

@@ -87,6 +87,7 @@ class AppRouter {
       case RouteNames.onlineTurnSelection:
         final arguments = settings.arguments as Map<String, dynamic>?;
         final gameSessionId = arguments?['gameSessionId'] as String?;
+        final matchMode = arguments?['matchMode'] as String;
 
         // check
         if (gameSessionId == null) {
@@ -108,6 +109,7 @@ class AppRouter {
           pageBuilder: (context, animation, secondaryAnimation) =>
               OnlineTurnSelectionScreen(
             gameSessionId: gameSessionId,
+            matchMode: matchMode,
           ),
           transitionDuration: const Duration(milliseconds: 600),
           reverseTransitionDuration: const Duration(milliseconds: 300),
