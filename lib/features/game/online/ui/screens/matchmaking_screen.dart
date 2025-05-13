@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/widgets/display_ripple_icon.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
@@ -307,15 +308,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     switch (_uiState) {
       case MatchmakingUIState.loading:
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                color: colorYellowAccent,
-                strokeWidth: 1,
-              ),
-            ],
-          ),
+          child: DualProgressIndicator(),
         );
 
       case MatchmakingUIState.modeSelection:
@@ -356,7 +349,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SizedBox(height: 24),
-              DisplayRippleIcon(
+              DualProgressIndicator(),
+              /* DisplayRippleIcon(
                 icon: Icon(
                   Icons.travel_explore_rounded,
                   color: colorBlack,
@@ -364,7 +358,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 ),
                 rippleColor: colorYellowAccent,
                 shadowScale: 3,
-              ),
+              ), */
               SizedBox(height: kToolbarHeight),
               Text(
                 'Suche nach Spielern weltweit...',

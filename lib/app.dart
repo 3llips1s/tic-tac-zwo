@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/services/data_initialization_service.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 
 import 'features/game/core/ui/screens/home_screen.dart';
 import 'features/navigation/ui/hidden_drawer.dart';
@@ -18,10 +19,7 @@ class DataInitializationWrapper extends ConsumerWidget {
     return dataStatus.when(
       loading: () => Scaffold(
         body: Center(
-          child: CircularProgressIndicator(
-            color: colorBlack,
-            strokeWidth: 1,
-          ),
+          child: DualProgressIndicator(),
         ),
       ),
       error: (error, stackTrace) => Scaffold(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/game_result_dialog.dart';
@@ -240,7 +241,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     if (gameState == null) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: DualProgressIndicator(),
         ),
       );
     }
@@ -296,13 +297,13 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                 icon: Icon(
                   Icons.home_rounded,
                   color: colorGrey600,
-                  size: 35,
+                  size: 40,
                 ),
               ),
             ),
           ),
 
-          SizedBox(height: 40),
+          SizedBox(height: 30),
 
           // keyboard
           WordleKeyboard(

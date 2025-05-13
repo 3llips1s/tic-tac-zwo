@@ -6,6 +6,7 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/ripple_icon.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
@@ -176,10 +177,7 @@ class _OnlineTurnSelectionScreenState
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(
-                color: colorBlack,
-                strokeWidth: 1,
-              ),
+              child: DualProgressIndicator(),
             );
           }
 
