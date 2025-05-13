@@ -67,7 +67,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   Future<void> _initializeMatchmaking() async {
     try {
       await ref.read(matchmakingServiceProvider).goOnline();
-      Future.delayed(Duration(milliseconds: 1000));
+      await Future.delayed(Duration(milliseconds: 700));
       _startGlobalMatchMaking();
     } catch (e) {
       print('matchmaking initialization error: $e');
@@ -155,6 +155,16 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     }
   }
 
+  String _getModeTitle() {
+    if (_uiState == MatchmakingUIState.globalSearching) {
+      return 'global';
+    } else if (_uiState == MatchmakingUIState.nearbySearching) {
+      return 'in der Nähe';
+    } else {
+      return 'online';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final matchmakingState = ref.watch(matchmakingStateProvider);
@@ -202,7 +212,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   child: Align(
                     alignment: Alignment.center,
                     child: Text(
-                      widget.gameMode.string,
+                      _getModeTitle(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -315,8 +325,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             children: [
               _buildModeButton(
                 icon: Icons.wifi_tethering,
-                title: 'in der Nähe spielen',
-                subtitle: 'gegen Spieler in deiner Umgebung',
+                title: 'In der Nähe',
+                subtitle: 'gegen Freunden in deiner Nähe',
                 color: colorRed,
                 textColor: colorWhite,
                 onTap: () {
@@ -327,8 +337,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
               SizedBox(height: kToolbarHeight),
               _buildModeButton(
                 icon: Icons.travel_explore_rounded,
-                title: 'online spielen',
-                subtitle: 'gegen globale Spieler',
+                title: 'Global',
+                subtitle: 'gegen weltweite Spieler',
                 color: colorYellowAccent,
                 textColor: colorBlack,
                 onTap: () {
@@ -680,7 +690,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
               subtitle,
               style: TextStyle(
                 fontSize: 16,
-                color: textColor.withOpacity(0.8),
+                color: textColor.withOpacity(0.7),
               ),
               textAlign: TextAlign.center,
             ),

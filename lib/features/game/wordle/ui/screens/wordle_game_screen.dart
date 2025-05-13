@@ -253,7 +253,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
           Padding(
             padding: const EdgeInsets.only(top: 20),
             child: SizedBox(
-              height: kToolbarHeight * 2,
+              height: 120,
               child: Align(
                 alignment: Alignment.center,
                 child: Text(
@@ -302,7 +302,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
             ),
           ),
 
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
 
           // keyboard
           WordleKeyboard(

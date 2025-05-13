@@ -18,7 +18,10 @@ class DataInitializationWrapper extends ConsumerWidget {
     return dataStatus.when(
       loading: () => Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: colorBlack,
+            strokeWidth: 1,
+          ),
         ),
       ),
       error: (error, stackTrace) => Scaffold(

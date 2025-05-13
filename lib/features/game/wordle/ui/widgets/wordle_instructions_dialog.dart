@@ -183,7 +183,7 @@ class WordleInstructionsManager {
         context: context,
         barrierDismissible: false,
         width: 300,
-        height: 550,
+        height: 500,
         child: WordleInstructionsDialog(
           onClose: () {
             Navigator.of(context).pop();

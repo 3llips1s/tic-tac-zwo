@@ -222,7 +222,7 @@ class MatchmakingService {
   }
 
   // listen for match updates
-  void _startMatchListener() {
+  void _startMatchListener() async {
     final userId = _userId;
     final entryId = _currentQueueEntryId;
 
@@ -240,6 +240,16 @@ class MatchmakingService {
     if (kDebugMode) {
       print(
           '[MatchmakingService] starting match listener for entry id: $entryId');
+    }
+
+    await Future.delayed(Duration(milliseconds: 300));
+
+    if (entryId != _currentQueueEntryId || !_isInQueue) {
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] Queue state changed during listener setup, aborting.');
+      }
+      return;
     }
 
     // subscribe to channel for realtime updates
@@ -311,6 +321,28 @@ class MatchmakingService {
             }
           },
         );
+
+    try {
+      final currentEntry = await _supabase
+          .from('matchmaking_queue')
+          .select('is_matched, game_id')
+          .eq('id', entryId)
+          .maybeSingle();
+
+      if (currentEntry != null) {
+        final bool isMatched = currentEntry['is_matched'] ?? false;
+        final String? gameId = currentEntry['game_id'];
+
+        if (kDebugMode) {
+          print(
+              '[MatchmakingService] Initial queue entry status check: is_matched=$isMatched, game_id=$gameId');
+        }
+
+        if (isMatched && gameId != null) {
+          _onMatchFound(gameId);
+        }
+      }
+    } catch (e) {}
   }
 
   // listen for nearby players

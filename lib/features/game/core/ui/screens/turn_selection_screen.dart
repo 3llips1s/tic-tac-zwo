@@ -103,6 +103,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: SizedBox(
+              // todo: change all ktoolbarheights to h = 56 pixels?
               height: kToolbarHeight * 2,
               child: Align(
                 alignment: Alignment.center,
