@@ -48,11 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 ]
               : []),
-      child:
-          // Padding(
-          //   padding: const EdgeInsets.only(top: 10),
-          //   child:
-          Column(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // app title
@@ -84,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // ),
     );
   }
 }
