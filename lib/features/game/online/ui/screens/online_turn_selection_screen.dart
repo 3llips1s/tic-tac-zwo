@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
@@ -175,9 +176,15 @@ class _OnlineTurnSelectionScreenState
         future: _gameSessionFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: DualProgressIndicator(),
+            return Padding(
+              padding: EdgeInsets.only(bottom: kToolbarHeight * 3),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: DualProgressIndicator(),
+              ),
             );
+
+            ;
           }
 
           if (snapshot.hasError || !snapshot.hasData) {
@@ -275,7 +282,16 @@ class _OnlineTurnSelectionScreenState
                 ),
 
                 // Player 1
-                _buildPlayerRow(_player1!),
+                _buildPlayerRow(_player1!)
+                    .animate(delay: const Duration(milliseconds: 500))
+                    .fadeIn(
+                        curve: Curves.linear,
+                        duration: const Duration(milliseconds: 900))
+                    .slideX(
+                        begin: -0.5,
+                        end: 0.0,
+                        curve: Curves.ease,
+                        duration: const Duration(milliseconds: 900)),
 
                 SizedBox(height: kToolbarHeight * 1.2),
 
@@ -293,7 +309,16 @@ class _OnlineTurnSelectionScreenState
                 SizedBox(height: kToolbarHeight * 1.2),
 
                 // Player 2
-                _buildPlayerRow(_player2!, alignRight: true),
+                _buildPlayerRow(_player2!, alignRight: true)
+                    .animate(delay: const Duration(milliseconds: 500))
+                    .fadeIn(
+                        curve: Curves.linear,
+                        duration: const Duration(milliseconds: 900))
+                    .slideX(
+                        begin: 0.5,
+                        end: 0.0,
+                        curve: Curves.ease,
+                        duration: const Duration(milliseconds: 900)),
 
                 SizedBox(height: kToolbarHeight / 1.5),
 
@@ -457,7 +482,11 @@ class _OnlineTurnSelectionScreenState
           ),
           onTap: _toggleReady,
         ),
-      );
+      ).animate(delay: const Duration(milliseconds: 500)).scale(
+            begin: Offset(0, -1),
+            duration: const Duration(milliseconds: 1500),
+            curve: Curves.easeInOut,
+          );
     }
   }
 

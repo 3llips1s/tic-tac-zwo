@@ -15,7 +15,7 @@ class DualProgressIndicator extends StatefulWidget {
 
   const DualProgressIndicator({
     super.key,
-    this.size = 75.0,
+    this.size = 40.0,
     this.outerCircleColors = const [colorYellowAccent, colorRed],
     this.innerCircleColors = const [colorRed, colorYellowAccent],
     this.outerStrokeWidth = 2,

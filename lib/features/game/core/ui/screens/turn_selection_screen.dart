@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_name_dialog.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
@@ -95,7 +96,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
   Widget build(BuildContext context) {
     return Container(
       color: colorGrey300,
-      padding: EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: 20),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -121,7 +122,16 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
           SizedBox(height: kToolbarHeight / 1.5),
 
           // Player 1
-          _buildPlayerRow(players[0]),
+          _buildPlayerRow(players[0])
+              .animate(delay: const Duration(milliseconds: 500))
+              .fadeIn(
+                  curve: Curves.linear,
+                  duration: const Duration(milliseconds: 900))
+              .slideX(
+                  begin: -0.5,
+                  end: 0.0,
+                  curve: Curves.ease,
+                  duration: const Duration(milliseconds: 1000)),
 
           SizedBox(height: kToolbarHeight * 1.2),
 
@@ -138,7 +148,16 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
           SizedBox(height: kToolbarHeight * 1.2),
 
           // Player 2
-          _buildPlayerRow(players[1], alignRight: true),
+          _buildPlayerRow(players[1], alignRight: true)
+              .animate(delay: const Duration(milliseconds: 500))
+              .fadeIn(
+                  curve: Curves.linear,
+                  duration: const Duration(milliseconds: 900))
+              .slideX(
+                  begin: 0.5,
+                  end: 0.0,
+                  curve: Curves.ease,
+                  duration: const Duration(milliseconds: 1000)),
 
           SizedBox(height: kToolbarHeight * 1.5),
 
@@ -169,7 +188,11 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
               size: 120,
             ),
             onTap: _startGame,
-          ),
+          ).animate(delay: const Duration(milliseconds: 500)).scale(
+                begin: Offset(0, -1),
+                duration: const Duration(milliseconds: 1500),
+                curve: Curves.easeInOut,
+              ),
 
           // back home
           Align(

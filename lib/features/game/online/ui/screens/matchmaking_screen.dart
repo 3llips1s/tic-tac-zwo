@@ -7,6 +7,7 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/widgets/display_ripple_icon.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../data/services/matchmaking_service.dart';
@@ -71,7 +72,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
   Future<void> _initializeMatchmaking() async {
     try {
       await ref.read(matchmakingServiceProvider).goOnline();
-      await Future.delayed(Duration(milliseconds: 700));
+      await Future.delayed(Duration(milliseconds: 1200));
 
       if (_uiState != MatchmakingUIState.globalSearching) {
         _startGlobalMatchMaking();
@@ -365,7 +366,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 ),
                 rippleColor: colorYellowAccent,
                 shadowScale: 3,
-              ),
+              ).animate(delay: Duration(milliseconds: 450)).scale(
+                  duration: const Duration(milliseconds: 2000),
+                  curve: Curves.easeInOut),
               SizedBox(height: kToolbarHeight),
               Text(
                 'Suche nach Spielern weltweit...',
@@ -414,7 +417,9 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 ),
                 rippleColor: colorRed,
                 shadowScale: 3,
-              ),
+              ).animate().scale(
+                  duration: const Duration(milliseconds: 2000),
+                  curve: Curves.easeInOut),
               SizedBox(height: kToolbarHeight * 2),
               Text(
                 'Suche nach Spielern in der Nähe...',
@@ -519,7 +524,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
             final player = _cachedNearbyPlayers[index];
             final username = player['username'] as String? ?? 'Unbekannt';
 
-            // Show loading indicator inside each item (or you could highlight just the selected one)
+            // Show loading indicator inside each item
             return SizedBox(
               height: itemHeight,
               child: Row(

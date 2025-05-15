@@ -10,6 +10,10 @@ class OnlineGameService {
   // stream subscriptions
   final Map<String, StreamSubscription> _gameSubscriptions = {};
 
+  final Map<String, Map<String, dynamic>> _lastReceivedGameData = {};
+
+  final Map<String, Timer> _updateDebounceTimers = {};
+
   OnlineGameService(this._supabase);
 
   String? get _localUserId => _supabase.auth.currentUser?.id;
@@ -165,13 +169,80 @@ class OnlineGameService {
             return;
           }
 
-          controller.add(data.first);
+          final gameData = data.first;
+
+          // Check if this is a duplicate update by comparing key fields
+          final lastData = _lastReceivedGameData[gameSessionId];
+          if (lastData != null) {
+            bool hasSignificantChanges = false;
+
+            // Check key fields for meaningful changes
+            final keyFields = [
+              'board',
+              'current_player_id',
+              'selected_cell_index',
+              'current_noun_id',
+              'is_game_over',
+              'winner_id'
+            ];
+
+            for (var field in keyFields) {
+              if (!_areEqual(lastData[field], gameData[field])) {
+                hasSignificantChanges = true;
+                break;
+              }
+            }
+
+            if (!hasSignificantChanges) {
+              // Skip this update as it doesn't have meaningful changes
+              return;
+            }
+          }
+
+          // Save this as the last received data
+          _lastReceivedGameData[gameSessionId] =
+              Map<String, dynamic>.from(gameData);
+
+          // Forward the data to listeners
+          controller.add(gameData);
         }, onError: (error) {
-          print('error in game state stream: $error');
-          controller.add({});
+          print('Error in game state stream: $error');
+          controller.addError(error);
         });
 
     return controller.stream;
+  }
+
+  // Helper to compare values, handling lists specially
+  bool _areEqual(dynamic a, dynamic b) {
+    if (a == b) return true;
+
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+
+      for (int i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+// fetch game session
+  Future<Map<String, dynamic>> getGameSession(String gameSessionId) async {
+    try {
+      final response = await _supabase
+          .from('game_sessions')
+          .select()
+          .eq('id', gameSessionId)
+          .single();
+      return response;
+    } catch (e) {
+      print('error getting game session: $e');
+      return {};
+    }
   }
 
   // update game state after a move
@@ -185,17 +256,43 @@ class OnlineGameService {
     String? winnerId,
   }) async {
     try {
-      await _supabase.from('game_sessions').update({
-        if (board != null) 'board': board,
-        if (selectedCellIndex != null) 'selected_cell_index': selectedCellIndex,
-        if (currentPlayerId != null) 'current_player_id': currentPlayerId,
-        if (currentNounId != null) 'current_noun_id': currentNounId,
-        if (isGameOver != null) 'is_game_over': isGameOver,
-        if (winnerId != null) 'winner_id': winnerId,
+      _updateDebounceTimers[gameSessionId]?.cancel();
+
+      final updatePayload = <String, dynamic>{
         'last_activity': DateTime.now().toIso8601String(),
-      }).eq('id', gameSessionId);
+      };
+
+      if (board != null) updatePayload['board'] = board;
+      if (selectedCellIndex != null) {
+        updatePayload['selected_cell_index'] = selectedCellIndex;
+      }
+      if (currentPlayerId != null) {
+        updatePayload['current_player_id'] = currentPlayerId;
+      }
+      if (currentNounId != null) {
+        updatePayload['current_noun_id'] = currentNounId;
+      }
+      if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
+      if (winnerId != null) updatePayload['winner_id'] = winnerId;
+
+      print('Updating game state for $gameSessionId: $updatePayload');
+
+      // Create a new debounce timer
+      _updateDebounceTimers[gameSessionId] =
+          Timer(Duration(milliseconds: 50), () async {
+        try {
+          await _supabase
+              .from('game_sessions')
+              .update(updatePayload)
+              .eq('id', gameSessionId);
+
+          print('Game state update completed for $gameSessionId');
+        } catch (e) {
+          print('Error in debounced game state update: $e');
+        }
+      });
     } catch (e) {
-      print('error updating game state');
+      print('Error setting up game state update: $e');
     }
   }
 
@@ -233,8 +330,17 @@ class OnlineGameService {
 
   // dispose subs
   void dispose() {
-    _gameSubscriptions.forEach((_, subscription) => subscription.cancel());
+    for (var timer in _updateDebounceTimers.values) {
+      timer.cancel();
+    }
+    _updateDebounceTimers.clear();
+
+    for (var subscription in _gameSubscriptions.values) {
+      subscription.cancel();
+    }
     _gameSubscriptions.clear();
+
+    _lastReceivedGameData.clear();
   }
 }
 
