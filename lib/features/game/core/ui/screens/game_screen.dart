@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
@@ -65,12 +66,27 @@ class GameScreen extends ConsumerWidget {
             halfSpace,
 
             // players
-            PlayerInfo(gameConfig: gameConfig),
+            PlayerInfo(gameConfig: gameConfig).animate().shimmer(
+                  delay: const Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 1500),
+                  colors: [
+                    colorGrey300.withOpacity(0.1),
+                    colorGrey300.withOpacity(0.5),
+                    colorGrey300.withOpacity(0.1),
+                  ],
+                  size: 0.8,
+                  blendMode: BlendMode.srcIn,
+                  curve: Curves.easeInOut,
+                ),
 
             quarterSpace,
 
             // word display
-            TurnNounDisplay(gameConfig: gameConfig),
+            TurnNounDisplay(gameConfig: gameConfig).animate().fadeIn(
+                  curve: Curves.easeInOut,
+                  delay: const Duration(seconds: 2),
+                  duration: const Duration(milliseconds: 900),
+                ),
 
             quarterSpace,
 
@@ -79,7 +95,11 @@ class GameScreen extends ConsumerWidget {
               child: GameBoard(
                 gameConfig: gameConfig,
               ),
-            ),
+            ).animate().scale(
+                  delay: const Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 1500),
+                  curve: Curves.easeInOut,
+                ),
 
             space,
 

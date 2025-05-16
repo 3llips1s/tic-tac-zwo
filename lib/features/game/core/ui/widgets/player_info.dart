@@ -66,8 +66,9 @@ class PlayerInfo extends ConsumerWidget {
 
         // scores
         Center(
-            child: playerScores(
-                context, gameState.player1Score, gameState.player2Score)),
+          child: playerScores(
+              context, gameState.player1Score, gameState.player2Score),
+        ),
 
         // p2 name + symbol | right
         Expanded(

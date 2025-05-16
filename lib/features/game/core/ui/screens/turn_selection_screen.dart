@@ -123,7 +123,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
           // Player 1
           _buildPlayerRow(players[0])
-              .animate(delay: const Duration(milliseconds: 500))
+              .animate(delay: const Duration(milliseconds: 450))
               .fadeIn(
                   curve: Curves.linear,
                   duration: const Duration(milliseconds: 900))
@@ -149,7 +149,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
           // Player 2
           _buildPlayerRow(players[1], alignRight: true)
-              .animate(delay: const Duration(milliseconds: 500))
+              .animate(delay: const Duration(milliseconds: 450))
               .fadeIn(
                   curve: Curves.linear,
                   duration: const Duration(milliseconds: 900))
@@ -159,13 +159,17 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
                   curve: Curves.ease,
                   duration: const Duration(milliseconds: 1000)),
 
-          SizedBox(height: kToolbarHeight * 1.5),
+          SizedBox(
+            height: widget.gameMode == GameMode.pass
+                ? kToolbarHeight * 1.2
+                : kToolbarHeight * 1.5,
+          ),
 
           if (widget.gameMode == GameMode.pass) ...[
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(right: 40),
+                padding: const EdgeInsets.only(right: 50),
                 child: GestureDetector(
                   onTap: _handleNameEdit,
                   child: Container(

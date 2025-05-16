@@ -40,8 +40,9 @@ class _OnlineTurnSelectionScreenState
 
   Player? _player1;
   Player? _player2;
-  bool _isPlayerOne = false;
   String? _localUserId;
+
+  bool _isPlayerOne = false;
 
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
@@ -49,10 +50,10 @@ class _OnlineTurnSelectionScreenState
   @override
   void initState() {
     super.initState();
+    _localUserId = ref.read(supabaseProvider).auth.currentUser?.id;
+
     _loadGameSession();
     _initHoverAnimation();
-
-    _localUserId = ref.read(supabaseProvider).auth.currentUser?.id;
   }
 
   void _initHoverAnimation() {
@@ -163,18 +164,26 @@ class _OnlineTurnSelectionScreenState
             return Center(child: DualProgressIndicator());
           }
 
-          // determine readiness
-          final String? player1Id = sessionData['player1_id'];
+          // determine readiness from stream data
+          final String? streamPlayer1Id = sessionData['player1_id'];
+          final String? streamPlayer2Id = sessionData['player2_id'];
           final bool p1Ready = sessionData['player1_ready'] ?? false;
           final bool p2Ready = sessionData['player2_ready'] ?? false;
 
           bool isOpponentActuallyReady = false;
-          if (_localUserId != null && player1Id == null) {
-            if (_localUserId == player1Id) {
+
+          if (_localUserId != null) {
+            if (_localUserId == streamPlayer1Id) {
               isOpponentActuallyReady = p2Ready;
-            } else {
+            } else if (_localUserId == streamPlayer2Id) {
               isOpponentActuallyReady = p1Ready;
+            } else {
+              print(
+                  'Debug: _localUserId ($_localUserId) does not match streamPlayer1Id ($streamPlayer1Id) or streamPlayer2Id ($streamPlayer2Id). Opponent readiness may be inaccurate temporarily.');
             }
+          } else {
+            print(
+                'Debug: _localUserId is null. Cannot determine opponent readiness.');
           }
 
           print(
@@ -225,7 +234,7 @@ class _OnlineTurnSelectionScreenState
 
                 // Player 1
                 _buildPlayerRow(_player1!)
-                    .animate(delay: const Duration(milliseconds: 500))
+                    .animate(delay: const Duration(milliseconds: 450))
                     .fadeIn(
                         curve: Curves.linear,
                         duration: const Duration(milliseconds: 900))
@@ -252,7 +261,7 @@ class _OnlineTurnSelectionScreenState
 
                 // Player 2
                 _buildPlayerRow(_player2!, alignRight: true)
-                    .animate(delay: const Duration(milliseconds: 500))
+                    .animate(delay: const Duration(milliseconds: 450))
                     .fadeIn(
                         curve: Curves.linear,
                         duration: const Duration(milliseconds: 900))
@@ -343,7 +352,9 @@ class _OnlineTurnSelectionScreenState
                     ),
               ),
               SizedBox(height: 16),
-              // Back button
+              // home button
+              // todo: add leave match button + functionality on other clients side
+
               Padding(
                 padding: const EdgeInsets.only(left: 20, top: 20),
                 child: Container(
@@ -353,10 +364,11 @@ class _OnlineTurnSelectionScreenState
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(9),
                   ),
-
-                  // todo: add leave match to button + functionality on other clients side
                   child: IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pushReplacementNamed(
+                      context,
+                      RouteNames.home,
+                    ),
                     icon: Icon(
                       Icons.home_rounded,
                       color: colorWhite,

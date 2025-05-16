@@ -139,12 +139,23 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     _startNearbyMatchmaking();
   }
 
-  void _navigateToOnlineTurnSelection(String gameId) {
-    if (mounted) {
-      ref.read(matchmakingServiceProvider).goOffline();
-      Navigator.pushReplacementNamed(context, RouteNames.onlineTurnSelection,
-          arguments: {'gameSessionId': gameId, 'matchMode': _getModeTitle()});
-    }
+  Future<void> _navigateToOnlineTurnSelection(String gameId) async {
+    if (!mounted) return;
+
+    ref.read(matchmakingServiceProvider).goOffline();
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      RouteNames.onlineTurnSelection,
+      arguments: {
+        'gameSessionId': gameId,
+        'matchMode': _getModeTitle(),
+      },
+    );
   }
 
   void _handleBackNavigation() {
