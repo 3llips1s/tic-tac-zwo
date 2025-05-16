@@ -8,10 +8,12 @@ class OnlineGameService {
   final SupabaseClient _supabase;
 
   // stream subscriptions
-  final Map<String, StreamSubscription> _gameSubscriptions = {};
+  final Map<String, StreamSubscription> _gameStreamSubscriptions = {};
 
-  final Map<String, Map<String, dynamic>> _lastReceivedGameData = {};
+  // Cache for last received data to prevent redundant processing if Supabase stream sends duplicates
+  final Map<String, Map<String, dynamic>> _lastReceivedStreamData = {};
 
+  // Debounce timers for updates to Supabase
   final Map<String, Timer> _updateDebounceTimers = {};
 
   OnlineGameService(this._supabase);
@@ -19,192 +21,108 @@ class OnlineGameService {
   String? get _localUserId => _supabase.auth.currentUser?.id;
 
   Future<void> setPlayerReady(String gameSessionId) async {
-    if (_localUserId == null) return;
+    if (_localUserId == null) {
+      print(
+          '[OnlineGameService] setPlayerReady: Local user ID is null. Cannot set ready state.');
+      return;
+    }
 
     try {
       // fetch game sessions
       final gameSession = await _supabase
           .from('game_sessions')
-          .select()
+          .select('player1_id, player2_id')
           .eq('id', gameSessionId)
           .single();
 
       final isPlayerOne = gameSession['player1_id'] == _localUserId;
+      final readyField = isPlayerOne ? 'player1_ready' : 'player2_ready';
 
       print(
-          'setting player ready: ${isPlayerOne ? 'player1' : 'player2'} in session $gameSessionId');
+          '[OnlineGameService] Setting player ready: $_localUserId (${isPlayerOne ? 'player1' : 'player2'}) in session $gameSessionId.');
 
       // update ready field
       await _supabase.from('game_sessions').update({
-        isPlayerOne ? 'player1_ready' : 'player2_ready': true,
+        readyField: true,
+        'last_activity': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
-
-      // todo: consider getting rid of this verification
-      final updatedSession = await _supabase
-          .from('game_sessions')
-          .select()
-          .eq('id', gameSessionId)
-          .single();
-
-      print(
-          'after update - player1 ready: ${updatedSession['player1_ready']}, player2 ready: ${updatedSession['player2_ready']}');
     } catch (e) {
-      print('error setting player ready');
+      print(
+          '[OnlineGameService] Error setting player ready for session $gameSessionId: $e');
     }
   }
 
   Future<void> setPlayerNotReady(String gameSessionId) async {
-    if (_localUserId == null) return;
+    if (_localUserId == null) {
+      print('[OnlineGameService] setPlayerNotReady: Local user ID is null.');
+      return;
+    }
 
     try {
       // fetch game sessions
       final gameSession = await _supabase
           .from('game_sessions')
-          .select()
+          .select('player1_id, player2_id')
           .eq('id', gameSessionId)
           .single();
 
       final isPlayerOne = gameSession['player1_id'] == _localUserId;
+      final readyField = isPlayerOne ? 'player1_ready' : 'player2_ready';
 
       // update ready field
       await _supabase.from('game_sessions').update({
-        isPlayerOne ? 'player1_ready' : 'player2_ready': false,
+        readyField: false,
+        'last_activity': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
+      print(
+          '[OnlineGameService] Player $_localUserId set to not ready for session $gameSessionId.');
     } catch (e) {
-      print('error setting player not ready');
-    }
-  }
-
-  // check if opp is ready
-  Stream<bool> getOpponentReadyStream(String gameSessionId) {
-    if (_localUserId == null) {
       print(
-          '[OnlineGameService] getOpponentReadyStream: No local user ID, returning false stream.');
-      return Stream.value(false);
+          '[OnlineGameService] Error setting player not ready for session $gameSessionId: $e');
     }
-    ;
-
-    final controller = StreamController<bool>.broadcast();
-
-    print(
-        '[OnlineGameService] getOpponentReadyStream: Initializing for session $gameSessionId, user $_localUserId');
-
-    // get game session to determine which player we are
-    _supabase
-        .from('game_sessions')
-        .select()
-        .eq('id', gameSessionId)
-        .single()
-        .then(
-      (gameSession) {
-        final isPlayerOne = gameSession['player1_id'] == _localUserId;
-        print(
-            '[OnlineGameService] Initial fetch for $gameSessionId: Current user is ${isPlayerOne ? 'player1' : 'player2'}. P1: ${gameSession['player1_id']}, P2: ${gameSession['player2_id']}');
-        print(
-            '[OnlineGameService] Initial session data: player1_ready: ${gameSession['player1_ready']}, player2_ready: ${gameSession['player2_ready']}');
-
-        // listen to opp ready state
-        _gameSubscriptions[gameSessionId] = _supabase
-            .from('game_sessions')
-            .stream(primaryKey: ['id'])
-            .eq('id', gameSessionId)
-            .listen(
-              (data) {
-                if (data.isEmpty) {
-                  print(
-                      '[OnlineGameService] OpponentReadyStream for $gameSessionId: Received empty data array.');
-                  return;
-                }
-
-                // todo: remove after testing
-                final session = data.first;
-
-                final p1ReadyFromStream = session['player1_ready'] ?? false;
-                final p2ReadyFromStream = session['player2_ready'] ?? false;
-
-                print(
-                    '[OnlineGameService] RAW STREAM DATA RECEIVED for $gameSessionId: $session');
-
-                final opponentReady = isPlayerOne
-                    ? session['player2_ready'] ?? false
-                    : session['player1_ready'] ?? false;
-
-                '[OnlineGameService] Opponent ready stream update for $gameSessionId: derived_opponentReady: $opponentReady - Stream P1_ready: $p1ReadyFromStream - Stream P2_ready: $p2ReadyFromStream (User is P1: $isPlayerOne)';
-
-                controller.add(opponentReady);
-              },
-              onError: (error) {
-                print(
-                    '[OnlineGameService] ERROR in opponent ready stream for $gameSessionId: $error');
-                controller.addError(error);
-              },
-              onDone: () {
-                print(
-                    '[OnlineGameService] Opponent ready stream DONE for $gameSessionId');
-              },
-            );
-      },
-    ).catchError((error) {
-      print(
-          '[OnlineGameService] ERROR fetching initial game session $gameSessionId: $error');
-      controller.addError(error);
-    });
-
-    return controller.stream;
   }
 
   // stream for general game state updates
   Stream<Map<String, dynamic>> getGameStateStream(String gameSessionId) {
     final controller = StreamController<Map<String, dynamic>>.broadcast();
+    final String streamKey = 'gameState_$gameSessionId';
 
-    _gameSubscriptions['state_$gameSessionId']?.cancel();
+    _gameStreamSubscriptions[streamKey]?.cancel();
 
-    _gameSubscriptions['state_$gameSessionId'] = _supabase
+    print(
+        '[OnlineGameService] Setting up game state stream for session: $gameSessionId');
+
+    _gameStreamSubscriptions[streamKey] = _supabase
         .from('game_sessions')
         .stream(primaryKey: ['id'])
         .eq('id', gameSessionId)
-        .listen((data) {
-          if (data.isEmpty) {
-            controller.add({});
+        .listen((dataList) {
+          if (controller.isClosed) return;
+
+          if (dataList.isEmpty) {
+            print(
+                '[OnlineGameService] Game state stream for $gameSessionId received empty data list.');
+            // handle as error / session ended
             return;
           }
 
-          final gameData = data.first;
+          final gameData = dataList.first;
+          print(
+              '[OnlineGameService] RAW STREAM DATA RECEIVED for $gameSessionId: $gameData');
 
-          // Check if this is a duplicate update by comparing key fields
-          final lastData = _lastReceivedGameData[gameSessionId];
-          if (lastData != null) {
-            bool hasSignificantChanges = false;
+          // Prevent processing identical consecutive updates if Supabase sends them
+          final String lastDataKey = 'lastStreamData_$gameSessionId';
+          final lastData = _lastReceivedStreamData[lastDataKey];
 
-            // Check key fields for meaningful changes
-            final keyFields = [
-              'board',
-              'current_player_id',
-              'selected_cell_index',
-              'current_noun_id',
-              'is_game_over',
-              'winner_id'
-            ];
-
-            for (var field in keyFields) {
-              if (!_areEqual(lastData[field], gameData[field])) {
-                hasSignificantChanges = true;
-                break;
-              }
-            }
-
-            if (!hasSignificantChanges) {
-              // Skip this update as it doesn't have meaningful changes
-              return;
-            }
+          if (lastData != null &&
+              lastData['updated_at'] == gameData['updated_at'] &&
+              _areMapsEqual(lastData, gameData)) {
+            return;
           }
 
-          // Save this as the last received data
-          _lastReceivedGameData[gameSessionId] =
+          _lastReceivedStreamData[lastDataKey] =
               Map<String, dynamic>.from(gameData);
-
-          // Forward the data to listeners
-          controller.add(gameData);
+          controller.add(Map<String, dynamic>.from(gameData));
         }, onError: (error) {
           print('Error in game state stream: $error');
           controller.addError(error);
@@ -213,26 +131,26 @@ class OnlineGameService {
     return controller.stream;
   }
 
-  // Helper to compare values, handling lists specially
-  bool _areEqual(dynamic a, dynamic b) {
-    if (a == b) return true;
+  // Helper to compare values
+  bool _areMapsEqual(Map<String, dynamic> map1, Map<String, dynamic> map2) {
+    if (map1.length != map2.length) return false;
+    for (final key in map1.keys) {
+      if (!map2.containsKey(key)) return false;
 
-    if (a is List && b is List) {
-      if (a.length != b.length) return false;
-
-      for (int i = 0; i < a.length; i++) {
-        if (a[i] != b[i]) return false;
+      if (key == 'board') {
+        if (map1[key].toString() != map2[key].toString()) return false;
+      } else if (map1[key] != map2[key]) {
+        return false;
       }
-
-      return true;
     }
-
-    return false;
+    return true;
   }
 
 // fetch game session
   Future<Map<String, dynamic>> getGameSession(String gameSessionId) async {
     try {
+      print('[OnlineGameService] Fetching game session: $gameSessionId');
+
       final response = await _supabase
           .from('game_sessions')
           .select()
@@ -240,7 +158,8 @@ class OnlineGameService {
           .single();
       return response;
     } catch (e) {
-      print('error getting game session: $e');
+      print(
+          '[OnlineGameService] Error getting game session $gameSessionId: $e');
       return {};
     }
   }
@@ -249,51 +168,64 @@ class OnlineGameService {
   Future<void> updateGameState(
     String gameSessionId, {
     List<String?>? board,
-    int? selectedCellIndex,
+    dynamic selectedCellIndex,
     String? currentPlayerId,
-    String? currentNounId,
+    dynamic currentNounId,
     bool? isGameOver,
-    String? winnerId,
+    dynamic winnerId,
   }) async {
-    try {
-      _updateDebounceTimers[gameSessionId]?.cancel();
+    const debounceDuration = Duration(milliseconds: 100);
 
-      final updatePayload = <String, dynamic>{
-        'last_activity': DateTime.now().toIso8601String(),
-      };
-
-      if (board != null) updatePayload['board'] = board;
-      if (selectedCellIndex != null) {
-        updatePayload['selected_cell_index'] = selectedCellIndex;
-      }
-      if (currentPlayerId != null) {
-        updatePayload['current_player_id'] = currentPlayerId;
-      }
-      if (currentNounId != null) {
-        updatePayload['current_noun_id'] = currentNounId;
-      }
-      if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
-      if (winnerId != null) updatePayload['winner_id'] = winnerId;
-
-      print('Updating game state for $gameSessionId: $updatePayload');
-
-      // Create a new debounce timer
-      _updateDebounceTimers[gameSessionId] =
-          Timer(Duration(milliseconds: 50), () async {
-        try {
-          await _supabase
-              .from('game_sessions')
-              .update(updatePayload)
-              .eq('id', gameSessionId);
-
-          print('Game state update completed for $gameSessionId');
-        } catch (e) {
-          print('Error in debounced game state update: $e');
-        }
-      });
-    } catch (e) {
-      print('Error setting up game state update: $e');
+    if (_updateDebounceTimers[gameSessionId]?.isActive ?? false) {
+      _updateDebounceTimers[gameSessionId]!.cancel();
     }
+
+    _updateDebounceTimers[gameSessionId] = Timer(debounceDuration, () async {
+      try {
+        final updatePayload = <String, dynamic>{
+          'last_activity': DateTime.now().toIso8601String(),
+        };
+
+        if (board != null) updatePayload['board'] = board;
+
+        if (selectedCellIndex != null || board != null) {
+          updatePayload['selected_cell_index'] = selectedCellIndex;
+        }
+
+        if (currentNounId != null || board != null) {
+          updatePayload['current_noun_id'] = currentNounId;
+        }
+        if (winnerId != null || isGameOver != null) {
+          updatePayload['winner_id'] = winnerId;
+        }
+
+        if (currentPlayerId != null) {
+          updatePayload['current_player_id'] = currentPlayerId;
+        }
+
+        if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
+
+        if (updatePayload.length == 1 &&
+            updatePayload.containsKey('last_activity')) {
+          // print('[OnlineGameService] updateGameState for $gameSessionId: No actual game data to update, only last_activity. Skipping DB call.');
+          return;
+        }
+
+        print(
+            '[OnlineGameService] Debounced update executing for $gameSessionId. Payload: $updatePayload');
+
+        await _supabase
+            .from('game_sessions')
+            .update(updatePayload)
+            .eq('id', gameSessionId);
+
+        print(
+            '[OnlineGameService] Game state update completed via debounce for $gameSessionId.');
+      } catch (e) {
+        print(
+            '[OnlineGameService] Error in debounced game state update for $gameSessionId: $e');
+      }
+    });
   }
 
   // record game move
@@ -306,6 +238,9 @@ class OnlineGameService {
     required int cellIndex,
   }) async {
     try {
+      print(
+          '[OnlineGameService] Recording game round for session $gameSessionId, player $playerId.');
+
       await _supabase.from('game_rounds').insert({
         'game_id': gameSessionId,
         'player_id': playerId,
@@ -313,19 +248,27 @@ class OnlineGameService {
         'selected_article': selectedArticle,
         'is_correct': isCorrect,
         'cell_index': cellIndex,
+        'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print('Error recording game round: $e');
+      print(
+          '[OnlineGameService] Error recording game round for session $gameSessionId: $e');
     }
   }
 
   // clean up subs
-  void disposeGameSession(String gameSessionId) {
-    print('Disposing game session subscriptions for $gameSessionId');
-    _gameSubscriptions[gameSessionId]?.cancel();
-    _gameSubscriptions['state_$gameSessionId']?.cancel();
-    _gameSubscriptions.remove(gameSessionId);
-    _gameSubscriptions.remove('state_$gameSessionId');
+  void clientDisposeGameSessionResources(String gameSessionId) {
+    print(
+        '[OnlineGameService] Disposing client-specific resources for game session $gameSessionId.');
+
+    final gameStateStreamKey = 'gameState_$gameSessionId';
+
+    _gameStreamSubscriptions[gameStateStreamKey]?.cancel();
+    _gameStreamSubscriptions.remove(gameStateStreamKey);
+    _lastReceivedStreamData.remove('lastStreamData_$gameSessionId');
+
+    _updateDebounceTimers[gameSessionId]?.cancel();
+    _updateDebounceTimers.remove(gameSessionId);
   }
 
   // dispose subs
@@ -335,28 +278,21 @@ class OnlineGameService {
     }
     _updateDebounceTimers.clear();
 
-    for (var subscription in _gameSubscriptions.values) {
+    for (var subscription in _gameStreamSubscriptions.values) {
       subscription.cancel();
     }
-    _gameSubscriptions.clear();
-
-    _lastReceivedGameData.clear();
+    _gameStreamSubscriptions.clear();
+    _lastReceivedStreamData.clear();
   }
 }
 
 // providers
-
 final onlineGameServiceProvider = Provider(
   (ref) {
     final supabase = ref.watch(supabaseProvider);
-    return OnlineGameService(supabase);
-  },
-);
-
-final opponentReadyProvider = StreamProvider.family<bool, String>(
-  (ref, gameSessionId) {
-    final service = ref.watch(onlineGameServiceProvider);
-    return service.getOpponentReadyStream(gameSessionId);
+    final service = OnlineGameService(supabase);
+    ref.onDispose(() => service.dispose());
+    return service;
   },
 );
 

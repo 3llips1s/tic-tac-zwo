@@ -27,6 +27,8 @@ class GameState {
   final List<int>? winningCells;
   final bool showArticleFeedback;
 
+  final bool isOpponentReady;
+
   static const int turnDurationSeconds = 9;
 
   GameState({
@@ -49,6 +51,7 @@ class GameState {
     required this.gamesPlayed,
     this.winningCells,
     this.showArticleFeedback = false,
+    this.isOpponentReady = false,
   });
 
   GameState.initial(this.players, this.startingPlayer)
@@ -68,7 +71,8 @@ class GameState {
         player2Score = 0,
         gamesPlayed = 0,
         winningCells = null,
-        showArticleFeedback = false;
+        showArticleFeedback = false,
+        isOpponentReady = false;
 
   GameState copyWith({
     List<String?>? board,
@@ -77,19 +81,23 @@ class GameState {
     Player? startingPlayer,
     Player? lastPlayedPlayer,
     GermanNoun? currentNoun,
+    bool allowNullCurrentNoun = false,
     int? remainingSeconds,
     bool? isTimerActive,
     int? selectedCellIndex,
+    bool allowNullSelectedCellIndex = false,
     String? wrongSelectedArticle,
 
     // after game ends
     bool? isGameOver,
     Player? winningPlayer,
+    bool allowNullWinningPlayer = false,
     int? player1Score,
     int? player2Score,
     int? gamesPlayed,
     List<int>? winningCells,
     bool? showArticleFeedback,
+    bool? isOpponentReady,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -97,25 +105,34 @@ class GameState {
       players: players ?? this.players,
       startingPlayer: startingPlayer ?? this.startingPlayer,
       lastPlayedPlayer: lastPlayedPlayer ?? this.lastPlayedPlayer,
-      currentNoun: currentNoun ?? this.currentNoun,
+      currentNoun: allowNullCurrentNoun
+          ? currentNoun
+          : (currentNoun ?? this.currentNoun),
       isTimerActive: isTimerActive ?? this.isTimerActive,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
-      selectedCellIndex: selectedCellIndex ?? this.selectedCellIndex,
+      selectedCellIndex: allowNullSelectedCellIndex
+          ? selectedCellIndex
+          : (selectedCellIndex ?? this.selectedCellIndex),
       wrongSelectedArticle: wrongSelectedArticle ?? this.wrongSelectedArticle,
 
       // after game ends
       isGameOver: isGameOver ?? this.isGameOver,
-      winningPlayer: winningPlayer ?? this.winningPlayer,
+      winningPlayer: allowNullWinningPlayer
+          ? winningPlayer
+          : (winningPlayer ?? this.winningPlayer),
       player1Score: player1Score ?? this.player1Score,
       player2Score: player2Score ?? this.player2Score,
       gamesPlayed: gamesPlayed ?? this.gamesPlayed,
       winningCells: winningCells ?? this.winningCells,
       showArticleFeedback: showArticleFeedback ?? this.showArticleFeedback,
+      isOpponentReady: isOpponentReady ?? this.isOpponentReady,
     );
   }
 
   // method to determine whose turn it is
   bool isPlayerTurn(Player player) {
+    if (isGameOver) return false;
+
     if (lastPlayedPlayer == null) {
       // first turn to starting player
       return player.symbol == startingPlayer.symbol;
@@ -126,7 +143,8 @@ class GameState {
   }
 
   Player get currentPlayer =>
-      players.firstWhere((player) => isPlayerTurn(player));
+      players.firstWhere((player) => isPlayerTurn(player),
+          orElse: () => players.first);
 
   // symbol display
   static const String symbolX = 'X';
@@ -172,6 +190,7 @@ class GameState {
       'gamesPlayed': gamesPlayed,
       'winningCells': winningCells,
       'showArticleFeedback': showArticleFeedback,
+      'isOpponentReady': isOpponentReady,
     };
   }
 
@@ -207,7 +226,8 @@ class GameState {
       winningCells: json['winningCells'] != null
           ? List<int>.from(json['winningCells'])
           : null,
-      showArticleFeedback: json['showArticleFeedback'],
+      showArticleFeedback: json['showArticleFeedback'] ?? false,
+      isOpponentReady: json['isOpponentReady'] ?? false,
     );
   }
 

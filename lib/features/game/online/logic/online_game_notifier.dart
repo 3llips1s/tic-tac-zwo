@@ -9,8 +9,11 @@ import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
 
+import '../../core/data/models/player.dart';
+
 class OnlineGameNotifier extends GameNotifier {
   final SupabaseClient supabase;
+
   final String gameSessionId;
   String? currentUserId;
   Map<String, dynamic>? gameSessionData;
@@ -24,8 +27,17 @@ class OnlineGameNotifier extends GameNotifier {
       : gameSessionId = gameConfig.gameSessionId ?? '',
         currentUserId = supabase.auth.currentUser?.id,
         super(ref, gameConfig.players, gameConfig.startingPlayer) {
-    if (gameSessionId.isNotEmpty) {
+    if (gameSessionId.isNotEmpty && currentUserId != null) {
       _initOnlineGame();
+    } else {
+      if (gameSessionId.isEmpty) {
+        print(
+            '[OnlineGameNotifier] Game Session ID is empty. Cannot initialize online game.');
+      }
+      if (currentUserId == null) {
+        print(
+            '[OnlineGameNotifier] Current User ID is null. Cannot initialize online game.');
+      }
     }
   }
 
@@ -34,192 +46,369 @@ class OnlineGameNotifier extends GameNotifier {
 
     // get initial game session data
     try {
-      gameSessionData = await gameService.getGameSession(gameSessionId);
+      final initialSessionData =
+          await gameService.getGameSession(gameSessionId);
+      if (initialSessionData.isEmpty) {
+        print(
+            '[OnlineGameNotifier] Failed to fetch initial game session data or data is empty for session $gameSessionId.');
+        // Handle error appropriately, maybe notify user or retry
+        return;
+      }
+
+      gameSessionData = initialSessionData;
 
       final currentPlayerId = gameSessionData?['current_player_id'];
       _isLocalPlayerTurn = currentPlayerId == currentUserId;
 
+      // update initial opponent ready state
+      _updateLocalOpponentReadyStatus(gameSessionData!);
+
       // initialize player ready status
+      print(
+          '[OnlineGameNotifier] Setting player $currentUserId as ready for session $gameSessionId.');
       await gameService.setPlayerReady(gameSessionId);
 
       // sub to game state updates
+      await _gameStateSubscription?.cancel();
       _gameStateSubscription = gameService
           .getGameStateStream(gameSessionId)
-          .listen(_handleGameStateUpdate);
+          .listen(_handleGameStateUpdate, onError: (error) {
+        print(
+            '[OnlineGameNotifier] Error in game state stream for session $gameSessionId: $error');
+      });
+      // Handle stream errors, e.g., retry subscription or notify user.
+      print(
+          '[OnlineGameNotifier] Subscribed to game state stream for session $gameSessionId.');
     } catch (e) {
-      print('error initializing online game: $e');
+      print(
+          '[OnlineGameNotifier] Critical error initializing online game for session $gameSessionId: $e');
+    }
+  }
+
+  void _updateLocalOpponentReadyStatus(
+      Map<String, dynamic> currentSessionData) {
+    if (currentUserId == null) {
+      state = state.copyWith(isOpponentReady: false);
+      return;
     }
 
-    _gameStateSubscription = gameService
-        .getGameStateStream(gameSessionId)
-        .listen(_handleGameStateUpdate);
+    final String? player1Id = currentSessionData['player1_id'];
+    final String? player2Id = currentSessionData['player2_id'];
+    final bool player1Ready = currentSessionData['player1_ready'] ?? false;
+    final bool player2Ready = currentSessionData['player2_ready'] ?? false;
 
-    // initialize player ready status
-    gameService.setPlayerReady(gameSessionId);
+    bool newOpponentReadyState = false;
+    if (currentUserId == player1Id) {
+      newOpponentReadyState = player2Ready;
+    } else if (currentUserId == player2Id) {
+      newOpponentReadyState = player1Ready;
+    }
+
+    if (state.isOpponentReady != newOpponentReadyState) {
+      print(
+          '[OnlineGameNotifier] Opponent ready state changed to: $newOpponentReadyState for session $gameSessionId');
+      state = state.copyWith(isOpponentReady: newOpponentReadyState);
+    }
   }
 
   @override
   void loadTurnNoun() async {
-    if (!_isLocalPlayerTurn) return;
+    if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
 
     super.loadTurnNoun();
 
     // update loaded noun to server
     if (state.currentNoun != null && gameSessionId.isNotEmpty) {
       final gameService = ref.read(onlineGameServiceProvider);
-
       final currentNounId = state.currentNoun!.id;
+      print(
+          '[OnlineGameNotifier] Local player loaded noun ${state.currentNoun!.noun}. Updating server for session $gameSessionId.');
 
-      await gameService.updateGameState(
-        gameSessionId,
-        currentNounId: currentNounId,
-      );
+      try {
+        await gameService.updateGameState(
+          gameSessionId,
+          currentNounId: currentNounId,
+        );
+      } catch (e) {
+        print(
+            '[OnlineGameNotifier] Error updating current_noun_id to server: $e');
+      }
     }
   }
 
   @override
-  void selectCell(int index) {
-    if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
+  Future<void> selectCell(int index) async {
+    if (!_isLocalPlayerTurn || _processingRemoteUpdate) {
+      print(
+          '[OnlineGameNotifier] selectCell blocked: isLocalPlayerTurn: $_isLocalPlayerTurn, processingRemoteUpdate: $_processingRemoteUpdate');
+      return;
+    }
 
     super.selectCell(index);
 
-    // update selected cell
     if (gameSessionId.isNotEmpty && state.selectedCellIndex != null) {
       final gameService = ref.read(onlineGameServiceProvider);
-
-      // update game state
-      gameService.updateGameState(
-        gameSessionId,
-        selectedCellIndex: state.selectedCellIndex,
-        currentNounId: state.currentNoun?.id,
-      );
+      print(
+          '[OnlineGameNotifier] Local player selected cell ${state.selectedCellIndex}. Updating server for session $gameSessionId.');
+      try {
+        // send selected cell index and current noun id
+        await gameService.updateGameState(
+          gameSessionId,
+          selectedCellIndex: state.selectedCellIndex,
+          currentNounId: state.currentNoun?.id,
+        );
+      } catch (e) {
+        print(
+            '[OnlineGameNotifier] Error updating selected_cell_index to server: $e');
+      }
     }
   }
 
   @override
   void makeMove(String selectedArticle) async {
-    if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
+    if (!_isLocalPlayerTurn || _processingRemoteUpdate) {
+      print(
+          '[OnlineGameNotifier] makeMove blocked: isLocalPlayerTurn: $_isLocalPlayerTurn, processingRemoteUpdate: $_processingRemoteUpdate');
+      return;
+    }
+    ;
     if (state.selectedCellIndex == null ||
         !state.isTimerActive ||
         gameSessionId.isEmpty) {
+      print(
+          '[OnlineGameNotifier] makeMove blocked: local state check failed (no cell selected, timer not active, or no session ID).');
       return;
     }
 
-    _processingRemoteUpdate = true;
-
-    bool isCorrect = state.currentNoun?.article == selectedArticle;
-
-    final int cellIndex = state.selectedCellIndex!;
-    final boardCopy = List<String?>.from(state.board);
-
-    if (isCorrect) {
-      boardCopy[cellIndex] = state.currentPlayer.symbolString;
-    }
+    // _processingRemoteUpdate = true;
+    final int committedCellIndex = state.selectedCellIndex!;
+    final String? committedNounId = state.currentNoun?.id;
+    bool isCorrectMove = state.currentNoun?.article == selectedArticle;
 
     super.makeMove(selectedArticle);
+
+    // After super.makeMove(), state.board, state.isGameOver, state.winningPlayer are updated.
+    print(
+        '[OnlineGameNotifier] Local player made a move. Correct: $isCorrectMove. Board after local update: ${state.board}');
+    print(
+        '[OnlineGameNotifier] Game over after local update: ${state.isGameOver}, Winner: ${state.winningPlayer?.userId}');
 
     final gameService = ref.read(onlineGameServiceProvider);
 
     try {
-      // record the round in game rounds table
-      await gameService.recordGameRound(
-        gameSessionId,
-        playerId: currentUserId ?? '',
-        nounId: state.currentNoun?.id ?? '',
-        selectedArticle: selectedArticle,
-        isCorrect: isCorrect,
-        cellIndex: state.selectedCellIndex!,
-      );
+      // record move attempt == record attempt
+      if (committedNounId != null) {
+        print(
+            '[OnlineGameNotifier] Recording game round for session $gameSessionId.');
+        await gameService.recordGameRound(
+          gameSessionId,
+          playerId: currentUserId!,
+          nounId: committedNounId,
+          selectedArticle: selectedArticle,
+          isCorrect: isCorrectMove,
+          cellIndex: committedCellIndex,
+        );
+      } else {
+        print(
+            '[OnlineGameNotifier] Warning: committedNounId is null during makeMove. Round not recorded.');
+      }
     } catch (e) {
-      print('Error recording game round: $e');
+      print('[OnlineGameNotifier] Error recording game round: $e');
     }
 
     final String? player1Id = gameSessionData?['player1_id'];
     final String? player2Id = gameSessionData?['player1_id'];
+    String? nextPlayerUserId;
 
-    // determine next player's id
-    final nextPlayerUserId =
-        (currentUserId == player1Id) ? player2Id : player1Id;
+    if (player1Id != null && player2Id != null) {
+      nextPlayerUserId = (currentUserId == player1Id ? player2Id : player1Id);
+    } else {
+      print(
+          "[OnlineGameNotifier] ERROR: Player IDs not found in gameSessionData. Cannot determine next player.");
+      return;
+    }
+
+    print(
+        '[OnlineGameNotifier] Current player: $currentUserId, Next player determined: $nextPlayerUserId for session $gameSessionId.');
 
     try {
       // update the game state over the server with full info
+      print(
+          '[OnlineGameNotifier] Updating game state on server for session $gameSessionId. Board: ${state.board}, Next Player: $nextPlayerUserId, Game Over: ${state.isGameOver}');
       await gameService.updateGameState(
         gameSessionId,
         board: state.board,
         selectedCellIndex: null,
-        currentPlayerId: nextPlayerUserId,
+        currentPlayerId: state.isGameOver ? null : nextPlayerUserId,
+        currentNounId: null,
         isGameOver: state.isGameOver,
         winnerId: state.winningPlayer?.userId,
       );
 
-      _isLocalPlayerTurn = false;
+      if (!state.isGameOver) {
+        _isLocalPlayerTurn = false;
+        print(
+            '[OnlineGameNotifier] Turn passed locally to $nextPlayerUserId for session $gameSessionId.');
+      } else {
+        print(
+            '[OnlineGameNotifier] Game is over. Local turn status not changed. Session $gameSessionId.');
+      }
     } catch (e) {
-      print('Error updating game state: $e');
+      print(
+          '[OnlineGameNotifier] Error updating game state to server after move: $e');
       // On error, restore local interaction ability
+    } finally {
       _processingRemoteUpdate = false;
     }
   }
 
-  void _handleGameStateUpdate(Map<String, dynamic> gameSessionData) {
-    if (gameSessionData.isEmpty) return;
-
-    if (_isIdenticalToLastUpdate(gameSessionData)) {
+  void _handleGameStateUpdate(Map<String, dynamic> remoteGameSessionData) {
+    if (remoteGameSessionData.isEmpty) {
+      print(
+          '[OnlineGameNotifier] Received empty game session data from stream for session $gameSessionId.');
       return;
     }
 
+    if (_isIdenticalToLastUpdate(remoteGameSessionData)) {
+      print(
+          '[OnlineGameNotifier] Received identical game state data, skipping processing for session $gameSessionId.');
+      return;
+    }
+
+    print(
+        '[OnlineGameNotifier] Received new game state from stream for session $gameSessionId: $remoteGameSessionData');
+
     _processingRemoteUpdate = true;
-    this.gameSessionData = gameSessionData;
+    gameSessionData = remoteGameSessionData;
 
     try {
       bool stateChanged = false;
 
+      _updateLocalOpponentReadyStatus(remoteGameSessionData);
+
       // update turn information
-      final currentPlayerId = gameSessionData['current_player_id'];
+      final remoteCurrentPlayerId = remoteGameSessionData['current_player_id'];
       final previousIsLocalPlayerTurn = _isLocalPlayerTurn;
-      _isLocalPlayerTurn = currentPlayerId == currentUserId;
+      _isLocalPlayerTurn = remoteCurrentPlayerId == currentUserId;
 
       if (previousIsLocalPlayerTurn != _isLocalPlayerTurn) {
+        print(
+            '[OnlineGameNotifier] Turn changed. Previous: $previousIsLocalPlayerTurn, New: $_isLocalPlayerTurn for session $gameSessionId.');
         stateChanged = true;
       }
 
       // check if board is different from local state + update
-      final remoteBoard =
-          List<String?>.from(gameSessionData['board'] ?? List.filled(9, null));
-
+      final remoteBoard = List<String?>.from(
+          remoteGameSessionData['board'] ?? List.filled(9, null));
       bool boardChanged = false;
-      for (int i = 0; i < 9; i++) {
-        if (state.board[i] != remoteBoard[i]) {
-          boardChanged = true;
-          break;
+      if (state.board.length != remoteBoard.length) {
+        boardChanged = true;
+      } else {
+        for (int i = 0; i < state.board.length; i++) {
+          if (state.board[i] != remoteBoard[i]) {
+            boardChanged = true;
+            break;
+          }
         }
       }
 
       if (boardChanged) {
+        print(
+            '[OnlineGameNotifier] Board changed remotely. Local: ${state.board}, Remote: $remoteBoard for session $gameSessionId.');
         state = state.copyWith(board: remoteBoard);
         stateChanged = true;
       }
 
       // handle opponent cell selection
-      final remoteSelectedCell = gameSessionData['selected_cell_index'];
-      if (remoteSelectedCell != null &&
-          remoteSelectedCell != state.selectedCellIndex &&
-          !_isLocalPlayerTurn) {
-        var newCellPressed = List<bool>.from(state.cellPressed);
+      final remoteSelectedCell = remoteGameSessionData['selected_cell_index'];
+      if (!_isLocalPlayerTurn &&
+          remoteSelectedCell != null &&
+          remoteSelectedCell != state.selectedCellIndex) {
+        print(
+            '[OnlineGameNotifier] Opponent selected cell $remoteSelectedCell for session $gameSessionId.');
+
+        var newCellPressed = List.filled(9, false);
         newCellPressed[remoteSelectedCell] = true;
 
         state = state.copyWith(
           selectedCellIndex: remoteSelectedCell,
+          allowNullSelectedCellIndex: true,
           cellPressed: newCellPressed,
         );
+        stateChanged = true;
+      } else if (_isLocalPlayerTurn &&
+          state.selectedCellIndex != null &&
+          remoteSelectedCell == null) {
+        state = state.copyWith(
+            selectedCellIndex: null,
+            allowNullSelectedCellIndex: true,
+            cellPressed: List.filled(9, false));
         stateChanged = true;
       }
 
       // handle current noun from opponent
-      final remoteNounId = gameSessionData['current_noun_id'];
+      final remoteNounId = remoteGameSessionData['current_noun_id'];
       if (remoteNounId != null &&
           (state.currentNoun == null ||
               state.currentNoun!.id != remoteNounId)) {
+        print(
+            '[OnlineGameNotifier] Remote noun ID $remoteNounId received. Loading noun for session $gameSessionId.');
         _loadNounFromId(remoteNounId);
+        stateChanged = true;
+      } else if (remoteNounId == null &&
+          state.currentNoun != null &&
+          !_isLocalPlayerTurn) {
+        print(
+            '[OnlineGameNotifier] Remote noun ID is null. Clearing local noun for session $gameSessionId.');
+        state = state.copyWith(currentNoun: null, allowNullCurrentNoun: true);
+        stateChanged = true;
+      }
+
+      // check game over state from remote
+      final remoteIsGameOver = remoteGameSessionData['is_game_over'] ?? false;
+      if (remoteIsGameOver && !state.isGameOver) {
+        final remoteWinnerId = remoteGameSessionData['winner_id'];
+        Player? winningPlayer;
+        if (remoteWinnerId != null) {
+          try {
+            winningPlayer = state.players
+                .firstWhere((player) => player.userId == remoteWinnerId);
+          } catch (e) {
+            print(
+                "[OnlineGameNotifier] Winner ID $remoteWinnerId not found in local players list: ${state.players.map((p) => p.userId).toList()}. Error: $e");
+            winningPlayer = null;
+          }
+        }
+
+        print(
+            '[OnlineGameNotifier] Game over remotely. Winner: $remoteWinnerId for session $gameSessionId.');
+        state = state.copyWith(
+          isGameOver: true,
+          winningPlayer: winningPlayer,
+          allowNullWinningPlayer: true,
+          selectedCellIndex: null,
+          allowNullSelectedCellIndex: true,
+          currentNoun: null,
+          allowNullCurrentNoun: true,
+          isTimerActive: false,
+        );
+        stateChanged = true;
+      } else if (!remoteIsGameOver && state.isGameOver) {
+        print(
+            '[OnlineGameNotifier] Game was over locally, but remote state is not game over. Session $gameSessionId.');
+        // Potentially reset local game state if a rematch is signaled through these fields.
+        state = GameState.initial(state.players, state.startingPlayer).copyWith(
+          player1Score: state.player1Score,
+          player2Score: state.player2Score,
+          gamesPlayed: state.gamesPlayed,
+          isOpponentReady: state.isOpponentReady,
+        );
+
+        // todo: consider (more specific) remote_rematch()
+        _isLocalPlayerTurn =
+            remoteGameSessionData['current_player_id'] == currentUserId;
+        print(
+            '[OnlineGameNotifier] Local game state reset due to remote !isGameOver. New local turn: $_isLocalPlayerTurn');
         stateChanged = true;
       }
 
@@ -228,50 +417,34 @@ class OnlineGameNotifier extends GameNotifier {
           _isLocalPlayerTurn &&
           !state.isGameOver) {
         // reset game state for local player
+        print(
+            '[OnlineGameNotifier] It is now local player\'s turn for session $gameSessionId. Preparing turn.');
         state = state.copyWith(
-          selectedCellIndex: null,
           isTimerActive: false,
-          currentNoun: null,
+          cellPressed: List.filled(9, false),
         );
 
-        // load new noun for local player
-        if (_isLocalPlayerTurn) {
-          Future.delayed(
-            Duration(milliseconds: 300),
-            () {
-              if (_isLocalPlayerTurn && !state.isGameOver) {
-                loadTurnNoun();
-              }
-            },
-          );
-        }
-        stateChanged = true;
-      }
-
-      // check game over state
-      final isGameOver = gameSessionData['is_game_over'] ?? false;
-      if (isGameOver && !state.isGameOver) {
-        final winnerId = gameSessionData['winner_id'];
-        final winningPlayer = winnerId != null
-            ? state.players.firstWhere((player) => player.userId == winnerId,
-                orElse: () => state.players[0])
-            : null;
-
-        state = state.copyWith(
-          isGameOver: true,
-          winningPlayer: winningPlayer,
-        );
         stateChanged = true;
       }
 
       if (stateChanged) {
-        // rebuild if something has changes
+        // The state object is immutable, so assigning to state = state.copyWith(...)
+        // already triggers rebuilds if the StateNotifier is listened to correctly.
+        // No explicit call to a rebuild method is usually needed here.
+        print(
+            '[OnlineGameNotifier] State changed due to remote update. UI should rebuild. Session $gameSessionId.');
       }
+    } catch (e, s) {
+      print(
+          '[OnlineGameNotifier] Error processing game state update for session $gameSessionId: $e');
+      print(s);
     } finally {
       Future.delayed(
         Duration(milliseconds: 150),
         () {
           _processingRemoteUpdate = false;
+          print(
+              '[OnlineGameNotifier] Finished processing remote update. _processingRemoteUpdate is false. Session $gameSessionId.');
         },
       );
     }
@@ -289,7 +462,10 @@ class OnlineGameNotifier extends GameNotifier {
       'selected_cell_index',
       'current_noun_id',
       'is_game_over',
-      'winner_id'
+      'winner_id',
+      'player1_ready',
+      'player2_ready',
+      'last_activity'
     ];
 
     bool identical = true;
@@ -299,24 +475,10 @@ class OnlineGameNotifier extends GameNotifier {
         List? oldBoard = _lastProcessedUpdate![field];
         List? newBoard = newData[field];
 
-        if (oldBoard == null && newBoard == null) continue;
-        if (oldBoard == null || newBoard == null) {
+        if (oldBoard?.toString() != newBoard?.toString()) {
           identical = false;
           break;
         }
-
-        if (oldBoard.length != newBoard.length) {
-          identical = false;
-          break;
-        }
-
-        for (int i = 0; i < oldBoard.length; i++) {
-          if (oldBoard[i] != newBoard[i]) {
-            identical = false;
-            break;
-          }
-        }
-        if (!identical) break;
       } else if (_lastProcessedUpdate![field] != newData[field]) {
         identical = false;
         break;
@@ -325,33 +487,51 @@ class OnlineGameNotifier extends GameNotifier {
 
     if (!identical) {
       _lastProcessedUpdate = Map<String, dynamic>.from(newData);
+      print(
+          "[OnlineGameNotifier] Data is not identical to last update. New data: $newData");
     }
-
     return identical;
   }
 
   Future<void> _loadNounFromId(String nounId, {int retryCount = 3}) async {
+    if (state.currentNoun?.id == nounId && state.currentNoun != null) return;
+
+    print(
+        '[OnlineGameNotifier] Loading noun by ID: $nounId for session $gameSessionId.');
     for (int attempt = 0; attempt < retryCount; attempt++) {
       try {
         final germanNounsRepository = ref.read(germanNounRepoProvider);
         final noun = await germanNounsRepository.getNounById(nounId);
 
         if (noun != null) {
-          state = state.copyWith(currentNoun: noun);
+          if (mounted) {
+            state = state.copyWith(currentNoun: noun);
+            print(
+                '[OnlineGameNotifier] Successfully loaded noun: ${noun.noun} for session $gameSessionId.');
+          }
           return;
+        } else {
+          print(
+              '[OnlineGameNotifier] Noun with ID $nounId not found locally (attempt ${attempt + 1}).');
         }
 
-        await Future.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+        if (attempt < retryCount - 1) {
+          await Future.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+        }
       } catch (e) {
-        print('error loading noun by id (attempt ${attempt + 1}): $e');
+        print(
+            '[OnlineGameNotifier] Error loading noun by ID $nounId (attempt ${attempt + 1}): $e for session $gameSessionId.');
         if (attempt == retryCount - 1) {
           // On last attempt, notify the user
-          print('Failed to load noun after $retryCount attempts');
+          // todo:Consider setting a placeholder error noun or notifying the user
+          print(
+              '[OnlineGameNotifier] Failed to load noun $nounId after $retryCount attempts for session $gameSessionId.');
         } else {
           // Wait before retry with exponential backoff
           await Future.delayed(Duration(milliseconds: 300 * (attempt + 1)));
         }
       }
+      if (!mounted) return;
     }
   }
 
@@ -359,17 +539,24 @@ class OnlineGameNotifier extends GameNotifier {
   void forfeitTurn() {
     if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
 
-    _processingRemoteUpdate = true;
-
     super.forfeitTurn();
 
     final gameService = ref.read(onlineGameServiceProvider);
 
     final String? player1Id = gameSessionData?['player1_id'];
     final String? player2Id = gameSessionData?['player2_id'];
+    String? nextPlayerUserId;
 
-    final nextPlayerUserId =
-        (currentUserId == player1Id) ? player2Id : player1Id;
+    if (player1Id != null && player2Id != null) {
+      nextPlayerUserId = (currentUserId == player1Id) ? player2Id : player1Id;
+    } else {
+      print(
+          "[OnlineGameNotifier] ERROR: Player IDs not found in gameSessionData during forfeit. Cannot determine next player.");
+      return;
+    }
+
+    print(
+        '[OnlineGameNotifier] Local player forfeited turn. Updating server. Next player: $nextPlayerUserId for session $gameSessionId.');
 
     gameService
         .updateGameState(
@@ -377,44 +564,81 @@ class OnlineGameNotifier extends GameNotifier {
       selectedCellIndex: null,
       currentPlayerId: nextPlayerUserId,
       currentNounId: null,
+      board: state.board,
+      isGameOver: state.isGameOver,
+      winnerId: state.winningPlayer?.userId,
     )
         .then((_) {
       _isLocalPlayerTurn = false;
+      print(
+          '[OnlineGameNotifier] Forfeit successful. Turn passed to $nextPlayerUserId on server for session $gameSessionId.');
     }).catchError((e) {
-      print('Error updating game state for forfeit: $e');
-    }).whenComplete(
-      () {
-        _processingRemoteUpdate = false;
-      },
-    );
+      // todo: Consider how to handle: revert local forfeit?
+      print(
+          '[OnlineGameNotifier] Error updating game state to server for forfeit: $e for session $gameSessionId.');
+    });
   }
 
   @override
   void rematch() {
     super.rematch();
 
+    print(
+        '[OnlineGameNotifier] Local rematch initiated. Resetting local state for session $gameSessionId.');
+
+    int currentP1Score = state.player1Score;
+    int currentP2Score = state.player2Score;
+    int currentGamesPlayed = state.gamesPlayed;
+
+    state = GameState.initial(state.players, state.startingPlayer).copyWith(
+      player1Score: currentP1Score,
+      player2Score: currentP2Score,
+      gamesPlayed: currentGamesPlayed,
+      isOpponentReady: false,
+    );
+
     if (gameSessionId.isNotEmpty) {
       final gameService = ref.read(onlineGameServiceProvider);
+      final newStartingPlayerIdOnServer = state.currentPlayer.userId;
 
       // reset game session on server
-      gameService.updateGameState(
+      gameService
+          .updateGameState(
         gameSessionId,
         board: List.filled(9, null),
         selectedCellIndex: null,
+        currentNounId: null,
         isGameOver: null,
         winnerId: null,
-      );
+        currentPlayerId: newStartingPlayerIdOnServer,
+        // todo: add player ready state to avoid auto starting
+      )
+          .then(
+        (_) async {
+          print(
+              '[OnlineGameNotifier] Server reset for rematch. Session $gameSessionId.');
+          if (currentUserId != null) {
+            await gameService.setPlayerReady(gameSessionId);
+            print(
+                '[OnlineGameNotifier] Local player set to ready for new game. Waiting for stream update for turn/opponent status.');
+          }
+        },
+      ).catchError((e) {
+        print(
+            '[OnlineGameNotifier] Error resetting game state on server for rematch: $e for session $gameSessionId.');
+      });
     }
   }
 
   @override
   void dispose() {
     _gameStateSubscription?.cancel();
+    _gameStateSubscription = null;
     final gameService = ref.read(onlineGameServiceProvider);
     if (gameSessionId.isNotEmpty) {
-      gameService.disposeGameSession(gameSessionId);
-      gameService.setPlayerNotReady(gameSessionId);
+      gameService.clientDisposeGameSessionResources(gameSessionId);
     }
+    _lastProcessedUpdate = null;
     super.dispose();
   }
 }

@@ -152,30 +152,45 @@ class _OnlineTurnSelectionScreenState
 
   @override
   Widget build(BuildContext context) {
-    // set up ready listener to start game
-    ref.listen<AsyncValue<bool>>(
-      opponentReadyProvider(widget.gameSessionId),
-      (previous, next) {
-        next.whenData(
-          (isOpponentReady) {
-            print(
-                'opp ready state changed: $isOpponentReady, my ready state: $_isReady');
-
-            if (isOpponentReady && _isReady) {
-              print('both player ready. starting game...');
-              _startGame();
-            }
-          },
-        );
-      },
-    );
+    final gameSessionStream =
+        ref.watch(onlineGameStateProvider(widget.gameSessionId));
 
     return Scaffold(
       backgroundColor: colorGrey300,
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _gameSessionFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: gameSessionStream.when(
+        data: (sessionData) {
+          if (sessionData.isEmpty) {
+            return Center(child: DualProgressIndicator());
+          }
+
+          // determine readiness
+          final String? player1Id = sessionData['player1_id'];
+          final bool p1Ready = sessionData['player1_ready'] ?? false;
+          final bool p2Ready = sessionData['player2_ready'] ?? false;
+
+          bool isOpponentActuallyReady = false;
+          if (_localUserId != null && player1Id == null) {
+            if (_localUserId == player1Id) {
+              isOpponentActuallyReady = p2Ready;
+            } else {
+              isOpponentActuallyReady = p1Ready;
+            }
+          }
+
+          print(
+              'DB states from stream - P1 ready: $p1Ready, P2 ready: $p2Ready. My ready: $_isReady. Opponent ready: $isOpponentActuallyReady');
+
+          if (isOpponentActuallyReady && _isReady) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+                print(
+                    'Both players ready (derived from gameSessionStream). Starting game...');
+                _startGame();
+              }
+            });
+          }
+
+          if (_player1 == null || _player2 == null) {
             return Padding(
               padding: EdgeInsets.only(bottom: kToolbarHeight * 3),
               child: Align(
@@ -183,80 +198,7 @@ class _OnlineTurnSelectionScreenState
                 child: DualProgressIndicator(),
               ),
             );
-
-            ;
           }
-
-          if (snapshot.hasError || !snapshot.hasData) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Fehler beim Laden der Spielsitzung',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                  ),
-                  SizedBox(height: 16),
-                  // Back button
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, top: 20),
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-
-                      // todo: add leave match to button + functionality on other clients side
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(
-                          Icons.home_rounded,
-                          color: colorWhite,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final gameSession = snapshot.data!;
-
-          _player1 ??= Player(
-            userName: gameSession['player1']['username'] ?? 'Spieler 1',
-            userId: gameSession['player1']['id'] ?? '',
-            countryCode: gameSession['player1']['country_code'],
-            symbol: PlayerSymbol.X,
-          );
-
-          _player2 ??= Player(
-            userName: gameSession['player2']['username'] ?? 'Spieler 2',
-            userId: gameSession['player2']['id'] ?? '',
-            countryCode: gameSession['player2']['country_code'],
-            symbol: PlayerSymbol.O,
-          );
-
-          if (_localUserId != null) {
-            _isPlayerOne = gameSession['player1']['id'] == _localUserId;
-          }
-
-          // Check opponent's ready state
-          final opponentReadyState =
-              ref.watch(opponentReadyProvider(widget.gameSessionId));
-          final isOpponentReady = opponentReadyState.value ?? false;
-
-          // todo: remove after testing
-          //  check database directly for debugging purposes
-          final player1Ready = gameSession['player1_ready'] ?? false;
-          final player2Ready = gameSession['player2_ready'] ?? false;
-          print('DB states - P1 ready: $player1Ready, P2 ready: $player2Ready');
 
           return Container(
             padding: EdgeInsets.only(top: 10),
@@ -324,7 +266,7 @@ class _OnlineTurnSelectionScreenState
 
                 // Ready button
                 GestureDetector(
-                  onTap: _isReady ? _toggleReady : null,
+                  onTap: _toggleReady,
                   child: _buildReadyButton(),
                 ),
 
@@ -336,7 +278,7 @@ class _OnlineTurnSelectionScreenState
                       offset: Offset(0, _hoverAnimation.value),
                       child: Padding(
                         padding: const EdgeInsets.only(top: 20.0),
-                        child: _showReadyStatus(isOpponentReady),
+                        child: _showReadyStatus(isOpponentActuallyReady),
                       ),
                     );
                   },
@@ -381,6 +323,51 @@ class _OnlineTurnSelectionScreenState
             ),
           );
         },
+        loading: () => Padding(
+          // Consistent loading indicator
+          padding: EdgeInsets.only(bottom: kToolbarHeight * 3),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: DualProgressIndicator(),
+          ),
+        ),
+        error: (error, stackTrace) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Fehler beim Laden der Spielsitzung',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+              ),
+              SizedBox(height: 16),
+              // Back button
+              Padding(
+                padding: const EdgeInsets.only(left: 20, top: 20),
+                child: Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+
+                  // todo: add leave match to button + functionality on other clients side
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      Icons.home_rounded,
+                      color: colorWhite,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
