@@ -61,21 +61,25 @@ class GameScreen extends ConsumerWidget {
             Align(
               alignment: Alignment.center,
               child: TimerDisplay(gameConfig: gameConfig),
-            ),
+            ).animate().fadeIn(
+                  delay: 3300.ms,
+                  duration: 600.ms,
+                  curve: Curves.easeInOut,
+                ),
 
             halfSpace,
 
             // players
-            PlayerInfo(gameConfig: gameConfig).animate().shimmer(
-                  delay: const Duration(milliseconds: 500),
-                  duration: const Duration(milliseconds: 1500),
-                  colors: [
-                    colorGrey300.withOpacity(0.1),
-                    colorGrey300.withOpacity(0.5),
-                    colorGrey300.withOpacity(0.1),
-                  ],
-                  size: 0.8,
-                  blendMode: BlendMode.srcIn,
+            PlayerInfo(gameConfig: gameConfig)
+                .animate(delay: 1800.ms)
+                .slideY(
+                  begin: -1,
+                  end: 0.0,
+                  duration: 1500.ms,
+                  curve: Curves.easeInOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
                   curve: Curves.easeInOut,
                 ),
 
@@ -83,9 +87,9 @@ class GameScreen extends ConsumerWidget {
 
             // word display
             TurnNounDisplay(gameConfig: gameConfig).animate().fadeIn(
+                  delay: 3300.ms,
+                  duration: 600.ms,
                   curve: Curves.easeInOut,
-                  delay: const Duration(seconds: 2),
-                  duration: const Duration(milliseconds: 900),
                 ),
 
             quarterSpace,
@@ -95,9 +99,17 @@ class GameScreen extends ConsumerWidget {
               child: GameBoard(
                 gameConfig: gameConfig,
               ),
-            ).animate().scale(
-                  delay: const Duration(milliseconds: 500),
-                  duration: const Duration(milliseconds: 1500),
+            )
+                .animate(
+                  delay: 300.ms,
+                )
+                .scale(
+                  duration: 1500.ms,
+                  curve: Curves.easeInOut,
+                )
+                .fadeIn(
+                  begin: 0.0,
+                  duration: 1500.ms,
                   curve: Curves.easeInOut,
                 ),
 

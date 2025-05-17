@@ -123,15 +123,14 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
           // Player 1
           _buildPlayerRow(players[0])
-              .animate(delay: const Duration(milliseconds: 450))
-              .fadeIn(
-                  curve: Curves.linear,
-                  duration: const Duration(milliseconds: 900))
+              .animate(delay: 450.ms)
+              .fadeIn(curve: Curves.linear, duration: 900.ms)
               .slideX(
-                  begin: -0.5,
-                  end: 0.0,
-                  curve: Curves.ease,
-                  duration: const Duration(milliseconds: 1000)),
+                begin: -0.5,
+                end: 0.0,
+                curve: Curves.ease,
+                duration: 1200.ms,
+              ),
 
           SizedBox(height: kToolbarHeight * 1.2),
 
@@ -149,15 +148,14 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
           // Player 2
           _buildPlayerRow(players[1], alignRight: true)
-              .animate(delay: const Duration(milliseconds: 450))
-              .fadeIn(
-                  curve: Curves.linear,
-                  duration: const Duration(milliseconds: 900))
+              .animate(delay: 450.ms)
+              .fadeIn(curve: Curves.linear, duration: 900.ms)
               .slideX(
-                  begin: 0.5,
-                  end: 0.0,
-                  curve: Curves.ease,
-                  duration: const Duration(milliseconds: 1000)),
+                begin: 0.5,
+                end: 0.0,
+                curve: Curves.ease,
+                duration: 1200.ms,
+              ),
 
           SizedBox(
             height: widget.gameMode == GameMode.pass
@@ -192,7 +190,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
               size: 120,
             ),
             onTap: _startGame,
-          ).animate(delay: const Duration(milliseconds: 500)).scale(
+          ).animate(delay: 900.ms).scale(
                 begin: Offset(0, -1),
                 duration: const Duration(milliseconds: 1500),
                 curve: Curves.easeInOut,
