@@ -57,8 +57,11 @@ class OnlineGameNotifier extends GameNotifier {
 
       gameSessionData = initialSessionData;
 
-      final currentPlayerId = gameSessionData?['current_player_id'];
-      _isLocalPlayerTurn = currentPlayerId == currentUserId;
+      final serverCurrentPlayerId = gameSessionData?['current_player_id'];
+      _isLocalPlayerTurn = serverCurrentPlayerId == currentUserId;
+
+      // sync current player with server's current_player_id
+      _syncLocalTurnWithServer(serverCurrentPlayerId);
 
       // update initial opponent ready state
       _updateLocalOpponentReadyStatus(gameSessionData!);
@@ -85,10 +88,62 @@ class OnlineGameNotifier extends GameNotifier {
     }
   }
 
+  void _syncLocalTurnWithServer(String? serverCurrentPlayerId) {
+    if (serverCurrentPlayerId == null) {
+      print(
+          '[OnlineGameNotifier] _synchronizeLocalTurnWithServer: serverActualCurrentPlayerId is null. Cannot synchronize. For session $gameSessionId');
+      return;
+    }
+
+    // todo: remove this after testing
+    if (state.players.length != 2) {
+      print(
+          '[OnlineGameNotifier] _synchronizeLocalTurnWithServer: state.players list is not set up correctly (length != 2). Cannot synchronize. For session $gameSessionId');
+      return;
+    }
+
+    Player? serverDesignatedCurrentPlayer;
+    Player? serverDesignatedOpponent;
+
+    try {
+      serverDesignatedCurrentPlayer = state.players
+          .firstWhere((player) => player.userId == serverCurrentPlayerId);
+      serverDesignatedOpponent = state.players
+          .firstWhere((player) => player.userId != serverCurrentPlayerId);
+    } catch (e) {
+      print(
+          '[OnlineGameNotifier] _synchronizeLocalTurnWithServer: ERROR - Could not find player with ID $serverCurrentPlayerId in local state.players for session $gameSessionId. Local players: ${state.players.map((p) => "ID:${p.userId}").toList()}');
+      return;
+    }
+
+    Player? newLastPlayedPlayer;
+    final bool boardIsEmpty = state.board.every((cell) => cell == null);
+
+    if (state.startingPlayer.userId == serverDesignatedCurrentPlayer.userId &&
+        boardIsEmpty) {
+      newLastPlayedPlayer = null;
+    } else {
+      newLastPlayedPlayer = serverDesignatedOpponent;
+    }
+
+    if (state.lastPlayedPlayer != newLastPlayedPlayer ||
+        (state.lastPlayedPlayer == null && newLastPlayedPlayer != null) ||
+        (state.lastPlayedPlayer != null && newLastPlayedPlayer == null)) {
+      state = state.copyWith(
+          lastPlayedPlayer: newLastPlayedPlayer,
+          allowNullLastPlayedPlayer: true);
+      print(
+          '[OnlineGameNotifier] _synchronizeLocalTurnWithServer: Local turn synced with server for session $gameSessionId. Server current_player_id: $serverCurrentPlayerId. New local GameState.currentPlayer: ID=${state.currentPlayer.userId}, Symbol=${state.currentPlayer.symbolString}. LastPlayed: ${state.lastPlayedPlayer?.userId}');
+    } else {
+      print(
+          '[OnlineGameNotifier] _synchronizeLocalTurnWithServer: Local turn already matches server. GameState.currentPlayer: ID=${state.currentPlayer.userId}, Symbol=${state.currentPlayer.symbolString}. For session $gameSessionId');
+    }
+  }
+
   void _updateLocalOpponentReadyStatus(
       Map<String, dynamic> currentSessionData) {
     if (currentUserId == null) {
-      state = state.copyWith(isOpponentReady: false);
+      if (state.isOpponentReady) state = state.copyWith(isOpponentReady: false);
       return;
     }
 
@@ -185,7 +240,29 @@ class OnlineGameNotifier extends GameNotifier {
     final String? committedNounId = state.currentNoun?.id;
     bool isCorrectMove = state.currentNoun?.article == selectedArticle;
 
+    // identify current player
+    Player playerMakingCurrentMove;
+    try {
+      playerMakingCurrentMove =
+          state.players.firstWhere((player) => player.userId == currentUserId);
+      print(
+          '[OnlineGameNotifier] makeMove: Player making move (ID: ${playerMakingCurrentMove.userId}, Symbol: ${playerMakingCurrentMove.symbolString}) for $gameSessionId');
+    } catch (e) {
+      print(
+          '[OnlineGameNotifier] makeMove: CRITICAL ERROR - currentUserId $currentUserId not found in state.players. Cannot make move for $gameSessionId.');
+      return;
+    }
+
+    // update local state
+    if (state.currentPlayer.userId != playerMakingCurrentMove.userId) {
+      print(
+          "[OnlineGameNotifier] makeMove: WARNING - Mismatch! state.currentPlayer.userId (${state.currentPlayer.userId}) != playerMakingTheMove.userId (${playerMakingCurrentMove.userId}) before super.makeMove(). This might lead to wrong symbol placement. For $gameSessionId");
+    }
+
     super.makeMove(selectedArticle);
+
+    print(
+        '[OnlineGameNotifier] makeMove: Local state updated by super.makeMove() for $gameSessionId. New board: ${state.board}, GameOver: ${state.isGameOver}');
 
     // After super.makeMove(), state.board, state.isGameOver, state.winningPlayer are updated.
     print(
@@ -202,7 +279,7 @@ class OnlineGameNotifier extends GameNotifier {
             '[OnlineGameNotifier] Recording game round for session $gameSessionId.');
         await gameService.recordGameRound(
           gameSessionId,
-          playerId: currentUserId!,
+          playerId: playerMakingCurrentMove.userId!,
           nounId: committedNounId,
           selectedArticle: selectedArticle,
           isCorrect: isCorrectMove,
@@ -216,12 +293,17 @@ class OnlineGameNotifier extends GameNotifier {
       print('[OnlineGameNotifier] Error recording game round: $e');
     }
 
-    final String? player1Id = gameSessionData?['player1_id'];
-    final String? player2Id = gameSessionData?['player1_id'];
+    // determine server's next player id
+    final String? player1ServerId = gameSessionData?['player1_id'];
+    final String? player2ServerId = gameSessionData?['player2_id'];
     String? nextPlayerUserId;
 
-    if (player1Id != null && player2Id != null) {
-      nextPlayerUserId = (currentUserId == player1Id ? player2Id : player1Id);
+    if (player1ServerId != null &&
+        player2ServerId != null &&
+        currentUserId != null) {
+      nextPlayerUserId = (currentUserId == player1ServerId)
+          ? player2ServerId
+          : player1ServerId;
     } else {
       print(
           "[OnlineGameNotifier] ERROR: Player IDs not found in gameSessionData. Cannot determine next player.");
@@ -244,22 +326,62 @@ class OnlineGameNotifier extends GameNotifier {
         isGameOver: state.isGameOver,
         winnerId: state.winningPlayer?.userId,
       );
-
-      if (!state.isGameOver) {
-        _isLocalPlayerTurn = false;
-        print(
-            '[OnlineGameNotifier] Turn passed locally to $nextPlayerUserId for session $gameSessionId.');
-      } else {
-        print(
-            '[OnlineGameNotifier] Game is over. Local turn status not changed. Session $gameSessionId.');
-      }
+      print(
+          '[OnlineGameNotifier] makeMove: Update sent to server for $gameSessionId. Waiting for stream to confirm turn.');
     } catch (e) {
       print(
           '[OnlineGameNotifier] Error updating game state to server after move: $e');
-      // On error, restore local interaction ability
+      // on error, restore local interaction ability
     } finally {
       _processingRemoteUpdate = false;
     }
+  }
+
+  @override
+  void forfeitTurn() {
+    if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
+
+    super.forfeitTurn();
+    print(
+        '[OnlineGameNotifier] forfeitTurn: Local state updated by super.forfeitTurn() for $gameSessionId.');
+
+    final gameService = ref.read(onlineGameServiceProvider);
+
+    final String? player1ServerId = gameSessionData?['player1_id'];
+    final String? player2ServerId = gameSessionData?['player2_id'];
+    String? nextPlayerUserId;
+
+    if (player1ServerId != null && player2ServerId != null) {
+      nextPlayerUserId = (currentUserId == player1ServerId)
+          ? player2ServerId
+          : player1ServerId;
+    } else {
+      print(
+          "[OnlineGameNotifier] ERROR: Player IDs not found in gameSessionData during forfeit. Cannot determine next player.");
+      return;
+    }
+
+    print(
+        '[OnlineGameNotifier] forfeitTurn: Local player $currentUserId forfeited. Updating server. Next player: $nextPlayerUserId for session $gameSessionId.');
+
+    gameService
+        .updateGameState(
+      gameSessionId,
+      selectedCellIndex: null,
+      currentPlayerId: nextPlayerUserId,
+      currentNounId: null,
+      board: state.board,
+      isGameOver: state.isGameOver,
+      winnerId: state.winningPlayer?.userId,
+    )
+        .then((_) {
+      print(
+          '[OnlineGameNotifier] Forfeit successful. Turn passed to $nextPlayerUserId on server for session $gameSessionId.');
+    }).catchError((e) {
+      // todo: consider how to handle: revert local forfeit?
+      print(
+          '[OnlineGameNotifier] Error updating game state to server for forfeit: $e for session $gameSessionId.');
+    });
   }
 
   void _handleGameStateUpdate(Map<String, dynamic> remoteGameSessionData) {
@@ -282,41 +404,36 @@ class OnlineGameNotifier extends GameNotifier {
     gameSessionData = remoteGameSessionData;
 
     try {
-      bool stateChanged = false;
-
       _updateLocalOpponentReadyStatus(remoteGameSessionData);
 
       // update turn information
       final remoteCurrentPlayerId = remoteGameSessionData['current_player_id'];
-      final previousIsLocalPlayerTurn = _isLocalPlayerTurn;
-      _isLocalPlayerTurn = remoteCurrentPlayerId == currentUserId;
-
-      if (previousIsLocalPlayerTurn != _isLocalPlayerTurn) {
-        print(
-            '[OnlineGameNotifier] Turn changed. Previous: $previousIsLocalPlayerTurn, New: $_isLocalPlayerTurn for session $gameSessionId.');
-        stateChanged = true;
-      }
-
-      // check if board is different from local state + update
+      final remoteIsGameOver = remoteGameSessionData['is_game_over'] ?? false;
       final remoteBoard = List<String?>.from(
           remoteGameSessionData['board'] ?? List.filled(9, null));
-      bool boardChanged = false;
-      if (state.board.length != remoteBoard.length) {
-        boardChanged = true;
-      } else {
-        for (int i = 0; i < state.board.length; i++) {
-          if (state.board[i] != remoteBoard[i]) {
-            boardChanged = true;
-            break;
-          }
-        }
+
+      // update _isLocalPlayerTurn from server data
+      final newIsLocalPlayerTurn =
+          (remoteCurrentPlayerId == currentUserId) && !remoteIsGameOver;
+      if (_isLocalPlayerTurn != newIsLocalPlayerTurn) {
+        print(
+            '[OnlineGameNotifier] _handleGameStateUpdate: Local turn flag changing for $gameSessionId. Was: $_isLocalPlayerTurn, Now: $newIsLocalPlayerTurn. Server current_player_id: $remoteCurrentPlayerId');
+        _isLocalPlayerTurn = newIsLocalPlayerTurn;
       }
 
-      if (boardChanged) {
+      // sync local game state's currentPlayer with server's current player_id
+      if (!remoteIsGameOver) {
+        _syncLocalTurnWithServer(remoteCurrentPlayerId);
+      } else {
         print(
-            '[OnlineGameNotifier] Board changed remotely. Local: ${state.board}, Remote: $remoteBoard for session $gameSessionId.');
+            '[OnlineGameNotifier] _handleGameStateUpdate: Game is over according to server for $gameSessionId. _isLocalPlayerTurn set to false.');
+      }
+
+      // update board state
+      if (state.board.toString() != remoteBoard.toString()) {
+        print(
+            '[OnlineGameNotifier] _handleGameStateUpdate: Board changed remotely for $gameSessionId.');
         state = state.copyWith(board: remoteBoard);
-        stateChanged = true;
       }
 
       // handle opponent cell selection
@@ -335,7 +452,6 @@ class OnlineGameNotifier extends GameNotifier {
           allowNullSelectedCellIndex: true,
           cellPressed: newCellPressed,
         );
-        stateChanged = true;
       } else if (_isLocalPlayerTurn &&
           state.selectedCellIndex != null &&
           remoteSelectedCell == null) {
@@ -343,7 +459,6 @@ class OnlineGameNotifier extends GameNotifier {
             selectedCellIndex: null,
             allowNullSelectedCellIndex: true,
             cellPressed: List.filled(9, false));
-        stateChanged = true;
       }
 
       // handle current noun from opponent
@@ -354,18 +469,13 @@ class OnlineGameNotifier extends GameNotifier {
         print(
             '[OnlineGameNotifier] Remote noun ID $remoteNounId received. Loading noun for session $gameSessionId.');
         _loadNounFromId(remoteNounId);
-        stateChanged = true;
-      } else if (remoteNounId == null &&
-          state.currentNoun != null &&
-          !_isLocalPlayerTurn) {
+      } else if (remoteNounId == null && state.currentNoun != null) {
         print(
-            '[OnlineGameNotifier] Remote noun ID is null. Clearing local noun for session $gameSessionId.');
+            '[OnlineGameNotifier] _handleGameStateUpdate: Remote noun ID is null. Clearing local noun for $gameSessionId.');
         state = state.copyWith(currentNoun: null, allowNullCurrentNoun: true);
-        stateChanged = true;
       }
 
       // check game over state from remote
-      final remoteIsGameOver = remoteGameSessionData['is_game_over'] ?? false;
       if (remoteIsGameOver && !state.isGameOver) {
         final remoteWinnerId = remoteGameSessionData['winner_id'];
         Player? winningPlayer;
@@ -381,7 +491,8 @@ class OnlineGameNotifier extends GameNotifier {
         }
 
         print(
-            '[OnlineGameNotifier] Game over remotely. Winner: $remoteWinnerId for session $gameSessionId.');
+            '[OnlineGameNotifier] _handleGameStateUpdate: Game over remotely for $gameSessionId. Winner: $remoteWinnerId');
+
         state = state.copyWith(
           isGameOver: true,
           winningPlayer: winningPlayer,
@@ -392,61 +503,51 @@ class OnlineGameNotifier extends GameNotifier {
           allowNullCurrentNoun: true,
           isTimerActive: false,
         );
-        stateChanged = true;
+        _isLocalPlayerTurn = false;
       } else if (!remoteIsGameOver && state.isGameOver) {
         print(
-            '[OnlineGameNotifier] Game was over locally, but remote state is not game over. Session $gameSessionId.');
+            '[OnlineGameNotifier] _handleGameStateUpdate: Game reset by server for $gameSessionId (was game over locally).');
+
         // Potentially reset local game state if a rematch is signaled through these fields.
-        state = GameState.initial(state.players, state.startingPlayer).copyWith(
-          player1Score: state.player1Score,
-          player2Score: state.player2Score,
-          gamesPlayed: state.gamesPlayed,
-          isOpponentReady: state.isOpponentReady,
+        state = state.copyWith(
+          isGameOver: false,
+          winningPlayer: null,
+          allowNullWinningPlayer: true,
+          board: remoteBoard,
         );
 
         // todo: consider (more specific) remote_rematch()
+        _syncLocalTurnWithServer(remoteCurrentPlayerId);
         _isLocalPlayerTurn =
-            remoteGameSessionData['current_player_id'] == currentUserId;
-        print(
-            '[OnlineGameNotifier] Local game state reset due to remote !isGameOver. New local turn: $_isLocalPlayerTurn');
-        stateChanged = true;
+            (remoteCurrentPlayerId == currentUserId) && !remoteIsGameOver;
       }
 
-      // change turn from remote player to local player
-      if (!previousIsLocalPlayerTurn &&
-          _isLocalPlayerTurn &&
-          !state.isGameOver) {
-        // reset game state for local player
-        print(
-            '[OnlineGameNotifier] It is now local player\'s turn for session $gameSessionId. Preparing turn.');
-        state = state.copyWith(
-          isTimerActive: false,
-          cellPressed: List.filled(9, false),
-        );
-
-        stateChanged = true;
-      }
-
-      if (stateChanged) {
-        // The state object is immutable, so assigning to state = state.copyWith(...)
-        // already triggers rebuilds if the StateNotifier is listened to correctly.
-        // No explicit call to a rebuild method is usually needed here.
-        print(
-            '[OnlineGameNotifier] State changed due to remote update. UI should rebuild. Session $gameSessionId.');
+      // ui cleanup when it's local player's turn
+      if (_isLocalPlayerTurn &&
+          !state.isGameOver &&
+          (state.selectedCellIndex != null || state.isTimerActive)) {
+        if (remoteSelectedCell == null) {
+          print(
+              '[OnlineGameNotifier] _handleGameStateUpdate: Clean start for local player\'s turn on $gameSessionId (clearing local selection/timer).');
+          state = state.copyWith(
+              isTimerActive: false, cellPressed: List.filled(9, false));
+        }
       }
     } catch (e, s) {
       print(
           '[OnlineGameNotifier] Error processing game state update for session $gameSessionId: $e');
       print(s);
     } finally {
-      Future.delayed(
-        Duration(milliseconds: 150),
-        () {
-          _processingRemoteUpdate = false;
-          print(
-              '[OnlineGameNotifier] Finished processing remote update. _processingRemoteUpdate is false. Session $gameSessionId.');
-        },
-      );
+      if (mounted) {
+        Future.delayed(
+          Duration(milliseconds: 50),
+          () {
+            if (mounted) _processingRemoteUpdate = false;
+          },
+        );
+      } else {
+        _processingRemoteUpdate = false;
+      }
     }
   }
 
@@ -533,50 +634,6 @@ class OnlineGameNotifier extends GameNotifier {
       }
       if (!mounted) return;
     }
-  }
-
-  @override
-  void forfeitTurn() {
-    if (!_isLocalPlayerTurn || _processingRemoteUpdate) return;
-
-    super.forfeitTurn();
-
-    final gameService = ref.read(onlineGameServiceProvider);
-
-    final String? player1Id = gameSessionData?['player1_id'];
-    final String? player2Id = gameSessionData?['player2_id'];
-    String? nextPlayerUserId;
-
-    if (player1Id != null && player2Id != null) {
-      nextPlayerUserId = (currentUserId == player1Id) ? player2Id : player1Id;
-    } else {
-      print(
-          "[OnlineGameNotifier] ERROR: Player IDs not found in gameSessionData during forfeit. Cannot determine next player.");
-      return;
-    }
-
-    print(
-        '[OnlineGameNotifier] Local player forfeited turn. Updating server. Next player: $nextPlayerUserId for session $gameSessionId.');
-
-    gameService
-        .updateGameState(
-      gameSessionId,
-      selectedCellIndex: null,
-      currentPlayerId: nextPlayerUserId,
-      currentNounId: null,
-      board: state.board,
-      isGameOver: state.isGameOver,
-      winnerId: state.winningPlayer?.userId,
-    )
-        .then((_) {
-      _isLocalPlayerTurn = false;
-      print(
-          '[OnlineGameNotifier] Forfeit successful. Turn passed to $nextPlayerUserId on server for session $gameSessionId.');
-    }).catchError((e) {
-      // todo: Consider how to handle: revert local forfeit?
-      print(
-          '[OnlineGameNotifier] Error updating game state to server for forfeit: $e for session $gameSessionId.');
-    });
   }
 
   @override

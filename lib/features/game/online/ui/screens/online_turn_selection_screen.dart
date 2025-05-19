@@ -42,8 +42,6 @@ class _OnlineTurnSelectionScreenState
   Player? _player2;
   String? _localUserId;
 
-  bool _isPlayerOne = false;
-
   late AnimationController _hoverController;
   late Animation<double> _hoverAnimation;
 
@@ -85,23 +83,25 @@ class _OnlineTurnSelectionScreenState
 
     _gameSessionFuture.then(
       (gameSession) {
+        if (!mounted) return;
+
+        final serverPlayer1Data = gameSession['player1'];
+        final serverPlayer2Data = gameSession['player2'];
+
         setState(() {
           _player1 = Player(
-            userName: gameSession['player1']['username'] ?? 'Spieler 1',
-            userId: gameSession['player1']['id'] ?? '',
-            countryCode: gameSession['player1']['country_code'] ?? '',
+            userName: serverPlayer1Data['username'] ?? 'Spieler 1',
+            userId: serverPlayer1Data['id'] ?? '',
+            countryCode: serverPlayer1Data['country_code'] ?? '',
             symbol: PlayerSymbol.X,
           );
 
           _player2 = Player(
-            userName: gameSession['player2']['username'] ?? 'Spieler 2',
-            userId: gameSession['player2']['id'] ?? '',
-            countryCode: gameSession['player2']['country_code'] ?? '',
+            userName: serverPlayer2Data['username'] ?? 'Spieler 2',
+            userId: serverPlayer2Data['id'] ?? '',
+            countryCode: serverPlayer2Data['country_code'] ?? '',
             symbol: PlayerSymbol.O,
           );
-
-          _isPlayerOne = gameSession['player1']['id'] == _localUserId;
-          print('Is player one: $_isPlayerOne');
         });
       },
     ).catchError((error) {
@@ -133,7 +133,7 @@ class _OnlineTurnSelectionScreenState
     }
 
     print(
-        'starting game with players: ${_player1!.userName} vs ${_player2!.userName}');
+        '[TurnSelectionScreen] Starting game with players: ${_player1!.userName} vs ${_player2!.userName}');
 
     final gameConfig = GameConfig(
       players: [_player1!, _player2!],
@@ -234,15 +234,14 @@ class _OnlineTurnSelectionScreenState
 
                 // Player 1
                 _buildPlayerRow(_player1!)
-                    .animate(delay: const Duration(milliseconds: 450))
-                    .fadeIn(
-                        curve: Curves.linear,
-                        duration: const Duration(milliseconds: 900))
+                    .animate(delay: 450.ms)
+                    .fadeIn(curve: Curves.linear, duration: 900.ms)
                     .slideX(
-                        begin: -0.5,
-                        end: 0.0,
-                        curve: Curves.ease,
-                        duration: const Duration(milliseconds: 900)),
+                      begin: -0.5,
+                      end: 0.0,
+                      curve: Curves.ease,
+                      duration: 1200.ms,
+                    ),
 
                 SizedBox(height: kToolbarHeight * 1.2),
 
@@ -261,15 +260,13 @@ class _OnlineTurnSelectionScreenState
 
                 // Player 2
                 _buildPlayerRow(_player2!, alignRight: true)
-                    .animate(delay: const Duration(milliseconds: 450))
-                    .fadeIn(
-                        curve: Curves.linear,
-                        duration: const Duration(milliseconds: 900))
+                    .animate(delay: 450.ms)
+                    .fadeIn(curve: Curves.linear, duration: 900.ms)
                     .slideX(
                         begin: 0.5,
                         end: 0.0,
                         curve: Curves.ease,
-                        duration: const Duration(milliseconds: 900)),
+                        duration: 1200.ms),
 
                 SizedBox(height: kToolbarHeight / 1.5),
 
@@ -481,7 +478,7 @@ class _OnlineTurnSelectionScreenState
           ),
           onTap: _toggleReady,
         ),
-      ).animate(delay: const Duration(milliseconds: 500)).scale(
+      ).animate(delay: 900.ms).scale(
             begin: Offset(0, -1),
             duration: const Duration(milliseconds: 1500),
             curve: Curves.easeInOut,

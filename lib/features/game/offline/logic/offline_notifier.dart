@@ -62,7 +62,11 @@ class OfflineNotifier extends GameNotifier {
     } else {}
   }
 
-  void _scheduleAIMove() {
+  Future<void> _scheduleAIMove() async {
+    if (state.lastPlayedPlayer == null && state.currentPlayer.isAI) {
+      await Future.delayed(const Duration(seconds: 4));
+    }
+
     // cancel existing timer
     _aiThinkingTimer?.cancel();
 

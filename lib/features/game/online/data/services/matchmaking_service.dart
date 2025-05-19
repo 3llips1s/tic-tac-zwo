@@ -237,6 +237,7 @@ class MatchmakingService {
     }
 
     _matchSubscription?.cancel();
+    _matchSubscription = null;
     if (kDebugMode) {
       print(
           '[MatchmakingService] starting match listener for entry id: $entryId');
@@ -342,7 +343,10 @@ class MatchmakingService {
           _onMatchFound(gameId);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      print('[MatchmakingService] matchmaking listener failed');
+      // todo: handle errors gracefully
+    }
   }
 
   // listen for nearby players
@@ -525,10 +529,10 @@ class MatchmakingService {
           '[MatchmakingService] Match found! Game ID: $gameId. Cleaning up and notifying.');
     }
     _matchStateController.add(MatchmakingState.matched);
+    _matchedGameIdController.add(gameId);
 
     _nearbySubscription?.cancel();
-
-    _matchedGameIdController.add(gameId);
+    _nearbySubscription = null;
 
     _cleanupListener();
 

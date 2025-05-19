@@ -80,6 +80,7 @@ class GameState {
     List<Player>? players,
     Player? startingPlayer,
     Player? lastPlayedPlayer,
+    bool allowNullLastPlayedPlayer = false,
     GermanNoun? currentNoun,
     bool allowNullCurrentNoun = false,
     int? remainingSeconds,
@@ -104,7 +105,9 @@ class GameState {
       cellPressed: cellPressed ?? this.cellPressed,
       players: players ?? this.players,
       startingPlayer: startingPlayer ?? this.startingPlayer,
-      lastPlayedPlayer: lastPlayedPlayer ?? this.lastPlayedPlayer,
+      lastPlayedPlayer: allowNullLastPlayedPlayer
+          ? lastPlayedPlayer
+          : (lastPlayedPlayer ?? this.lastPlayedPlayer),
       currentNoun: allowNullCurrentNoun
           ? currentNoun
           : (currentNoun ?? this.currentNoun),

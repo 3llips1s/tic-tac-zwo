@@ -73,7 +73,7 @@ class GameScreen extends ConsumerWidget {
             PlayerInfo(gameConfig: gameConfig)
                 .animate(delay: 1800.ms)
                 .slideY(
-                  begin: -1,
+                  begin: -0.5,
                   end: 0.0,
                   duration: 1500.ms,
                   curve: Curves.easeInOut,
