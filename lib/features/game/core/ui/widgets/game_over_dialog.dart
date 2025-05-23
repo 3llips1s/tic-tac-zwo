@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tic_tac_zwo/config/game_config/config.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
@@ -20,6 +21,17 @@ class GameOverDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final player1 = gameState.players[0];
+    final player2 = gameState.players[1];
+
+    final xPlayer = player1.symbol == PlayerSymbol.X ? player1 : player2;
+    final oPlayer = player1.symbol == PlayerSymbol.O ? player1 : player2;
+
+    final xPlayerScore =
+        xPlayer == player1 ? gameState.player1Score : gameState.player2Score;
+    final oPlayerScore =
+        oPlayer == player1 ? gameState.player1Score : gameState.player2Score;
+
     return Column(
       children: [
         // game outcome
@@ -60,7 +72,7 @@ class GameOverDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(9),
           ),
           child: Text(
-            '${gameState.player1Score} - ${gameState.player2Score}',
+            '$xPlayerScore - $oPlayerScore',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorBlack,
                   fontSize: 18,
