@@ -222,7 +222,8 @@ class MatchmakingService {
   }
 
   // listen for match updates
-  void _startMatchListener() async {
+  // listen for match updates
+  void _startMatchListener() {
     final userId = _userId;
     final entryId = _currentQueueEntryId;
 
@@ -237,20 +238,9 @@ class MatchmakingService {
     }
 
     _matchSubscription?.cancel();
-    _matchSubscription = null;
     if (kDebugMode) {
       print(
           '[MatchmakingService] starting match listener for entry id: $entryId');
-    }
-
-    await Future.delayed(Duration(milliseconds: 300));
-
-    if (entryId != _currentQueueEntryId || !_isInQueue) {
-      if (kDebugMode) {
-        print(
-            '[MatchmakingService] Queue state changed during listener setup, aborting.');
-      }
-      return;
     }
 
     // subscribe to channel for realtime updates
@@ -322,31 +312,6 @@ class MatchmakingService {
             }
           },
         );
-
-    try {
-      final currentEntry = await _supabase
-          .from('matchmaking_queue')
-          .select('is_matched, game_id')
-          .eq('id', entryId)
-          .maybeSingle();
-
-      if (currentEntry != null) {
-        final bool isMatched = currentEntry['is_matched'] ?? false;
-        final String? gameId = currentEntry['game_id'];
-
-        if (kDebugMode) {
-          print(
-              '[MatchmakingService] Initial queue entry status check: is_matched=$isMatched, game_id=$gameId');
-        }
-
-        if (isMatched && gameId != null) {
-          _onMatchFound(gameId);
-        }
-      }
-    } catch (e) {
-      print('[MatchmakingService] matchmaking listener failed');
-      // todo: handle errors gracefully
-    }
   }
 
   // listen for nearby players
@@ -524,10 +489,22 @@ class MatchmakingService {
   }
 
   void _onMatchFound(String gameId) {
+    if (!_isInQueue) {
+      if (kDebugMode) {
+        print(
+            '[MatchmakingService] _onMatchFound called but _isInQueue is false. Match likely already processed or cancelled. Ignoring gameId: $gameId');
+      }
+      return;
+    }
+
+    _isInQueue = false;
+    _currentQueueEntryId = null;
+
     if (kDebugMode) {
       print(
           '[MatchmakingService] Match found! Game ID: $gameId. Cleaning up and notifying.');
     }
+
     _matchStateController.add(MatchmakingState.matched);
     _matchedGameIdController.add(gameId);
 
@@ -535,9 +512,6 @@ class MatchmakingService {
     _nearbySubscription = null;
 
     _cleanupListener();
-
-    _isInQueue = false;
-    _currentQueueEntryId = null;
   }
 
   void _cleanupListener() {

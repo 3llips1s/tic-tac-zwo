@@ -18,6 +18,17 @@ class PlayerInfo extends ConsumerWidget {
 
     final space = SizedBox(width: 15);
 
+    final player1 = gameState.players[0];
+    final player2 = gameState.players[1];
+
+    final xPlayer = player1.symbol == PlayerSymbol.X ? player1 : player2;
+    final oPlayer = player1.symbol == PlayerSymbol.O ? player1 : player2;
+
+    final xPlayerScore =
+        xPlayer == player1 ? gameState.player1Score : gameState.player2Score;
+    final oPlayerScore =
+        oPlayer == player1 ? gameState.player1Score : gameState.player2Score;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -27,15 +38,12 @@ class PlayerInfo extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                gameState.players[0].userName,
+                xPlayer.userName,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 16,
-                      fontStyle: gameState.players[0].isAI
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                      color: gameState.players[0].isAI
-                          ? Colors.black54
-                          : colorBlack,
+                      fontStyle:
+                          xPlayer.isAI ? FontStyle.italic : FontStyle.normal,
+                      color: xPlayer.isAI ? Colors.black54 : colorBlack,
                     ),
               ),
               space,
@@ -44,18 +52,14 @@ class PlayerInfo extends ConsumerWidget {
                 width: 30,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  color: gameState.players[0].symbol == PlayerSymbol.X
-                      ? colorRed
-                      : colorYellow,
+                  color: colorRed,
                 ),
                 child: Center(
                   child: Text(
-                    gameState.players[0].symbolString,
+                    xPlayer.symbolString,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontSize: 18,
-                          color: gameState.players[0].symbol == PlayerSymbol.X
-                              ? colorWhite
-                              : colorBlack,
+                          color: colorWhite,
                         ),
                   ),
                 ),
@@ -66,8 +70,7 @@ class PlayerInfo extends ConsumerWidget {
 
         // scores
         Center(
-          child: playerScores(
-              context, gameState.player1Score, gameState.player2Score),
+          child: playerScores(context, xPlayerScore, oPlayerScore),
         ),
 
         // p2 name + symbol | right
@@ -80,33 +83,26 @@ class PlayerInfo extends ConsumerWidget {
                 width: 30,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  color: gameState.players[1].symbol == PlayerSymbol.X
-                      ? colorRed
-                      : colorYellow,
+                  color: colorYellow,
                 ),
                 child: Center(
                   child: Text(
-                    gameState.players[1].symbolString,
+                    oPlayer.symbolString,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontSize: 18,
-                          color: gameState.players[1].symbol == PlayerSymbol.X
-                              ? colorWhite
-                              : colorBlack,
+                          color: colorBlack,
                         ),
                   ),
                 ),
               ),
               space,
               Text(
-                gameState.players[1].userName,
+                oPlayer.userName,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 16,
-                      fontStyle: gameState.players[1].isAI
-                          ? FontStyle.italic
-                          : FontStyle.normal,
-                      color: gameState.players[1].isAI
-                          ? Colors.black54
-                          : colorBlack,
+                      fontStyle:
+                          oPlayer.isAI ? FontStyle.italic : FontStyle.normal,
+                      color: oPlayer.isAI ? Colors.black54 : colorBlack,
                     ),
               ),
             ],
@@ -117,7 +113,7 @@ class PlayerInfo extends ConsumerWidget {
   }
 }
 
-Widget playerScores(BuildContext context, int player1Score, int player2Score) {
+Widget playerScores(BuildContext context, int xPlayerScore, int oPlayerScore) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: 20),
     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -127,7 +123,7 @@ Widget playerScores(BuildContext context, int player1Score, int player2Score) {
       border: Border.all(color: colorGrey300),
     ),
     child: Text(
-      '$player1Score - $player2Score',
+      '$xPlayerScore - $oPlayerScore',
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 16,
             color: colorWhite,

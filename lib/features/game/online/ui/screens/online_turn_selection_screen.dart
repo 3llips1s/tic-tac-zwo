@@ -77,7 +77,8 @@ class _OnlineTurnSelectionScreenState
     _gameSessionFuture = ref
         .read(supabaseProvider)
         .from('game_sessions')
-        .select('*, player1:player1_id(*), player2:player2_id(*)')
+        .select(
+            '*, player1:player1_id(*), player2:player2_id(*), startingPlayer:current_player_id(*)')
         .eq('id', widget.gameSessionId)
         .single();
 
@@ -87,20 +88,23 @@ class _OnlineTurnSelectionScreenState
 
         final serverPlayer1Data = gameSession['player1'];
         final serverPlayer2Data = gameSession['player2'];
+        final startingPlayerId = gameSession['startingPlayer'];
+
+        final bool player1IsX = startingPlayerId == serverPlayer1Data['id'];
 
         setState(() {
           _player1 = Player(
             userName: serverPlayer1Data['username'] ?? 'Spieler 1',
             userId: serverPlayer1Data['id'] ?? '',
             countryCode: serverPlayer1Data['country_code'] ?? '',
-            symbol: PlayerSymbol.X,
+            symbol: player1IsX ? PlayerSymbol.X : PlayerSymbol.O,
           );
 
           _player2 = Player(
             userName: serverPlayer2Data['username'] ?? 'Spieler 2',
             userId: serverPlayer2Data['id'] ?? '',
             countryCode: serverPlayer2Data['country_code'] ?? '',
-            symbol: PlayerSymbol.O,
+            symbol: player1IsX ? PlayerSymbol.O : PlayerSymbol.X,
           );
         });
       },
@@ -233,7 +237,9 @@ class _OnlineTurnSelectionScreenState
                 ),
 
                 // Player 1
-                _buildPlayerRow(_player1!)
+                _buildPlayerRow(
+                  _player1!.symbol == PlayerSymbol.X ? _player1! : _player2!,
+                )
                     .animate(delay: 450.ms)
                     .fadeIn(curve: Curves.linear, duration: 900.ms)
                     .slideX(
@@ -259,7 +265,10 @@ class _OnlineTurnSelectionScreenState
                 SizedBox(height: kToolbarHeight * 1.2),
 
                 // Player 2
-                _buildPlayerRow(_player2!, alignRight: true)
+                _buildPlayerRow(
+                  _player1!.symbol == PlayerSymbol.O ? _player1! : _player2!,
+                  alignRight: true,
+                )
                     .animate(delay: 450.ms)
                     .fadeIn(curve: Curves.linear, duration: 900.ms)
                     .slideX(

@@ -94,6 +94,9 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final xPlayer = players.firstWhere((p) => p.symbol == PlayerSymbol.X);
+    final oPlayer = players.firstWhere((p) => p.symbol == PlayerSymbol.O);
+
     return Container(
       color: colorGrey300,
       padding: EdgeInsets.only(top: 20),
@@ -122,7 +125,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
           SizedBox(height: kToolbarHeight / 1.5),
 
           // Player 1
-          _buildPlayerRow(players[0])
+          _buildPlayerRow(xPlayer)
               .animate(delay: 450.ms)
               .fadeIn(curve: Curves.linear, duration: 900.ms)
               .slideX(
@@ -147,7 +150,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
           SizedBox(height: kToolbarHeight * 1.2),
 
           // Player 2
-          _buildPlayerRow(players[1], alignRight: true)
+          _buildPlayerRow(oPlayer, alignRight: true)
               .animate(delay: 450.ms)
               .fadeIn(curve: Curves.linear, duration: 900.ms)
               .slideX(
