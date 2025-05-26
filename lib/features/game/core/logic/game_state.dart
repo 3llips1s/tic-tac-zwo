@@ -6,6 +6,13 @@ import '../../../../config/game_config/config.dart';
 import '../data/models/german_noun.dart';
 import '../data/models/player.dart';
 
+enum OnlineGamePhase {
+  waiting,
+  cellSelected,
+  articleRevealed,
+  turnComplete,
+}
+
 class GameState {
   final List<String?> board;
   final List<bool> cellPressed;
@@ -31,6 +38,12 @@ class GameState {
 
   static const int turnDurationSeconds = 9;
 
+  // online mode article feedbacks sync
+  final String? revealedArticle;
+  final bool? revealedArticleIsCorrect;
+  final DateTime? articleRevealedAt;
+  final OnlineGamePhase onlineGamePhase;
+
   GameState({
     required this.board,
     required this.cellPressed,
@@ -51,28 +64,35 @@ class GameState {
     required this.gamesPlayed,
     this.winningCells,
     this.showArticleFeedback = false,
+
+    // online mode sync
     this.isOpponentReady = false,
+    this.revealedArticle,
+    this.revealedArticleIsCorrect,
+    this.articleRevealedAt,
+    required this.onlineGamePhase,
   });
 
-  GameState.initial(this.players, this.startingPlayer)
-      : board = List.filled(9, null),
-        cellPressed = List.filled(9, false),
-        currentNoun = null,
-        lastPlayedPlayer = null,
-        remainingSeconds = turnDurationSeconds,
-        isTimerActive = false,
-        selectedCellIndex = null,
-        wrongSelectedArticle = null,
-
-        // after game ends
-        isGameOver = false,
-        winningPlayer = null,
-        player1Score = 0,
-        player2Score = 0,
-        gamesPlayed = 0,
-        winningCells = null,
-        showArticleFeedback = false,
-        isOpponentReady = false;
+  static GameState initial(
+    List<Player> players,
+    Player startingPlayer, {
+    OnlineGamePhase onlineGamePhase = OnlineGamePhase.waiting,
+  }) {
+    return GameState(
+      board: List.filled(9, null),
+      cellPressed: List.filled(9, false),
+      players: players,
+      startingPlayer: startingPlayer,
+      isTimerActive: false,
+      remainingSeconds: turnDurationSeconds,
+      isGameOver: false,
+      player1Score: 0,
+      player2Score: 0,
+      gamesPlayed: 0,
+      showArticleFeedback: false,
+      onlineGamePhase: onlineGamePhase,
+    );
+  }
 
   GameState copyWith({
     List<String?>? board,
@@ -98,7 +118,18 @@ class GameState {
     int? gamesPlayed,
     List<int>? winningCells,
     bool? showArticleFeedback,
+
+    // online mode
     bool? isOpponentReady,
+    String? revealedArticle,
+    bool? revealedArticleIsCorrect,
+    DateTime? articleRevealedAt,
+    OnlineGamePhase? onlineGamePhase,
+
+    // catch null values
+    bool allowNullRevealedArticle = false,
+    bool allowNullRevealedArticleIsCorrect = false,
+    bool allowNullArticleRevealedAt = false,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -129,6 +160,40 @@ class GameState {
       winningCells: winningCells ?? this.winningCells,
       showArticleFeedback: showArticleFeedback ?? this.showArticleFeedback,
       isOpponentReady: isOpponentReady ?? this.isOpponentReady,
+
+      // online game mode
+      revealedArticle: allowNullRevealedArticle
+          ? revealedArticle
+          : (revealedArticle ?? this.revealedArticle),
+      revealedArticleIsCorrect: allowNullRevealedArticleIsCorrect
+          ? revealedArticleIsCorrect
+          : (revealedArticleIsCorrect ?? this.revealedArticleIsCorrect),
+      articleRevealedAt: allowNullArticleRevealedAt
+          ? articleRevealedAt
+          : (articleRevealedAt ?? this.articleRevealedAt),
+      onlineGamePhase: onlineGamePhase ?? this.onlineGamePhase,
+    );
+  }
+
+  static GameState initialOnline({
+    required List<Player> players,
+    required Player startingPlayer,
+    required String gameSessionId,
+  }) {
+    return GameState(
+      board: List.filled(9, null),
+      cellPressed: List.filled(9, false),
+      players: players,
+      startingPlayer: startingPlayer,
+      isTimerActive: false,
+      remainingSeconds: turnDurationSeconds,
+      isGameOver: false,
+      player1Score: 0,
+      player2Score: 0,
+      gamesPlayed: 0,
+      showArticleFeedback: false,
+      isOpponentReady: false,
+      onlineGamePhase: OnlineGamePhase.waiting,
     );
   }
 
@@ -194,44 +259,50 @@ class GameState {
       'winningCells': winningCells,
       'showArticleFeedback': showArticleFeedback,
       'isOpponentReady': isOpponentReady,
+      'revealedArticle': revealedArticle,
+      'revealedArticleIsCorrect': revealedArticleIsCorrect,
+      'articleRevealedAt': articleRevealedAt,
     };
   }
 
   static GameState fromJson(Map<String, dynamic> json) {
     return GameState(
-      board: List<String?>.from(json['board']),
-      cellPressed: List<bool>.from(json['cellPressed']),
-      players:
-          (json['players'] as List).map((p) => Player.fromJson(p)).toList(),
-      startingPlayer: Player.fromJson(json['startingPlayer']),
-      lastPlayedPlayer: json['lastPlayedPlayer'] != null
-          ? Player.fromJson(json['lastPlayedPlayer'])
-          : null,
-      currentNoun: json['currentNoun'] != null
-          ? GermanNoun(
-              id: json['currentNoun']['id'],
-              article: json['currentNoun']['article'],
-              noun: json['currentNoun']['noun'],
-              english: json['currentNoun']['english'],
-              plural: json['currentNoun']['plural'],
-            )
-          : null,
-      isTimerActive: json['isTimerActive'],
-      remainingSeconds: json['remainingSeconds'],
-      selectedCellIndex: json['selectedCellIndex'],
-      isGameOver: json['isGameOver'],
-      winningPlayer: json['winningPlayer'] != null
-          ? Player.fromJson(json['winningPlayer'])
-          : null,
-      player1Score: json['player1Score'],
-      player2Score: json['player2Score'],
-      gamesPlayed: json['gamesPlayed'],
-      winningCells: json['winningCells'] != null
-          ? List<int>.from(json['winningCells'])
-          : null,
-      showArticleFeedback: json['showArticleFeedback'] ?? false,
-      isOpponentReady: json['isOpponentReady'] ?? false,
-    );
+        board: List<String?>.from(json['board']),
+        cellPressed: List<bool>.from(json['cellPressed']),
+        players:
+            (json['players'] as List).map((p) => Player.fromJson(p)).toList(),
+        startingPlayer: Player.fromJson(json['startingPlayer']),
+        lastPlayedPlayer: json['lastPlayedPlayer'] != null
+            ? Player.fromJson(json['lastPlayedPlayer'])
+            : null,
+        currentNoun: json['currentNoun'] != null
+            ? GermanNoun(
+                id: json['currentNoun']['id'],
+                article: json['currentNoun']['article'],
+                noun: json['currentNoun']['noun'],
+                english: json['currentNoun']['english'],
+                plural: json['currentNoun']['plural'],
+              )
+            : null,
+        isTimerActive: json['isTimerActive'],
+        remainingSeconds: json['remainingSeconds'],
+        selectedCellIndex: json['selectedCellIndex'],
+        isGameOver: json['isGameOver'],
+        winningPlayer: json['winningPlayer'] != null
+            ? Player.fromJson(json['winningPlayer'])
+            : null,
+        player1Score: json['player1Score'],
+        player2Score: json['player2Score'],
+        gamesPlayed: json['gamesPlayed'],
+        winningCells: json['winningCells'] != null
+            ? List<int>.from(json['winningCells'])
+            : null,
+        showArticleFeedback: json['showArticleFeedback'] ?? false,
+        isOpponentReady: json['isOpponentReady'] ?? false,
+        revealedArticle: json['revealedArticle'],
+        revealedArticleIsCorrect: json['revealedArticleIsCorrect'] ?? false,
+        articleRevealedAt: json['articleRevealedAt'],
+        onlineGamePhase: json['onlineGamePhase']);
   }
 
   (String?, List<int>?) checkWinner() {

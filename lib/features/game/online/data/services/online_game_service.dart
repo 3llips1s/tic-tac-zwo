@@ -165,7 +165,7 @@ class OnlineGameService {
   }
 
   // update game state after a move
-  Future<void> updateGameState(
+  Future<void> updateGameSessionState(
     String gameSessionId, {
     List<String?>? board,
     dynamic selectedCellIndex,
@@ -173,6 +173,8 @@ class OnlineGameService {
     dynamic currentNounId,
     bool? isGameOver,
     dynamic winnerId,
+    String? revealedArticle,
+    bool? revealedArticleIsCorrect,
   }) async {
     const debounceDuration = Duration(milliseconds: 100);
 
@@ -204,6 +206,15 @@ class OnlineGameService {
         }
 
         if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
+
+        if (revealedArticle != null) {
+          updatePayload['revealed_article'] = revealedArticle;
+        }
+
+        if (revealedArticleIsCorrect != null) {
+          updatePayload['revealed_article_is_correct'] =
+              revealedArticleIsCorrect;
+        }
 
         if (updatePayload.length == 1 &&
             updatePayload.containsKey('last_activity')) {

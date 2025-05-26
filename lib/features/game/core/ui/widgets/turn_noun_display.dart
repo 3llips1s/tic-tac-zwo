@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
+import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 
+import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/german_noun.dart';
 import '../../data/models/player.dart';
@@ -28,6 +30,12 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   late AnimationController _feedbackController;
   late Animation<double> _underlineOpacity;
 
+  // track previous state for animation triggers
+  String? _previousRevealedArticle;
+  bool? _previousRevealedArticleIsCorrect;
+
+  bool _isOnlineMode = false;
+
   // dynamic font scaling
   double _calculateDynamicFontSize(String noun) {
     const baseFontSize = 30.0;
@@ -42,9 +50,64 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     return minFontSize;
   }
 
+  bool _showNoun() {
+    if (_isOnlineMode) {
+      final phase = _getCurrentGamePhase();
+
+      return phase == OnlineGamePhase.cellSelected ||
+          phase == OnlineGamePhase.articleRevealed;
+    } else {
+      final gameState =
+          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+      return gameState.selectedCellIndex != null && gameState.isTimerActive;
+    }
+  }
+
+  bool _showArticle() {
+    if (_isOnlineMode) {
+      final phase = _getCurrentGamePhase();
+
+      return phase == OnlineGamePhase.articleRevealed;
+    } else {
+      final gameState =
+          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+      return gameState.lastPlayedPlayer != null && !gameState.isTimerActive;
+    }
+  }
+
+  bool _showArticleFeedback() {
+    if (_isOnlineMode) {
+      final phase = _getCurrentGamePhase();
+      return phase == OnlineGamePhase.articleRevealed;
+    } else {
+      final gameState =
+          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+      return gameState.showArticleFeedback;
+    }
+  }
+
+  String? _getWrongArticle() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
+    if (_isOnlineMode) {
+      if (gameState.revealedArticle != null &&
+          gameState.revealedArticleIsCorrect == false &&
+          gameState.currentNoun != null) {
+        return gameState.revealedArticle != gameState.currentNoun!.article
+            ? gameState.revealedArticle
+            : null;
+      }
+      return null;
+    } else {
+      return gameState.wrongSelectedArticle;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _isOnlineMode = widget.gameConfig.gameMode == GameMode.online;
     _initializeAnimations();
   }
 
@@ -113,10 +176,73 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   @override
   void didUpdateWidget(TurnNounDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    _isOnlineMode = widget.gameConfig.gameMode == GameMode.online;
+
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
-    // reset and player article animation when a move is made
+    if (_isOnlineMode) {
+      _handleOnlineModeAnimations(gameState);
+    } else {
+      _handleOfflineModeAnimations(gameState);
+    }
+  }
+
+  OnlineGamePhase _getCurrentGamePhase() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
+    if (gameState.selectedCellIndex == null) {
+      return OnlineGamePhase.waiting;
+    }
+
+    if (gameState.currentNoun != null && gameState.revealedArticle == null) {
+      return OnlineGamePhase.cellSelected;
+    }
+
+    if (gameState.revealedArticle != null &&
+        gameState.revealedArticleIsCorrect != null) {
+      return OnlineGamePhase.articleRevealed;
+    }
+
+    return OnlineGamePhase.cellSelected;
+  }
+
+  void _handleOnlineModeAnimations(dynamic gameState) {
+    final currentPhase = _getCurrentGamePhase();
+    final currentRevealedArticle = gameState.revealedArticle;
+    final currentRevealedIsCorrect = gameState.revealedArticleIsCorrect;
+
+    if (currentRevealedArticle != _previousRevealedArticle) {
+      if (currentRevealedArticle != null &&
+          currentPhase == OnlineGamePhase.articleRevealed) {
+        _articleController.forward(from: 0);
+
+        // start feedback if we have correctness
+        if (currentRevealedIsCorrect != null) {
+          _feedbackController.forward(from: 0);
+        }
+      } else {
+        // article cleared - reset animations
+        _articleController.reset();
+        _feedbackController.reset();
+      }
+
+      _previousRevealedArticle = currentRevealedArticle;
+    }
+
+    if (currentRevealedIsCorrect != _previousRevealedArticleIsCorrect) {
+      if (currentRevealedIsCorrect != null &&
+          currentRevealedArticle != null &&
+          currentPhase == OnlineGamePhase.articleRevealed) {
+        _feedbackController.forward(from: 0);
+      }
+      _previousRevealedArticleIsCorrect = currentRevealedIsCorrect;
+    }
+  }
+
+  void _handleOfflineModeAnimations(dynamic gameState) {
     if (gameState.lastPlayedPlayer != null && !gameState.isTimerActive) {
       _articleController.forward(from: 0);
       _feedbackController.reset();
@@ -133,14 +259,14 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
+    final nounRepoReady = ref.watch(nounReadyProvider);
+    final String localPlayerId =
+        ref.watch(supabaseProvider).auth.currentUser!.id;
+
     final currentPlayer = gameState.currentPlayer;
     final currentNoun = gameState.currentNoun;
-    final isTimerActive = gameState.isTimerActive;
-    final selectedCellIndex = gameState.selectedCellIndex;
-    final lastPlayerPlayer = gameState.lastPlayedPlayer;
-    final showArticleFeedback = gameState.showArticleFeedback;
 
-    final nounRepoReady = ref.watch(nounReadyProvider);
+    final showNoun = _showNoun();
 
     return nounRepoReady.when(
       loading: () => const Center(
@@ -164,9 +290,19 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                 firstChild: AnimatedBuilder(
                   animation: _hoverAnimation,
                   builder: (context, child) {
+                    bool isLocalPlayerTurn = false;
+                    _isOnlineMode
+                        ? isLocalPlayerTurn =
+                            (gameState.currentPlayer.userId == localPlayerId)
+                        : true;
+
                     return Transform.translate(
                       offset: Offset(0, _hoverAnimation.value),
-                      child: _showCurrentPlayer(context, currentPlayer),
+                      child: _showCurrentPlayer(
+                        context,
+                        currentPlayer,
+                        isLocalPlayerTurn: isLocalPlayerTurn,
+                      ),
                     );
                   },
                 ),
@@ -174,12 +310,12 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                     ? _showCurrentNoun(
                         context,
                         currentNoun,
-                        lastPlayerPlayer != null && !isTimerActive,
+                        _showArticle(),
                         _articleSlideAnimation,
-                        showArticleFeedback,
+                        _showArticleFeedback(),
                       )
                     : const Row(children: [SizedBox()]),
-                crossFadeState: (selectedCellIndex != null && isTimerActive)
+                crossFadeState: showNoun
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 duration: const Duration(milliseconds: 600),
@@ -202,12 +338,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     Animation<Offset> slideAnimation,
     bool shouldArticleAnimate,
   ) {
-    final gameState =
-        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
-
-    final wrongArticle = gameState.wrongSelectedArticle;
-    final hasWrongArticle = wrongArticle != null &&
-        (shouldArticleAnimate || gameState.showArticleFeedback);
+    final wrongArticle = _getWrongArticle();
+    final hasWrongArticle = wrongArticle != null && shouldArticleAnimate;
 
     final dynamicFontSize = _calculateDynamicFontSize(currentNoun.noun);
 
@@ -312,8 +444,16 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   }
 }
 
-Widget _showCurrentPlayer(BuildContext context, Player currentPlayer) {
-  final space = SizedBox(width: 5);
+Widget _showCurrentPlayer(
+  BuildContext context,
+  Player currentPlayer, {
+  bool isLocalPlayerTurn = true,
+}) {
+  const space = SizedBox(width: 5);
+
+  final displayName = isLocalPlayerTurn ? 'Du' : currentPlayer.userName;
+  final verbText =
+      (isLocalPlayerTurn || displayName == 'Du') ? 'spielst...' : 'spielt...';
 
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -321,7 +461,7 @@ Widget _showCurrentPlayer(BuildContext context, Player currentPlayer) {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          currentPlayer.userName,
+          displayName,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
@@ -330,7 +470,7 @@ Widget _showCurrentPlayer(BuildContext context, Player currentPlayer) {
         ),
         space,
         Text(
-          currentPlayer.userName == 'Du' ? 'spielst...' : 'spielt...',
+          verbText,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
