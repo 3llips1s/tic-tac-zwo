@@ -26,8 +26,13 @@ class GameNotifier extends StateNotifier<GameState> {
     List<Player> players,
     Player startingPlayer, {
     OnlineGamePhase initialOnlineGamePhase = OnlineGamePhase.waiting,
-  }) : super(GameState.initial(players, startingPlayer,
-            onlineGamePhase: initialOnlineGamePhase)) {
+    String? currentPlayerId,
+  }) : super(GameState.initial(
+          players,
+          startingPlayer,
+          onlineGamePhase: initialOnlineGamePhase,
+          currentPlayerId: currentPlayerId,
+        )) {
     _loadGameNouns();
   }
 

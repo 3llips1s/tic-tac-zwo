@@ -1,3 +1,5 @@
+import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
+
 enum GameMode { pass, offline, wordle, online }
 
 enum PlayerSymbol { X, O }
@@ -24,6 +26,21 @@ extension SymbolExtension on PlayerSymbol {
         return 'X';
       case PlayerSymbol.O:
         return 'Ö';
+    }
+  }
+}
+
+extension OnlineGamePhaseExtension on OnlineGamePhase {
+  String get string {
+    switch (this) {
+      case OnlineGamePhase.waiting:
+        return 'waiting';
+      case OnlineGamePhase.cellSelected:
+        return 'cellSelected';
+      case OnlineGamePhase.articleRevealed:
+        return 'articleRevealed';
+      case OnlineGamePhase.turnComplete:
+        return 'turnComplete';
     }
   }
 }

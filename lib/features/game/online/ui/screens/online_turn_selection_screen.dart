@@ -88,23 +88,20 @@ class _OnlineTurnSelectionScreenState
 
         final serverPlayer1Data = gameSession['player1'];
         final serverPlayer2Data = gameSession['player2'];
-        final startingPlayerId = gameSession['startingPlayer'];
-
-        final bool player1IsX = startingPlayerId == serverPlayer1Data['id'];
 
         setState(() {
           _player1 = Player(
             userName: serverPlayer1Data['username'] ?? 'Spieler 1',
             userId: serverPlayer1Data['id'] ?? '',
             countryCode: serverPlayer1Data['country_code'] ?? '',
-            symbol: player1IsX ? PlayerSymbol.X : PlayerSymbol.O,
+            symbol: PlayerSymbol.X,
           );
 
           _player2 = Player(
             userName: serverPlayer2Data['username'] ?? 'Spieler 2',
             userId: serverPlayer2Data['id'] ?? '',
             countryCode: serverPlayer2Data['country_code'] ?? '',
-            symbol: player1IsX ? PlayerSymbol.O : PlayerSymbol.X,
+            symbol: PlayerSymbol.O,
           );
         });
       },

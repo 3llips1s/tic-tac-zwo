@@ -9,6 +9,7 @@ import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/german_noun.dart';
 import '../../data/models/player.dart';
+import '../../logic/game_state.dart';
 
 class TurnNounDisplay extends ConsumerStatefulWidget {
   final GameConfig gameConfig;
@@ -193,12 +194,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
-    if (gameState.selectedCellIndex == null) {
-      return OnlineGamePhase.waiting;
-    }
-
-    if (gameState.currentNoun != null && gameState.revealedArticle == null) {
-      return OnlineGamePhase.cellSelected;
+    if (gameState.isGameOver) {
+      return OnlineGamePhase.turnComplete;
     }
 
     if (gameState.revealedArticle != null &&
@@ -206,7 +203,11 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
       return OnlineGamePhase.articleRevealed;
     }
 
-    return OnlineGamePhase.cellSelected;
+    if (gameState.selectedCellIndex != null && gameState.currentNoun != null) {
+      return OnlineGamePhase.cellSelected;
+    }
+
+    return gameState.onlineGamePhase ?? OnlineGamePhase.waiting;
   }
 
   void _handleOnlineModeAnimations(dynamic gameState) {

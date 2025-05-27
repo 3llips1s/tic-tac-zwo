@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/game_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board_cell.dart';
+import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
 
+import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
 
 class GameBoard extends ConsumerWidget {
@@ -11,12 +13,26 @@ class GameBoard extends ConsumerWidget {
 
   const GameBoard({super.key, required this.gameConfig});
 
+  void onCellTapped(WidgetRef ref, int index) {
+    final gameNotifier =
+        ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
+
+    if (gameConfig.gameMode == GameMode.online) {
+      final notifier =
+          ref.read(onlineGameStateNotifierProvider(gameConfig).notifier);
+
+      if (notifier.canLocalPlayerMakeMove) {
+        notifier.selectCellOnline(index);
+      }
+    } else {
+      gameNotifier.selectCell(index);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, gameConfig));
-    final gameNotifier =
-        ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
 
     return Center(
       child: SizedBox(
@@ -32,7 +48,7 @@ class GameBoard extends ConsumerWidget {
           ),
           itemCount: 9,
           itemBuilder: (context, index) => GestureDetector(
-            onTap: () => gameNotifier.selectCell(index),
+            onTap: () => onCellTapped(ref, index),
             child: GameBoardCell(
               isPressed: gameState.cellPressed[index],
               cellColor: gameState.getCellColor(index),

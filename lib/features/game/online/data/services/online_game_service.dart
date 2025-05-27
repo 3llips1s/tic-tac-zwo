@@ -175,6 +175,7 @@ class OnlineGameService {
     dynamic winnerId,
     String? revealedArticle,
     bool? revealedArticleIsCorrect,
+    String? onlineGamePhaseString,
   }) async {
     const debounceDuration = Duration(milliseconds: 100);
 
@@ -247,6 +248,7 @@ class OnlineGameService {
     required String selectedArticle,
     required bool isCorrect,
     required int cellIndex,
+    bool isForfeited = false,
   }) async {
     try {
       print(
@@ -259,6 +261,7 @@ class OnlineGameService {
         'selected_article': selectedArticle,
         'is_correct': isCorrect,
         'cell_index': cellIndex,
+        'is_forfeited': isForfeited,
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {

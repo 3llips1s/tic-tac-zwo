@@ -38,11 +38,12 @@ class GameState {
 
   static const int turnDurationSeconds = 9;
 
-  // online mode article feedbacks sync
+  // online mode
+  final String? currentPlayerId;
   final String? revealedArticle;
   final bool? revealedArticleIsCorrect;
   final DateTime? articleRevealedAt;
-  final OnlineGamePhase onlineGamePhase;
+  final OnlineGamePhase? onlineGamePhase;
 
   GameState({
     required this.board,
@@ -65,34 +66,14 @@ class GameState {
     this.winningCells,
     this.showArticleFeedback = false,
 
-    // online mode sync
+    // online mode
+    this.currentPlayerId,
     this.isOpponentReady = false,
     this.revealedArticle,
     this.revealedArticleIsCorrect,
     this.articleRevealedAt,
     required this.onlineGamePhase,
   });
-
-  static GameState initial(
-    List<Player> players,
-    Player startingPlayer, {
-    OnlineGamePhase onlineGamePhase = OnlineGamePhase.waiting,
-  }) {
-    return GameState(
-      board: List.filled(9, null),
-      cellPressed: List.filled(9, false),
-      players: players,
-      startingPlayer: startingPlayer,
-      isTimerActive: false,
-      remainingSeconds: turnDurationSeconds,
-      isGameOver: false,
-      player1Score: 0,
-      player2Score: 0,
-      gamesPlayed: 0,
-      showArticleFeedback: false,
-      onlineGamePhase: onlineGamePhase,
-    );
-  }
 
   GameState copyWith({
     List<String?>? board,
@@ -120,6 +101,7 @@ class GameState {
     bool? showArticleFeedback,
 
     // online mode
+    String? currentPlayerId,
     bool? isOpponentReady,
     String? revealedArticle,
     bool? revealedArticleIsCorrect,
@@ -162,6 +144,7 @@ class GameState {
       isOpponentReady: isOpponentReady ?? this.isOpponentReady,
 
       // online game mode
+      currentPlayerId: currentPlayerId ?? this.currentPlayerId,
       revealedArticle: allowNullRevealedArticle
           ? revealedArticle
           : (revealedArticle ?? this.revealedArticle),
@@ -175,6 +158,30 @@ class GameState {
     );
   }
 
+  static GameState initial(
+    List<Player> players,
+    Player startingPlayer, {
+    OnlineGamePhase onlineGamePhase = OnlineGamePhase.waiting,
+    String? currentPlayerId,
+  }) {
+    return GameState(
+      board: List.filled(9, null),
+      cellPressed: List.filled(9, false),
+      players: players,
+      startingPlayer: startingPlayer,
+      lastPlayedPlayer: null,
+      isTimerActive: false,
+      remainingSeconds: turnDurationSeconds,
+      isGameOver: false,
+      player1Score: 0,
+      player2Score: 0,
+      gamesPlayed: 0,
+      showArticleFeedback: false,
+      onlineGamePhase: onlineGamePhase,
+      currentPlayerId: currentPlayerId ?? startingPlayer.userId,
+    );
+  }
+
   static GameState initialOnline({
     required List<Player> players,
     required Player startingPlayer,
@@ -185,6 +192,7 @@ class GameState {
       cellPressed: List.filled(9, false),
       players: players,
       startingPlayer: startingPlayer,
+      lastPlayedPlayer: null,
       isTimerActive: false,
       remainingSeconds: turnDurationSeconds,
       isGameOver: false,
@@ -194,6 +202,7 @@ class GameState {
       showArticleFeedback: false,
       isOpponentReady: false,
       onlineGamePhase: OnlineGamePhase.waiting,
+      currentPlayerId: startingPlayer.userId,
     );
   }
 
@@ -210,9 +219,21 @@ class GameState {
     return player.symbol != lastPlayedPlayer!.symbol;
   }
 
-  Player get currentPlayer =>
-      players.firstWhere((player) => isPlayerTurn(player),
-          orElse: () => players.first);
+  Player get currentPlayer {
+    if (currentPlayerId != null) {
+      return players.firstWhere(
+        (player) => player.userId == currentPlayerId,
+        orElse: () => startingPlayer,
+      );
+    }
+
+    if (lastPlayedPlayer == null) {
+      return startingPlayer;
+    }
+    return players.firstWhere(
+        (player) => player.symbol != lastPlayedPlayer!.symbol,
+        orElse: () => players.first);
+  }
 
   // symbol display
   static const String symbolX = 'X';
@@ -240,6 +261,7 @@ class GameState {
       'players': players.map((player) => player.toJson()).toList(),
       'startingPlayer': startingPlayer.toJson(),
       'lastPlayedPlayer': lastPlayedPlayer?.toJson(),
+      'currentPlayerId': currentPlayerId,
       'currentNoun': currentNoun != null
           ? {
               'article': currentNoun!.article,
@@ -302,6 +324,7 @@ class GameState {
         revealedArticle: json['revealedArticle'],
         revealedArticleIsCorrect: json['revealedArticleIsCorrect'] ?? false,
         articleRevealedAt: json['articleRevealedAt'],
+        currentPlayerId: json['currentPlayerId'],
         onlineGamePhase: json['onlineGamePhase']);
   }
 
