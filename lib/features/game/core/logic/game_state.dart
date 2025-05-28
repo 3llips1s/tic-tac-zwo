@@ -15,7 +15,7 @@ enum OnlineGamePhase {
 
 class GameState {
   final List<String?> board;
-  final List<bool> cellPressed;
+  final List<bool> _cellPressed;
   final List<Player> players;
   final Player startingPlayer;
   final Player? lastPlayedPlayer;
@@ -47,7 +47,7 @@ class GameState {
 
   GameState({
     required this.board,
-    required this.cellPressed,
+    required cellPressed,
     required this.players,
     required this.startingPlayer,
     this.lastPlayedPlayer,
@@ -73,7 +73,7 @@ class GameState {
     this.revealedArticleIsCorrect,
     this.articleRevealedAt,
     required this.onlineGamePhase,
-  });
+  }) : _cellPressed = cellPressed;
 
   GameState copyWith({
     List<String?>? board,
@@ -204,6 +204,21 @@ class GameState {
       onlineGamePhase: OnlineGamePhase.waiting,
       currentPlayerId: startingPlayer.userId,
     );
+  }
+
+  List<bool> get cellPressed {
+    if (onlineGamePhase != null) {
+      var pressed = List<bool>.filled(9, false);
+
+      if (selectedCellIndex != null &&
+          onlineGamePhase == OnlineGamePhase.cellSelected) {
+        pressed[selectedCellIndex!] = true;
+      }
+
+      return pressed;
+    }
+
+    return _cellPressed;
   }
 
   // method to determine whose turn it is

@@ -126,19 +126,35 @@ class _OnlineTurnSelectionScreenState
     }
   }
 
-  void _startGame() {
+  void _startGame() async {
     // todo: remove after testing
     if (_player1 == null || _player2 == null) {
       print('player not initialized');
       return;
     }
 
+    final gameSession = await _gameSessionFuture;
+    final String serverStartingPlayerId = gameSession['current_player_id'];
+
+    Player startingPlayer;
+    Player nonStartingPlayer;
+
+    if (_player1!.userId == serverStartingPlayerId) {
+      startingPlayer = _player1!.copyWith(symbol: PlayerSymbol.X);
+      nonStartingPlayer = _player2!.copyWith(symbol: PlayerSymbol.O);
+    } else {
+      startingPlayer = _player2!.copyWith(symbol: PlayerSymbol.X);
+      nonStartingPlayer = _player2!.copyWith(symbol: PlayerSymbol.O);
+    }
+
     print(
-        '[TurnSelectionScreen] Starting game with players: ${_player1!.userName} vs ${_player2!.userName}');
+        '[TurnSelectionScreen] Starting game. Server starting player: $serverStartingPlayerId');
+    print(
+        '[TurnSelectionScreen] Local starting player: ${startingPlayer.userName} (${startingPlayer.symbol})');
 
     final gameConfig = GameConfig(
-      players: [_player1!, _player2!],
-      startingPlayer: _player1!,
+      players: [startingPlayer, nonStartingPlayer],
+      startingPlayer: startingPlayer,
       gameMode: GameMode.online,
       gameSessionId: widget.gameSessionId,
     );

@@ -40,4 +40,20 @@ class Player {
       userId: json['user_id'] ?? '',
     );
   }
+
+  Player copyWith({
+    String? userName,
+    String? userId,
+    String? countryCode,
+    PlayerSymbol? symbol,
+    bool? isAI,
+  }) {
+    return Player(
+      userName: userName ?? this.userName,
+      userId: userId ?? this.userId,
+      countryCode: countryCode ?? this.countryCode,
+      symbol: symbol ?? this.symbol,
+      isAI: isAI ?? this.isAI,
+    );
+  }
 }

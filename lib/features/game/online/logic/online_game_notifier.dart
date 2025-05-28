@@ -15,6 +15,7 @@ import '../../core/data/models/player.dart';
 
 class OnlineGameNotifier extends GameNotifier {
   final SupabaseClient supabase;
+  Timer? _timer;
 
   final String gameSessionId;
   String? currentUserId;
@@ -38,6 +39,14 @@ class OnlineGameNotifier extends GameNotifier {
     print('[DEBUG CONSTRUCTOR] currentUserId: $currentUserId');
     print(
         '[DEBUG CONSTRUCTOR] startingPlayer.userId: ${gameConfig.startingPlayer.userId}');
+
+    _isLocalPlayerTurn = gameConfig.startingPlayer.userId == currentUserId;
+    print(
+        '[DEBUG CONSTRUCTOR] _isLocalPlayerTurn initialized to: $_isLocalPlayerTurn');
+    print(
+        '[DEBUG CONSTRUCTOR] Starting player: ${gameConfig.startingPlayer.userName}');
+    print(
+        '[DEBUG CONSTRUCTOR] Is local user the starting player? $_isLocalPlayerTurn');
 
     if (gameSessionId.isNotEmpty && currentUserId != null) {
       _listenToGameSessionUpdates();
@@ -71,7 +80,11 @@ class OnlineGameNotifier extends GameNotifier {
 
     final noun = await ref.read(germanNounRepoProvider).loadRandomNoun();
 
+    var newCellPressed = List<bool>.from(state.cellPressed);
+    newCellPressed[index] = true;
+
     state = state.copyWith(
+      cellPressed: newCellPressed,
       selectedCellIndex: index,
       currentNoun: noun,
       revealedArticle: null,
@@ -95,12 +108,33 @@ class OnlineGameNotifier extends GameNotifier {
       print('[OnlineGameNotifier] Error sending cell selection to server: $e');
 
       state = state.copyWith(
+        cellPressed: List<bool>.from(state.cellPressed),
         selectedCellIndex: null,
         currentNoun: null,
         isTimerActive: false,
         onlineGamePhase: OnlineGamePhase.waiting,
       );
     }
+
+    if (_isLocalPlayerTurn) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) {
+        if (state.remainingSeconds > 0) {
+          state = state.copyWith(
+            remainingSeconds: state.remainingSeconds - 1,
+          );
+        } else {
+          forfeitTurn();
+        }
+      },
+    );
   }
 
   @override
@@ -123,6 +157,7 @@ class OnlineGameNotifier extends GameNotifier {
 
     // update local state immediately
     state = state.copyWith(
+      cellPressed: List<bool>.from(state.cellPressed),
       revealedArticle: selectedArticle,
       revealedArticleIsCorrect: isCorrectMove,
       articleRevealedAt: DateTime.now(),
@@ -171,7 +206,7 @@ class OnlineGameNotifier extends GameNotifier {
       print(
           '[OnlineGameNotifier] Article choice and board state sent to server.');
 
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (state.onlineGamePhase == OnlineGamePhase.articleRevealed) {
           state = state.copyWith(
             selectedCellIndex: null,
@@ -180,7 +215,7 @@ class OnlineGameNotifier extends GameNotifier {
             revealedArticleIsCorrect: null,
             articleRevealedAt: null,
             isTimerActive: false,
-            onlineGamePhase: OnlineGamePhase.turnComplete,
+            onlineGamePhase: OnlineGamePhase.waiting,
             lastPlayedPlayer: null,
           );
           print(
@@ -216,10 +251,16 @@ class OnlineGameNotifier extends GameNotifier {
     final GermanNoun currentNoun = state.currentNoun!;
     final String correctArticle = currentNoun.article;
 
+    var newCellPressed = List<bool>.from(state.cellPressed);
+    if (state.selectedCellIndex != null) {
+      newCellPressed[state.selectedCellIndex!] = false;
+    }
+
     final Player previousPlayer = state.currentPlayer;
 
     // local feedback
     state = state.copyWith(
+      cellPressed: newCellPressed,
       revealedArticle: correctArticle,
       revealedArticleIsCorrect: false,
       articleRevealedAt: DateTime.now(),
@@ -262,7 +303,7 @@ class OnlineGameNotifier extends GameNotifier {
 
       print('[OnlineGameNotifier] Turn forfeited and state sent to server.');
 
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (state.onlineGamePhase == OnlineGamePhase.articleRevealed) {
           state = state.copyWith(
             selectedCellIndex: null,
@@ -271,18 +312,11 @@ class OnlineGameNotifier extends GameNotifier {
             revealedArticleIsCorrect: null,
             articleRevealedAt: null,
             isTimerActive: false,
-            onlineGamePhase: OnlineGamePhase.turnComplete,
+            onlineGamePhase: OnlineGamePhase.waiting,
             lastPlayedPlayer: null,
           );
           print(
               '[OnlineGameNotifier] Forfeit: Transitioned to turnComplete phase locally.');
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (state.onlineGamePhase == OnlineGamePhase.turnComplete) {
-              state = state.copyWith(onlineGamePhase: OnlineGamePhase.waiting);
-              print(
-                  '[OnlineGameNotifier] Forfeit: Transitioned to waiting phase locally.');
-            }
-          });
         }
       });
     } catch (e) {
@@ -345,7 +379,11 @@ class OnlineGameNotifier extends GameNotifier {
     }
 
     final String? remoteCurrentPlayerId = gameData['current_player_id'];
-    _isLocalPlayerTurn = remoteCurrentPlayerId == currentUserId;
+
+    final newIsLocalPlayerTurn =
+        remoteCurrentPlayerId?.trim() == currentUserId?.trim();
+
+    _isLocalPlayerTurn = newIsLocalPlayerTurn;
 
     print('[DEBUG] _isLocalPlayerTurn AFTER: $_isLocalPlayerTurn');
     print(
@@ -360,7 +398,7 @@ class OnlineGameNotifier extends GameNotifier {
         gameData['revealed_article'] != state.revealedArticle) {
       newPhase = OnlineGamePhase.articleRevealed;
 
-      Future.delayed(const Duration(seconds: 2), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted &&
             state.onlineGamePhase == OnlineGamePhase.articleRevealed) {
           state = state.copyWith(
@@ -370,7 +408,7 @@ class OnlineGameNotifier extends GameNotifier {
             revealedArticleIsCorrect: null,
             articleRevealedAt: null,
             isTimerActive: false,
-            onlineGamePhase: OnlineGamePhase.turnComplete,
+            onlineGamePhase: OnlineGamePhase.waiting,
             lastPlayedPlayer: null,
           );
           print(
@@ -418,12 +456,6 @@ class OnlineGameNotifier extends GameNotifier {
       isTimerActive: (newPhase == OnlineGamePhase.cellSelected),
       onlineGamePhase: newPhase,
     );
-
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (mounted) {
-        state = state.copyWith();
-      }
-    });
 
     print(
         '[OnlineGameNotifier] Remote state updated. Phase: $newPhase, isLocalTurn: $_isLocalPlayerTurn');
@@ -503,16 +535,17 @@ class OnlineGameNotifier extends GameNotifier {
       state = state = state.copyWith(
         board: List.filled(9, null),
         selectedCellIndex: null,
-        currentNoun: null, // Clear current noun
+        cellPressed: List<bool>.from(state.cellPressed),
+        currentNoun: null, // clear current noun
         isGameOver: false,
         winningPlayer: null,
         startingPlayer: state.players
             .firstWhere((p) => p.userId == newStartingPlayerIdOnServer),
         currentPlayerId: newStartingPlayerIdOnServer,
-        lastPlayedPlayer: null, // Set new starting player
+        lastPlayedPlayer: null, // set new starting player
         revealedArticle: null,
         revealedArticleIsCorrect: null,
-        articleRevealedAt: null, // Clear timestamp
+        articleRevealedAt: null, // clear timestamp
         isTimerActive: false,
         onlineGamePhase: OnlineGamePhase.waiting,
       );
