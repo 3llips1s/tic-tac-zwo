@@ -73,6 +73,15 @@ class _OnlineTurnSelectionScreenState
     _hoverController.repeat(reverse: true);
   }
 
+  Player _createPlayer(Map<String, dynamic> playerData, PlayerSymbol symbol) {
+    return Player(
+      userName: playerData['username'] ?? 'Unbekannt',
+      userId: playerData['id'] ?? '',
+      countryCode: playerData['country_code'] ?? '',
+      symbol: symbol,
+    );
+  }
+
   void _loadGameSession() {
     _gameSessionFuture = ref
         .read(supabaseProvider)
@@ -88,22 +97,22 @@ class _OnlineTurnSelectionScreenState
 
         final serverPlayer1Data = gameSession['player1'];
         final serverPlayer2Data = gameSession['player2'];
+        final startingPlayerData = gameSession['startingPlayer'];
 
-        setState(() {
-          _player1 = Player(
-            userName: serverPlayer1Data['username'] ?? 'Spieler 1',
-            userId: serverPlayer1Data['id'] ?? '',
-            countryCode: serverPlayer1Data['country_code'] ?? '',
-            symbol: PlayerSymbol.X,
-          );
+        final serverPlayer1Starts =
+            startingPlayerData['id'] == serverPlayer1Data['id'];
 
-          _player2 = Player(
-            userName: serverPlayer2Data['username'] ?? 'Spieler 2',
-            userId: serverPlayer2Data['id'] ?? '',
-            countryCode: serverPlayer2Data['country_code'] ?? '',
-            symbol: PlayerSymbol.O,
-          );
-        });
+        if (serverPlayer1Starts) {
+          setState(() {
+            _player1 = _createPlayer(serverPlayer1Data, PlayerSymbol.X);
+            _player2 = _createPlayer(serverPlayer2Data, PlayerSymbol.O);
+          });
+        } else {
+          setState(() {
+            _player1 = _createPlayer(serverPlayer2Data, PlayerSymbol.X);
+            _player2 = _createPlayer(serverPlayer1Data, PlayerSymbol.O);
+          });
+        }
       },
     ).catchError((error) {
       print('error loading game session: $error');
@@ -129,32 +138,13 @@ class _OnlineTurnSelectionScreenState
   void _startGame() async {
     // todo: remove after testing
     if (_player1 == null || _player2 == null) {
-      print('player not initialized');
+      print('players not initialized');
       return;
     }
 
-    final gameSession = await _gameSessionFuture;
-    final String serverStartingPlayerId = gameSession['current_player_id'];
-
-    Player startingPlayer;
-    Player nonStartingPlayer;
-
-    if (_player1!.userId == serverStartingPlayerId) {
-      startingPlayer = _player1!.copyWith(symbol: PlayerSymbol.X);
-      nonStartingPlayer = _player2!.copyWith(symbol: PlayerSymbol.O);
-    } else {
-      startingPlayer = _player2!.copyWith(symbol: PlayerSymbol.X);
-      nonStartingPlayer = _player2!.copyWith(symbol: PlayerSymbol.O);
-    }
-
-    print(
-        '[TurnSelectionScreen] Starting game. Server starting player: $serverStartingPlayerId');
-    print(
-        '[TurnSelectionScreen] Local starting player: ${startingPlayer.userName} (${startingPlayer.symbol})');
-
     final gameConfig = GameConfig(
-      players: [startingPlayer, nonStartingPlayer],
-      startingPlayer: startingPlayer,
+      players: [_player1!, _player2!],
+      startingPlayer: _player1!,
       gameMode: GameMode.online,
       gameSessionId: widget.gameSessionId,
     );

@@ -6,13 +6,6 @@ import '../../../../config/game_config/config.dart';
 import '../data/models/german_noun.dart';
 import '../data/models/player.dart';
 
-enum OnlineGamePhase {
-  waiting,
-  cellSelected,
-  articleRevealed,
-  turnComplete,
-}
-
 class GameState {
   final List<String?> board;
   final List<bool> _cellPressed;
@@ -161,7 +154,7 @@ class GameState {
   static GameState initial(
     List<Player> players,
     Player startingPlayer, {
-    OnlineGamePhase onlineGamePhase = OnlineGamePhase.waiting,
+    OnlineGamePhase? onlineGamePhase,
     String? currentPlayerId,
   }) {
     return GameState(
@@ -207,7 +200,7 @@ class GameState {
   }
 
   List<bool> get cellPressed {
-    if (onlineGamePhase != null) {
+    if (onlineGamePhase != null && onlineGamePhase != OnlineGamePhase.waiting) {
       var pressed = List<bool>.filled(9, false);
 
       if (selectedCellIndex != null &&

@@ -1,8 +1,13 @@
-import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
-
 enum GameMode { pass, offline, wordle, online }
 
 enum PlayerSymbol { X, O }
+
+enum OnlineGamePhase {
+  waiting,
+  cellSelected,
+  articleRevealed,
+  turnComplete,
+}
 
 extension GameModeExtension on GameMode {
   String get string {
@@ -36,11 +41,28 @@ extension OnlineGamePhaseExtension on OnlineGamePhase {
       case OnlineGamePhase.waiting:
         return 'waiting';
       case OnlineGamePhase.cellSelected:
-        return 'cellSelected';
+        return 'cell_selected';
       case OnlineGamePhase.articleRevealed:
-        return 'articleRevealed';
+        return 'article_revealed';
       case OnlineGamePhase.turnComplete:
-        return 'turnComplete';
+        return 'turn_complete';
+    }
+  }
+
+  static OnlineGamePhase fromString(String? phaseString) {
+    switch (phaseString?.toLowerCase()) {
+      case 'waiting':
+        return OnlineGamePhase.waiting;
+      case 'cell_selected':
+        return OnlineGamePhase.cellSelected;
+      case 'article_revealed':
+        return OnlineGamePhase.articleRevealed;
+      case 'turn_complete':
+        return OnlineGamePhase.turnComplete;
+      default:
+        print(
+            '[OnlineGameNotifier] Unknown or null online_game_phase string: "$phaseString", defaulting to waiting.');
+        return OnlineGamePhase.waiting;
     }
   }
 }

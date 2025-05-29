@@ -9,7 +9,6 @@ import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../data/models/german_noun.dart';
 import '../../data/models/player.dart';
-import '../../logic/game_state.dart';
 
 class TurnNounDisplay extends ConsumerStatefulWidget {
   final GameConfig gameConfig;
@@ -65,13 +64,16 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   }
 
   bool _showArticle() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
     if (_isOnlineMode) {
       final phase = _getCurrentGamePhase();
 
-      return phase == OnlineGamePhase.articleRevealed;
+      return phase == OnlineGamePhase.articleRevealed &&
+          gameState.revealedArticle != null &&
+          gameState.articleRevealedAt != null &&
+          DateTime.now().difference(gameState.articleRevealedAt!).inSeconds < 3;
     } else {
-      final gameState =
-          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
       return gameState.lastPlayedPlayer != null && !gameState.isTimerActive;
     }
   }
@@ -79,7 +81,10 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   bool _showArticleFeedback() {
     if (_isOnlineMode) {
       final phase = _getCurrentGamePhase();
-      return phase == OnlineGamePhase.articleRevealed;
+      final gameState =
+          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+      return phase == OnlineGamePhase.articleRevealed &&
+          gameState.revealedArticleIsCorrect == false;
     } else {
       final gameState =
           ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
@@ -291,10 +296,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                 firstChild: AnimatedBuilder(
                   animation: _hoverAnimation,
                   builder: (context, child) {
-                    bool isLocalPlayerTurn = false;
-                    _isOnlineMode
-                        ? isLocalPlayerTurn =
-                            (gameState.currentPlayer.userId == localPlayerId)
+                    bool isLocalPlayerTurn = _isOnlineMode
+                        ? (gameState.currentPlayerId == localPlayerId)
                         : true;
 
                     return Transform.translate(

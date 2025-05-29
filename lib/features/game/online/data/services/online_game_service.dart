@@ -217,6 +217,10 @@ class OnlineGameService {
               revealedArticleIsCorrect;
         }
 
+        if (onlineGamePhaseString != null) {
+          updatePayload['online_game_phase'] = onlineGamePhaseString;
+        }
+
         if (updatePayload.length == 1 &&
             updatePayload.containsKey('last_activity')) {
           // print('[OnlineGameService] updateGameState for $gameSessionId: No actual game data to update, only last_activity. Skipping DB call.');
