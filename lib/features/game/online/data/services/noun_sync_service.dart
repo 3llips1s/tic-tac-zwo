@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// TODO: ensure that fallbacknouns are not updated twice
-
 class NounSyncService {
   final SupabaseClient client;
 
@@ -27,15 +25,15 @@ class NounSyncService {
         query = query.gt('version', lastVersions);
       }
 
-      // Fetch the data
+      // Fetch data
       final data = await query.range(offset, offset + batchSize - 1);
 
       if (data.isEmpty) {
-        break; // Exit the loop if no more data is returned
+        break;
       }
 
       allData.addAll(List<Map<String, dynamic>>.from(data));
-      offset += batchSize; // Increment the offset for the next batch
+      offset += batchSize;
     }
 
     print('Total fetched: ${allData.length} nouns');

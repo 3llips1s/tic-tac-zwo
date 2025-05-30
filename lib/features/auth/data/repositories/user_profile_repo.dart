@@ -25,7 +25,7 @@ class UserProfileRepo {
       'id': userId,
       'username': username,
       'country_code': countryCode,
-      'score': 0,
+      'points': 0,
       'games_played': 0,
       'games_won': 0,
       'games_drawn': 0,

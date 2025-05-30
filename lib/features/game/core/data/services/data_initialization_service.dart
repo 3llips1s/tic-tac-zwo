@@ -48,10 +48,20 @@ class DataInitializationService {
       print('starting shared data initialization');
 
       if (_nounsBox.isEmpty) {
-        await _loadFromAssets();
-      }
+        try {
+          await syncWithRemote();
 
-      _scheduleRemoteSync();
+          if (_nounsBox.length < 100) {
+            await _loadFromAssets();
+            await _markFallbackData();
+          }
+        } catch (e) {
+          await _loadFromAssets();
+          await _markFallbackData();
+        }
+      } else {
+        _scheduleRemoteSync();
+      }
 
       print('data init complete. ${_nounsBox.length} nouns available');
 
@@ -80,14 +90,14 @@ class DataInitializationService {
       for (var i = 0; i < nouns.length; i++) {
         final noun = nouns[i];
         final hiveNoun = GermanNounHive(
-          id: noun.id,
+          id: 'fb_${noun.article}_${noun.noun}',
           noun: noun.noun,
           article: noun.article,
           plural: noun.plural,
           english: noun.english,
           difficulty: 1,
           updatedAt: DateTime.now(),
-          version: 1,
+          version: 0,
         );
         await _nounsBox.put(noun.id, hiveNoun);
       }
@@ -164,6 +174,12 @@ class DataInitializationService {
         count: updateCount,
         isSuccess: true,
       ));
+
+      if (updateCount > 0 && _syncInfoBox.get('hasFallbackData') == true) {
+        await _cleanUpFallbackData();
+        await _syncInfoBox.delete('hasFallbackData');
+        await _syncInfoBox.delete('fallbackLoadTime');
+      }
     } catch (e) {
       print('Error syncing with remote: $e');
       _syncController.add(SyncStatus(
@@ -177,7 +193,7 @@ class DataInitializationService {
 
   void _scheduleRemoteSync() {
     _syncTimer = Timer.periodic(
-      Duration(days: 1),
+      Duration(days: 7),
       (timer) async {
         final connectivityResult = await Connectivity().checkConnectivity();
         if (!connectivityResult.contains(ConnectivityResult.none)) {
@@ -187,6 +203,26 @@ class DataInitializationService {
     );
 
     syncWithRemote();
+  }
+
+  Future<void> _markFallbackData() async {
+    await _syncInfoBox.put('hasFallbackData', true);
+    await _syncInfoBox.put('fallbackLoadTime', DateTime.now());
+  }
+
+  Future<void> _cleanUpFallbackData() async {
+    final fallbackKeys = <dynamic>[];
+
+    for (final key in _nounsBox.keys) {
+      final noun = _nounsBox.get(key);
+      if (noun?.version == 0) {
+        fallbackKeys.add(key);
+      }
+    }
+
+    for (final key in fallbackKeys) {
+      await _nounsBox.delete(key);
+    }
   }
 
   void dispose() {

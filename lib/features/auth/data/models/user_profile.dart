@@ -1,7 +1,7 @@
 class UserProfile {
   final String id;
   final String username;
-  final int score;
+  final int points;
   final int gamesPlayed;
   final int gamesWon;
   final int gamesDrawn;
@@ -17,7 +17,7 @@ class UserProfile {
   UserProfile({
     required this.id,
     required this.username,
-    required this.score,
+    required this.points,
     required this.gamesPlayed,
     required this.gamesWon,
     required this.gamesDrawn,
@@ -35,7 +35,7 @@ class UserProfile {
     return UserProfile(
         id: json['id'],
         username: json['username'],
-        score: json['score'] ?? 0,
+        points: json['points'] ?? 0,
         gamesPlayed: json['games_played'] ?? 0,
         gamesWon: json['games_won'] ?? 0,
         gamesDrawn: json['games_drawn'] ?? 0,
@@ -53,7 +53,7 @@ class UserProfile {
     return {
       'id': id,
       'username': username,
-      'score': score,
+      'points': points,
       'games_played': gamesPlayed,
       'games_won': gamesWon,
       'games_drawn': gamesDrawn,
@@ -70,7 +70,7 @@ class UserProfile {
 
   UserProfile copyWith({
     String? username,
-    int? score,
+    int? points,
     int? gamesPlayed,
     int? gamesWon,
     int? gamesDrawn,
@@ -86,7 +86,7 @@ class UserProfile {
     return UserProfile(
       id: id,
       username: username ?? this.username,
-      score: score ?? this.score,
+      points: points ?? this.points,
       gamesPlayed: gamesPlayed ?? this.gamesPlayed,
       gamesWon: gamesWon ?? this.gamesWon,
       gamesDrawn: gamesDrawn ?? this.gamesDrawn,
