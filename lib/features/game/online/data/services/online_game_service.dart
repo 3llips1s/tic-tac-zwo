@@ -191,16 +191,11 @@ class OnlineGameService {
 
         if (board != null) updatePayload['board'] = board;
 
-        if (selectedCellIndex != null || board != null) {
-          updatePayload['selected_cell_index'] = selectedCellIndex;
-        }
-
-        if (currentNounId != null || board != null) {
-          updatePayload['current_noun_id'] = currentNounId;
-        }
-        if (winnerId != null || isGameOver != null) {
-          updatePayload['winner_id'] = winnerId;
-        }
+        updatePayload['selected_cell_index'] = selectedCellIndex;
+        updatePayload['current_noun_id'] = currentNounId;
+        updatePayload['winner_id'] = winnerId;
+        updatePayload['revealed_article'] = revealedArticle;
+        updatePayload['revealed_article_is_correct'] = revealedArticleIsCorrect;
 
         if (currentPlayerId != null) {
           updatePayload['current_player_id'] = currentPlayerId;
@@ -208,22 +203,19 @@ class OnlineGameService {
 
         if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
 
-        if (revealedArticle != null) {
-          updatePayload['revealed_article'] = revealedArticle;
-        }
-
-        if (revealedArticleIsCorrect != null) {
-          updatePayload['revealed_article_is_correct'] =
-              revealedArticleIsCorrect;
-        }
-
         if (onlineGamePhaseString != null) {
           updatePayload['online_game_phase'] = onlineGamePhaseString;
         }
 
-        if (updatePayload.length == 1 &&
-            updatePayload.containsKey('last_activity')) {
-          // print('[OnlineGameService] updateGameState for $gameSessionId: No actual game data to update, only last_activity. Skipping DB call.');
+        int meaningfulKeysCount = 0;
+        updatePayload.forEach(
+          (key, value) {
+            if (key != 'last_activity') {
+              meaningfulKeysCount++;
+            }
+          },
+        );
+        if (meaningfulKeysCount == 0) {
           return;
         }
 

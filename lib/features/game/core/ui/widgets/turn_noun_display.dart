@@ -51,14 +51,15 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   }
 
   bool _showNoun() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
     if (_isOnlineMode) {
       final phase = _getCurrentGamePhase();
 
       return phase == OnlineGamePhase.cellSelected ||
           phase == OnlineGamePhase.articleRevealed;
     } else {
-      final gameState =
-          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
       return gameState.selectedCellIndex != null && gameState.isTimerActive;
     }
   }
@@ -68,26 +69,23 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
     if (_isOnlineMode) {
       final phase = _getCurrentGamePhase();
+      final articleIsPresent = gameState.revealedArticle != null;
 
-      return phase == OnlineGamePhase.articleRevealed &&
-          gameState.revealedArticle != null &&
-          gameState.articleRevealedAt != null &&
-          DateTime.now().difference(gameState.articleRevealedAt!).inSeconds < 3;
+      return phase == OnlineGamePhase.articleRevealed && articleIsPresent;
     } else {
       return gameState.lastPlayedPlayer != null && !gameState.isTimerActive;
     }
   }
 
   bool _showArticleFeedback() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
     if (_isOnlineMode) {
       final phase = _getCurrentGamePhase();
-      final gameState =
-          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
       return phase == OnlineGamePhase.articleRevealed &&
           gameState.revealedArticleIsCorrect == false;
     } else {
-      final gameState =
-          ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
       return gameState.showArticleFeedback;
     }
   }
@@ -185,19 +183,20 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 
     _isOnlineMode = widget.gameConfig.gameMode == GameMode.online;
 
-    final gameState =
-        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
-
     if (_isOnlineMode) {
-      _handleOnlineModeAnimations(gameState);
+      _handleOnlineModeAnimations();
     } else {
-      _handleOfflineModeAnimations(gameState);
+      _handleOfflineModeAnimations();
     }
   }
 
   OnlineGamePhase _getCurrentGamePhase() {
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
+    if (_isOnlineMode && gameState.onlineGamePhase != null) {
+      return gameState.onlineGamePhase!;
+    }
 
     if (gameState.isGameOver) {
       return OnlineGamePhase.turnComplete;
@@ -215,40 +214,53 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     return gameState.onlineGamePhase ?? OnlineGamePhase.waiting;
   }
 
-  void _handleOnlineModeAnimations(dynamic gameState) {
+  void _handleOnlineModeAnimations() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
     final currentPhase = _getCurrentGamePhase();
     final currentRevealedArticle = gameState.revealedArticle;
     final currentRevealedIsCorrect = gameState.revealedArticleIsCorrect;
 
-    if (currentRevealedArticle != _previousRevealedArticle) {
-      if (currentRevealedArticle != null &&
-          currentPhase == OnlineGamePhase.articleRevealed) {
-        _articleController.forward(from: 0);
-
-        // start feedback if we have correctness
-        if (currentRevealedIsCorrect != null) {
-          _feedbackController.forward(from: 0);
+    // article animation
+    if (currentPhase == OnlineGamePhase.articleRevealed &&
+        currentRevealedArticle != null &&
+        _articleController.status == AnimationStatus.dismissed) {
+      _articleController.forward(from: 0);
+    } else if (currentPhase != OnlineGamePhase.articleRevealed &&
+            _articleController.isAnimating ||
+        _articleController.isCompleted) {
+      Future.delayed(Duration(milliseconds: 300), () {
+        if (mounted && gameState.revealedArticle == null) {
+          _articleController.reset();
         }
-      } else {
-        // article cleared - reset animations
-        _articleController.reset();
-        _feedbackController.reset();
-      }
-
-      _previousRevealedArticle = currentRevealedArticle;
+      });
     }
 
-    if (currentRevealedIsCorrect != _previousRevealedArticleIsCorrect) {
-      if (currentRevealedIsCorrect != null &&
-          currentRevealedArticle != null &&
-          currentPhase == OnlineGamePhase.articleRevealed) {
-        _feedbackController.forward(from: 0);
-      }
-      _previousRevealedArticleIsCorrect = currentRevealedIsCorrect;
+    // feedback? animation
+    if (currentPhase == OnlineGamePhase.articleRevealed &&
+        currentRevealedIsCorrect != null &&
+        (_feedbackController.status == AnimationStatus.dismissed ||
+            currentRevealedIsCorrect != _previousRevealedArticleIsCorrect ||
+            currentRevealedArticle != _previousRevealedArticle)) {
+      _feedbackController.forward(from: 0);
+    } else if (currentPhase != OnlineGamePhase.articleRevealed &&
+            _feedbackController.isAnimating ||
+        _feedbackController.isCompleted) {
+      Future.delayed(Duration(milliseconds: 300), () {
+        if (mounted && gameState.revealedArticle == null) {
+          _feedbackController.reset();
+        }
+      });
     }
+
+    _previousRevealedArticle = currentRevealedArticle;
+    _previousRevealedArticleIsCorrect = currentRevealedIsCorrect;
   }
 
-  void _handleOfflineModeAnimations(dynamic gameState) {
+  void _handleOfflineModeAnimations() {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
     if (gameState.lastPlayedPlayer != null && !gameState.isTimerActive) {
       _articleController.forward(from: 0);
       _feedbackController.reset();
@@ -323,7 +335,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
                 duration: const Duration(milliseconds: 600),
-                reverseDuration: Duration(milliseconds: 3000),
+                reverseDuration: Duration(milliseconds: 1800),
                 secondCurve: Curves.easeInOutCirc,
                 firstCurve: Curves.easeOutCirc,
                 sizeCurve: Curves.easeIn,
@@ -401,7 +413,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                           builder: (context, child) {
                             return Padding(
                               padding: shouldArticleAnimate
-                                  ? const EdgeInsets.only(bottom: 10.0)
+                                  ? const EdgeInsets.only(bottom: 7.0)
                                   : EdgeInsets.zero,
                               child: Container(
                                 height: 2,
