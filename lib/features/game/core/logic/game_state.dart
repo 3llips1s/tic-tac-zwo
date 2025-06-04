@@ -29,14 +29,18 @@ class GameState {
 
   final bool isOpponentReady;
 
-  static const int turnDurationSeconds = 9;
-
   // online mode
   final String? currentPlayerId;
   final String? revealedArticle;
   final bool? revealedArticleIsCorrect;
   final DateTime? articleRevealedAt;
   final OnlineGamePhase? onlineGamePhase;
+  final String? lastStarterId;
+  final OnlineRematchStatus onlineRematchStatus;
+  final bool localPlayerWantsRematch;
+  final bool remotePlayerWantsRematch;
+
+  static const int turnDurationSeconds = 9;
 
   GameState({
     required this.board,
@@ -66,6 +70,10 @@ class GameState {
     this.revealedArticleIsCorrect,
     this.articleRevealedAt,
     required this.onlineGamePhase,
+    this.lastStarterId,
+    this.onlineRematchStatus = OnlineRematchStatus.none,
+    this.localPlayerWantsRematch = false,
+    this.remotePlayerWantsRematch = false,
   }) : _cellPressed = cellPressed;
 
   GameState copyWith({
@@ -100,6 +108,10 @@ class GameState {
     bool? revealedArticleIsCorrect,
     DateTime? articleRevealedAt,
     OnlineGamePhase? onlineGamePhase,
+    String? lastStarterId,
+    OnlineRematchStatus? onlineRematchStatus,
+    bool? localPlayerWantsRematch,
+    bool? remotePlayerWantsRematch,
 
     // catch null values
     bool allowNullRevealedArticle = false,
@@ -148,6 +160,12 @@ class GameState {
           ? articleRevealedAt
           : (articleRevealedAt ?? this.articleRevealedAt),
       onlineGamePhase: onlineGamePhase ?? this.onlineGamePhase,
+      lastStarterId: lastStarterId ?? this.lastStarterId,
+      onlineRematchStatus: onlineRematchStatus ?? this.onlineRematchStatus,
+      localPlayerWantsRematch:
+          localPlayerWantsRematch ?? this.localPlayerWantsRematch,
+      remotePlayerWantsRematch:
+          remotePlayerWantsRematch ?? this.remotePlayerWantsRematch,
     );
   }
 
@@ -156,6 +174,7 @@ class GameState {
     Player startingPlayer, {
     OnlineGamePhase? onlineGamePhase,
     String? currentPlayerId,
+    String? initialLastStarterId,
   }) {
     return GameState(
       board: List.filled(9, null),
@@ -164,7 +183,7 @@ class GameState {
       startingPlayer: startingPlayer,
       lastPlayedPlayer: null,
       isTimerActive: false,
-      remainingSeconds: turnDurationSeconds,
+      remainingSeconds: GameState.turnDurationSeconds,
       isGameOver: false,
       player1Score: 0,
       player2Score: 0,
@@ -172,13 +191,16 @@ class GameState {
       showArticleFeedback: false,
       onlineGamePhase: onlineGamePhase,
       currentPlayerId: currentPlayerId ?? startingPlayer.userId,
+      lastStarterId: initialLastStarterId ?? startingPlayer.userId,
+      onlineRematchStatus: OnlineRematchStatus.none,
+      localPlayerWantsRematch: false,
+      remotePlayerWantsRematch: false,
     );
   }
 
   static GameState initialOnline({
     required List<Player> players,
     required Player startingPlayer,
-    required String gameSessionId,
   }) {
     return GameState(
       board: List.filled(9, null),
@@ -187,7 +209,7 @@ class GameState {
       startingPlayer: startingPlayer,
       lastPlayedPlayer: null,
       isTimerActive: false,
-      remainingSeconds: turnDurationSeconds,
+      remainingSeconds: GameState.turnDurationSeconds,
       isGameOver: false,
       player1Score: 0,
       player2Score: 0,
@@ -196,6 +218,10 @@ class GameState {
       isOpponentReady: false,
       onlineGamePhase: OnlineGamePhase.waiting,
       currentPlayerId: startingPlayer.userId,
+      lastStarterId: startingPlayer.userId,
+      onlineRematchStatus: OnlineRematchStatus.none,
+      localPlayerWantsRematch: false,
+      remotePlayerWantsRematch: false,
     );
   }
 
@@ -217,6 +243,10 @@ class GameState {
   // method to determine whose turn it is
   bool isPlayerTurn(Player player) {
     if (isGameOver) return false;
+
+    if (currentPlayerId != null) {
+      return player.userId == currentPlayerId;
+    }
 
     if (lastPlayedPlayer == null) {
       // first turn to starting player
@@ -261,80 +291,6 @@ class GameState {
 
   String get currentSymbol =>
       currentPlayer.symbol == PlayerSymbol.X ? symbolX : symbolO;
-
-  Map<String, dynamic> toJson() {
-    return {
-      'board': board,
-      'cellPressed': cellPressed,
-      'players': players.map((player) => player.toJson()).toList(),
-      'startingPlayer': startingPlayer.toJson(),
-      'lastPlayedPlayer': lastPlayedPlayer?.toJson(),
-      'currentPlayerId': currentPlayerId,
-      'currentNoun': currentNoun != null
-          ? {
-              'article': currentNoun!.article,
-              'noun': currentNoun!.noun,
-              'english': currentNoun!.english,
-              'plural': currentNoun!.plural,
-            }
-          : null,
-      'isTimerActive': isTimerActive,
-      'remainingSeconds': remainingSeconds,
-      'selectedCellIndex': selectedCellIndex,
-      'isGameOver': isGameOver,
-      'winningPlayer': winningPlayer?.toJson(),
-      'player1Score': player1Score,
-      'player2Score': player2Score,
-      'gamesPlayed': gamesPlayed,
-      'winningCells': winningCells,
-      'showArticleFeedback': showArticleFeedback,
-      'isOpponentReady': isOpponentReady,
-      'revealedArticle': revealedArticle,
-      'revealedArticleIsCorrect': revealedArticleIsCorrect,
-      'articleRevealedAt': articleRevealedAt,
-    };
-  }
-
-  static GameState fromJson(Map<String, dynamic> json) {
-    return GameState(
-        board: List<String?>.from(json['board']),
-        cellPressed: List<bool>.from(json['cellPressed']),
-        players:
-            (json['players'] as List).map((p) => Player.fromJson(p)).toList(),
-        startingPlayer: Player.fromJson(json['startingPlayer']),
-        lastPlayedPlayer: json['lastPlayedPlayer'] != null
-            ? Player.fromJson(json['lastPlayedPlayer'])
-            : null,
-        currentNoun: json['currentNoun'] != null
-            ? GermanNoun(
-                id: json['currentNoun']['id'],
-                article: json['currentNoun']['article'],
-                noun: json['currentNoun']['noun'],
-                english: json['currentNoun']['english'],
-                plural: json['currentNoun']['plural'],
-              )
-            : null,
-        isTimerActive: json['isTimerActive'],
-        remainingSeconds: json['remainingSeconds'],
-        selectedCellIndex: json['selectedCellIndex'],
-        isGameOver: json['isGameOver'],
-        winningPlayer: json['winningPlayer'] != null
-            ? Player.fromJson(json['winningPlayer'])
-            : null,
-        player1Score: json['player1Score'],
-        player2Score: json['player2Score'],
-        gamesPlayed: json['gamesPlayed'],
-        winningCells: json['winningCells'] != null
-            ? List<int>.from(json['winningCells'])
-            : null,
-        showArticleFeedback: json['showArticleFeedback'] ?? false,
-        isOpponentReady: json['isOpponentReady'] ?? false,
-        revealedArticle: json['revealedArticle'],
-        revealedArticleIsCorrect: json['revealedArticleIsCorrect'] ?? false,
-        articleRevealedAt: json['articleRevealedAt'],
-        currentPlayerId: json['currentPlayerId'],
-        onlineGamePhase: json['onlineGamePhase']);
-  }
 
   (String?, List<int>?) checkWinner() {
     final winPatterns = [

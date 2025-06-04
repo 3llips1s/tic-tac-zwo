@@ -9,6 +9,17 @@ enum OnlineGamePhase {
   turnComplete,
 }
 
+enum OnlineRematchStatus {
+  none,
+  localOffered,
+  remoteOffered,
+  bothAccepted,
+  localCancelled,
+  localDeclined,
+  remoteDeclined,
+  timeout,
+}
+
 extension GameModeExtension on GameMode {
   String get string {
     switch (this) {

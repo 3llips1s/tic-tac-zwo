@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 
+import '../../../../../config/game_config/config.dart';
+
 class OnlineGameService {
   final SupabaseClient _supabase;
 
@@ -44,7 +46,6 @@ class OnlineGameService {
       // update ready field
       await _supabase.from('game_sessions').update({
         readyField: true,
-        'last_activity': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
     } catch (e) {
       print(
@@ -72,7 +73,6 @@ class OnlineGameService {
       // update ready field
       await _supabase.from('game_sessions').update({
         readyField: false,
-        'last_activity': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
       print(
           '[OnlineGameService] Player $_localUserId set to not ready for session $gameSessionId.');
@@ -176,6 +176,9 @@ class OnlineGameService {
     String? revealedArticle,
     bool? revealedArticleIsCorrect,
     String? onlineGamePhaseString,
+    String? lastStarterId,
+    bool? player1Ready,
+    bool? player2Ready,
   }) async {
     const debounceDuration = Duration(milliseconds: 100);
 
@@ -185,12 +188,10 @@ class OnlineGameService {
 
     _updateDebounceTimers[gameSessionId] = Timer(debounceDuration, () async {
       try {
-        final updatePayload = <String, dynamic>{
-          'last_activity': DateTime.now().toIso8601String(),
-        };
+        // prevent empty updates
+        final updatePayload = <String, dynamic>{};
 
         if (board != null) updatePayload['board'] = board;
-
         updatePayload['selected_cell_index'] = selectedCellIndex;
         updatePayload['current_noun_id'] = currentNounId;
         updatePayload['winner_id'] = winnerId;
@@ -201,21 +202,41 @@ class OnlineGameService {
           updatePayload['current_player_id'] = currentPlayerId;
         }
 
-        if (isGameOver != null) updatePayload['is_game_over'] = isGameOver;
-
         if (onlineGamePhaseString != null) {
           updatePayload['online_game_phase'] = onlineGamePhaseString;
         }
 
+        if (lastStarterId != null) {
+          updatePayload['last_starter_id'] = lastStarterId;
+        }
+
+        if (isGameOver != null) {
+          updatePayload['is_game_over'] = isGameOver;
+          if (isGameOver == true) {
+            updatePayload['player1_ready'] = false;
+            updatePayload['player2_ready'] = false;
+          }
+        }
+
+        if (player1Ready != null) updatePayload['player1_ready'] = player1Ready;
+        if (player2Ready != null) updatePayload['player2_ready'] = player2Ready;
+        updatePayload['updated_at'] = DateTime.now().toIso8601String();
+
         int meaningfulKeysCount = 0;
         updatePayload.forEach(
           (key, value) {
-            if (key != 'last_activity') {
+            if (key != 'updated_at') {
               meaningfulKeysCount++;
             }
           },
         );
         if (meaningfulKeysCount == 0) {
+          print(
+              '[OnlineGameService] updateGameState for $gameSessionId: No actual game data to update (besides meta activity/timestamp). Skipping DB call.');
+          return;
+        }
+
+        if (updatePayload.isEmpty) {
           return;
         }
 
@@ -263,6 +284,61 @@ class OnlineGameService {
     } catch (e) {
       print(
           '[OnlineGameService] Error recording game round for session $gameSessionId: $e');
+    }
+  }
+
+  Future<void> setPlayerRematchStatus(
+      String gameSessionId, String playerIdToSetReady, bool isReady) async {
+    final sessionDetails = await _supabase
+        .from('game_sessions')
+        .select('player1_id, player2_id')
+        .eq('id', gameSessionId)
+        .single();
+
+    String? readyFieldKey;
+    if (sessionDetails['player1_id'] == playerIdToSetReady) {
+      readyFieldKey = 'player1_ready';
+    } else if (sessionDetails['player2_id'] == playerIdToSetReady) {
+      readyFieldKey = 'player2_ready';
+    }
+
+    if (readyFieldKey == null) return;
+
+    try {
+      print(
+          '[OnlineGameService] Setting $readyFieldKey to $isReady for session $gameSessionId.');
+      await _supabase.from('game_sessions').update({
+        readyFieldKey: isReady,
+      }).eq('id', gameSessionId);
+    } catch (e) {
+      print(
+          '[OnlineGameService] Error setting player rematch status for session $gameSessionId: $e');
+    }
+  }
+
+  Future<void> resetSessionForRematch(
+      String gameSessionId, String newStarterId) async {
+    try {
+      print(
+          '[OnlineGameService] Resetting session $gameSessionId for rematch. New starter: $newStarterId.');
+      await _supabase.from('game_sessions').update({
+        'board': List.filled(9, null),
+        'selected_cell_index': null,
+        'current_noun_id': null,
+        'is_game_over': false,
+        'winner_id': null,
+        'revealed_article': null,
+        'revealed_article_is_correct': null,
+        'current_player_id': newStarterId,
+        'last_starter_id': newStarterId,
+        'player1_ready': true,
+        'player2_ready': true,
+        'online_game_phase': OnlineGamePhase.waiting.string,
+      }).eq('id', gameSessionId);
+      print('[OnlineGameService] Session $gameSessionId reset successfully.');
+    } catch (e) {
+      print(
+          '[OnlineGameService] Error resetting session $gameSessionId for rematch: $e');
     }
   }
 
