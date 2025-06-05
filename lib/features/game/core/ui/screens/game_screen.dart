@@ -33,6 +33,7 @@ class GameScreen extends ConsumerWidget {
 
     final bool activateSaveButton =
         gameState.selectedCellIndex != null && gameState.isTimerActive;
+    final bool activateHomeButton = gameState.isGameOver;
 
     if (gameState.isGameOver) {
       showGameOverDialog(
@@ -144,7 +145,7 @@ class GameScreen extends ConsumerWidget {
                                 BlendMode.srcIn,
                               )
                             : ColorFilter.mode(
-                                Colors.black87,
+                                Colors.black26,
                                 BlendMode.srcIn,
                               ),
                       ),
@@ -168,11 +169,13 @@ class GameScreen extends ConsumerWidget {
                   ),
                   child: Center(
                     child: IconButton(
-                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        RouteNames.home,
-                        (route) => false,
-                      ),
+                      onPressed: activateHomeButton
+                          ? () => Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                RouteNames.home,
+                                (route) => false,
+                              )
+                          : () => {},
                       icon: Icon(
                         Icons.home_rounded,
                         color: colorWhite,

@@ -33,20 +33,21 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-        id: json['id'],
-        username: json['username'],
-        points: json['points'] ?? 0,
-        gamesPlayed: json['games_played'] ?? 0,
-        gamesWon: json['games_won'] ?? 0,
-        gamesDrawn: json['games_drawn'] ?? 0,
-        lat: json['lat'],
-        lng: json['lng'],
-        lastOnline: DateTime.parse(json['last_online']),
-        isOnline: json['is_online'] ?? false,
-        avatarUrl: json['avatar_url'],
-        countryCode: json['country_code'],
-        totalArticleAttempts: json['total_article_attempts'],
-        totalCorrectArticles: json['total_correct_articles']);
+      id: json['id'],
+      username: json['username'],
+      points: json['points'] ?? 0,
+      gamesPlayed: json['games_played'] ?? 0,
+      gamesWon: json['games_won'] ?? 0,
+      gamesDrawn: json['games_drawn'] ?? 0,
+      lat: json['lat'],
+      lng: json['lng'],
+      lastOnline: DateTime.parse(json['last_online']),
+      isOnline: json['is_online'] ?? false,
+      avatarUrl: json['avatar_url'],
+      countryCode: json['country_code'],
+      totalArticleAttempts: json['total_article_attempts'],
+      totalCorrectArticles: json['total_correct_articles'],
+    );
   }
 
   Map<String, dynamic> toJson() {

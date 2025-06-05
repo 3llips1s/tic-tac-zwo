@@ -261,11 +261,8 @@ class OnlineGameService {
   Future<void> recordGameRound(
     String gameSessionId, {
     required String playerId,
-    required String nounId,
     required String selectedArticle,
     required bool isCorrect,
-    required int cellIndex,
-    bool isForfeited = false,
   }) async {
     try {
       print(
@@ -274,11 +271,8 @@ class OnlineGameService {
       await _supabase.from('game_rounds').insert({
         'game_id': gameSessionId,
         'player_id': playerId,
-        'noun_id': nounId,
         'selected_article': selectedArticle,
         'is_correct': isCorrect,
-        'cell_index': cellIndex,
-        'is_forfeited': isForfeited,
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
