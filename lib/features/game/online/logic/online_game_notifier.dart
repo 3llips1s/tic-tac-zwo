@@ -164,8 +164,13 @@ class OnlineGameNotifier extends GameNotifier {
     final int cellIndex = state.selectedCellIndex!;
     final GermanNoun currentNoun = state.currentNoun!;
     final bool isCorrectMove = currentNoun.article == selectedArticle;
-
     final previousPlayer = state.currentPlayer;
+
+    // assign points locally
+    if (isCorrectMove) {
+      state =
+          state.copyWith(correctMovesPerGame: state.correctMovesPerGame + 1);
+    }
 
     // update local state immediately
     state = state.copyWith(
@@ -507,6 +512,14 @@ class OnlineGameNotifier extends GameNotifier {
     super.handleWinOrDraw();
 
     if (state.isGameOver) {
+      int pointsPerGame = state.correctMovesPerGame;
+      if (state.winningPlayer?.userId == currentUserId) {
+        pointsPerGame += 3;
+      } else if (state.winningPlayer == null) {
+        pointsPerGame += 1;
+      }
+      state = state.copyWith(pointsEarnedPerGame: pointsPerGame);
+
       _gameService.updateGameSessionState(
         gameSessionId,
         isGameOver: true,
@@ -696,16 +709,16 @@ class OnlineGameNotifier extends GameNotifier {
 
     final Player player1 = state.players[0];
     final Player player2 = state.players[1];
-    String newStarterId;
+    final String newStarterId = (state.lastStarterId == player1.userId)
+        ? player2.userId!
+        : player1.userId!;
 
-    if (state.lastStarterId == player1.userId) {
-      newStarterId = player2.userId!;
-    } else {
-      newStarterId = player1.userId!;
-    }
-
-    state =
-        state.copyWith(onlineRematchStatus: OnlineRematchStatus.bothAccepted);
+    state = state.copyWith(
+      onlineRematchStatus: OnlineRematchStatus.bothAccepted,
+      correctMovesPerGame: 0,
+      pointsEarnedPerGame: null,
+      allowNullPointsEarnedPerGame: true,
+    );
 
     try {
       await _gameService.resetSessionForRematch(gameSessionId, newStarterId);
