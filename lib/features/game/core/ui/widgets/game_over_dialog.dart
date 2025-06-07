@@ -39,7 +39,6 @@ class GameOverDialog extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // todo: add a flag to username in online mode
               Text(
                 gameState.winningPlayer!.userName == 'Du'
                     ? '${gameState.winningPlayer!.userName} gewinnst!'

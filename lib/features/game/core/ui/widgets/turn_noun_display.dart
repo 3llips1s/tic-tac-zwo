@@ -276,13 +276,13 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
   Widget build(BuildContext context) {
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
-
     final nounRepoReady = ref.watch(nounReadyProvider);
-    final String localPlayerId =
-        ref.watch(supabaseProvider).auth.currentUser!.id;
 
     final currentPlayer = gameState.currentPlayer;
     final currentNoun = gameState.currentNoun;
+
+    final String localPlayerId =
+        ref.watch(supabaseProvider).auth.currentUser!.id;
 
     final showNoun = _showNoun();
 
@@ -308,16 +308,14 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
                 firstChild: AnimatedBuilder(
                   animation: _hoverAnimation,
                   builder: (context, child) {
-                    bool isLocalPlayerTurn = _isOnlineMode
-                        ? (gameState.currentPlayerId == localPlayerId)
-                        : true;
-
                     return Transform.translate(
                       offset: Offset(0, _hoverAnimation.value),
                       child: _showCurrentPlayer(
                         context,
                         currentPlayer,
-                        isLocalPlayerTurn: isLocalPlayerTurn,
+                        gameMode: widget.gameConfig.gameMode,
+                        localPlayerId: localPlayerId,
+                        currentPlayerId: gameState.currentPlayerId,
                       ),
                     );
                   },
@@ -463,13 +461,36 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
 Widget _showCurrentPlayer(
   BuildContext context,
   Player currentPlayer, {
-  bool isLocalPlayerTurn = true,
+  required GameMode gameMode,
+  String? localPlayerId,
+  String? currentPlayerId,
 }) {
   const space = SizedBox(width: 5);
 
-  final displayName = isLocalPlayerTurn ? 'Du' : currentPlayer.userName;
-  final verbText =
-      (isLocalPlayerTurn || displayName == 'Du') ? 'spielst...' : 'spielt...';
+  String displayName;
+  String verbText;
+
+  switch (gameMode) {
+    case GameMode.online:
+      final isLocalPlayerTurn = (currentPlayerId == localPlayerId);
+      displayName = isLocalPlayerTurn ? 'Du' : currentPlayer.userName;
+      verbText = isLocalPlayerTurn ? 'bist dran...' : 'spielt...';
+      break;
+    case GameMode.pass:
+      displayName = currentPlayer.userName;
+      verbText = 'ist dran...';
+    case GameMode.offline:
+      if (currentPlayer.isAI) {
+        displayName = currentPlayer.userName;
+        verbText = 'spielt...';
+      } else {
+        displayName = 'Du';
+        verbText = 'bist dran...';
+      }
+    default:
+      displayName = currentPlayer.userName;
+      verbText = 'spielt...';
+  }
 
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10),

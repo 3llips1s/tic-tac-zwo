@@ -3,16 +3,22 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
+import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_over_dialog.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_info.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/timer_display.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart';
+import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
+import 'package:tic_tac_zwo/features/navigation/navigation_provider.dart';
 
+import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../../../navigation/routes/route_names.dart';
+import '../../../online/ui/widgets/online_game_over_dialog.dart';
 
 class GameScreen extends ConsumerWidget {
   final GameConfig gameConfig;
@@ -24,30 +30,70 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // navigation listener
+    ref.listen<NavigationTarget?>(navigationTargetProvider, (previous, next) {
+      if (next != null) {
+        String routeName;
+        switch (next) {
+          case NavigationTarget.home:
+            routeName = RouteNames.home;
+            break;
+          case NavigationTarget.matchmaking:
+            routeName = RouteNames.matchmaking;
+            break;
+        }
+
+        Navigator.pushNamedAndRemoveUntil(context, routeName, (route) => false);
+        ref.read(navigationTargetProvider.notifier).state = null;
+      }
+    });
+
+    // dialog trigger listener
+    ref.listen<GameState>(GameProviders.getStateProvider(ref, gameConfig),
+        (previous, next) {
+      final wasGameOver = previous?.isGameOver ?? false;
+      if (next.isGameOver && !wasGameOver) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) {
+            if (context.mounted) {
+              if (gameConfig.gameMode == GameMode.online) {
+                showOnlineGameOverDialog(context, ref, gameConfig);
+              } else {
+                showGameOverDialog(
+                  context,
+                  gameConfig,
+                  next,
+                  () {
+                    final gameNotifier = ref.read(
+                        GameProviders.getStateProvider(ref, gameConfig)
+                            .notifier);
+
+                    gameNotifier.rematch();
+                  },
+                );
+              }
+            }
+          },
+        );
+      }
+    });
+
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, gameConfig));
-
-    final space = SizedBox(height: kToolbarHeight);
-    final halfSpace = SizedBox(height: kToolbarHeight / 2);
-    final quarterSpace = SizedBox(height: kToolbarHeight / 4);
+    final isOnlineMode = gameConfig.gameMode == GameMode.online;
+    final onlineNotifier = isOnlineMode
+        ? ref.read(onlineGameStateNotifierProvider(gameConfig).notifier)
+        : null;
 
     final bool activateSaveButton =
         gameState.selectedCellIndex != null && gameState.isTimerActive;
     final bool activateHomeButton = gameState.isGameOver;
 
-    if (gameState.isGameOver) {
-      showGameOverDialog(
-        context,
-        gameConfig,
-        gameState,
-        () {
-          final gameNotifier = ref
-              .read(GameProviders.getStateProvider(ref, gameConfig).notifier);
+    final space = SizedBox(height: kToolbarHeight);
+    final halfSpace = SizedBox(height: kToolbarHeight / 2);
+    final quarterSpace = SizedBox(height: kToolbarHeight / 4);
 
-          gameNotifier.rematch();
-        },
-      );
-    }
+    if (gameState.isGameOver) {}
 
     return Scaffold(
       backgroundColor: colorGrey300,
@@ -59,9 +105,16 @@ class GameScreen extends ConsumerWidget {
           children: [
             space,
 
+            // timer
             Align(
               alignment: Alignment.center,
-              child: TimerDisplay(gameConfig: gameConfig),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 600),
+                switchInCurve: Curves.easeInOut,
+                switchOutCurve: Curves.easeInOut,
+                child: _buildTimerWidget(context, ref, gameConfig, gameState,
+                    isOnlineMode, onlineNotifier),
+              ),
             ).animate().fadeIn(
                   delay: 3300.ms,
                   duration: 600.ms,
@@ -190,5 +243,40 @@ class GameScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildTimerWidget(
+    BuildContext context,
+    WidgetRef ref,
+    GameConfig gameConfig,
+    GameState gameState,
+    bool isOnlineMode,
+    OnlineGameNotifier? onlineNotifier,
+  ) {
+    if (!isOnlineMode) {
+      final key = gameState.isTimerActive ? 'active' : 'inactive';
+      return TimerDisplay(
+        gameConfig: gameConfig,
+        key: ValueKey(key),
+      );
+    }
+
+    final timerState =
+        onlineNotifier?.timerDisplayState ?? TimerDisplayState.static;
+
+    switch (timerState) {
+      case TimerDisplayState.inactivity:
+        return DualProgressIndicator(key: ValueKey('inactivity'));
+      case TimerDisplayState.countdown:
+        return TimerDisplay(
+          gameConfig: gameConfig,
+          key: ValueKey('countdown'),
+        );
+      case TimerDisplayState.static:
+        return TimerDisplay(
+          gameConfig: gameConfig,
+          key: ValueKey('static'),
+        );
+    }
   }
 }

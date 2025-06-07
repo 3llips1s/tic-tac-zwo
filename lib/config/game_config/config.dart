@@ -20,6 +20,12 @@ enum OnlineRematchStatus {
   timeout,
 }
 
+enum TimerDisplayState {
+  static,
+  inactivity,
+  countdown,
+}
+
 extension GameModeExtension on GameMode {
   String get string {
     switch (this) {

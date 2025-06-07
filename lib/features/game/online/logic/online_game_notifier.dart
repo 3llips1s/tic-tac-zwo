@@ -10,6 +10,7 @@ import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
+import 'package:tic_tac_zwo/features/navigation/navigation_provider.dart';
 
 import '../../core/data/models/player.dart';
 
@@ -18,6 +19,10 @@ class OnlineGameNotifier extends GameNotifier {
   Timer? _turnTimer;
   Timer? _rematchOfferTimer;
 
+  Timer? _inactivityTimer;
+  bool _isInactivityTimerActive = false;
+  int _inactivityRemainingSeconds = GameState.turnDurationSeconds;
+
   final String gameSessionId;
   String? currentUserId;
   Map<String, dynamic>? _lastProcessedUpdate;
@@ -25,6 +30,7 @@ class OnlineGameNotifier extends GameNotifier {
   StreamSubscription? _gameStateSubscription;
   bool _processingRemoteUpdate = false;
   bool _isLocalPlayerTurn = false;
+  bool _isInitialGameLoad = true;
 
   OnlineGameService get _gameService => ref.read(onlineGameServiceProvider);
 
@@ -70,7 +76,69 @@ class OnlineGameNotifier extends GameNotifier {
     }
   }
 
+  void _startTurnTimer() {
+    _turnTimer?.cancel();
+    _turnTimer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) {
+        if (state.remainingSeconds > 0) {
+          state = state.copyWith(
+            remainingSeconds: state.remainingSeconds - 1,
+          );
+        } else {
+          forfeitTurn();
+        }
+      },
+    );
+  }
+
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _isInactivityTimerActive = true;
+    _inactivityRemainingSeconds = GameState.turnDurationSeconds;
+
+    state = state.copyWith(
+      remainingSeconds: GameState.turnDurationSeconds,
+    );
+
+    Timer(
+      Duration(seconds: _isInitialGameLoad ? 4 : 0),
+      () {
+        if (!mounted || !_isInactivityTimerActive) return;
+
+        if (_isInitialGameLoad) {
+          _isInitialGameLoad = false;
+        }
+
+        _inactivityTimer = Timer.periodic(
+          Duration(seconds: 1),
+          (timer) {
+            if (_inactivityRemainingSeconds > 0) {
+              _inactivityRemainingSeconds--;
+            } else {
+              _handleInactivityTimeout();
+            }
+          },
+        );
+      },
+    );
+  }
+
+  void _handleInactivityTimeout() {
+    _inactivityTimer?.cancel();
+    _isInactivityTimerActive = false;
+    _startTurnTimer();
+  }
+
+  void _cancelInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _isInactivityTimerActive = false;
+    _inactivityRemainingSeconds = GameState.turnDurationSeconds;
+  }
+
   Future<void> selectCellOnline(int index) async {
+    if (state.lastPlayedPlayer == null && _isInitialGameLoad) return;
+
     if (state.isGameOver ||
         _processingRemoteUpdate ||
         !_isLocalPlayerTurn ||
@@ -85,6 +153,8 @@ class OnlineGameNotifier extends GameNotifier {
           '[OnlineGameNotifier] Cell already selected, cannot select another.');
       return;
     }
+
+    _cancelInactivityTimer();
 
     final noun = await ref.read(germanNounRepoProvider).loadRandomNoun();
 
@@ -129,22 +199,6 @@ class OnlineGameNotifier extends GameNotifier {
     if (_isLocalPlayerTurn) {
       _startTurnTimer();
     }
-  }
-
-  void _startTurnTimer() {
-    _turnTimer?.cancel();
-    _turnTimer = Timer.periodic(
-      Duration(seconds: 1),
-      (timer) {
-        if (state.remainingSeconds > 0) {
-          state = state.copyWith(
-            remainingSeconds: state.remainingSeconds - 1,
-          );
-        } else {
-          forfeitTurn();
-        }
-      },
-    );
   }
 
   @override
@@ -371,10 +425,18 @@ class OnlineGameNotifier extends GameNotifier {
     if (!mounted) return;
 
     final String? remoteCurrentPlayerId = gameData['current_player_id'];
+    final bool wasLocalPlayerTurn = _isLocalPlayerTurn;
     _isLocalPlayerTurn = remoteCurrentPlayerId == currentUserId;
 
-    if (!_isLocalPlayerTurn) {
-      _turnTimer?.cancel();
+    if (_isLocalPlayerTurn != wasLocalPlayerTurn) {
+      if (_isLocalPlayerTurn &&
+          !state.isGameOver &&
+          state.onlineGamePhase == OnlineGamePhase.waiting) {
+        _startInactivityTimer();
+      } else if (!_isLocalPlayerTurn) {
+        _cancelInactivityTimer();
+        _turnTimer?.cancel();
+      }
     }
 
     OnlineGamePhase serverPhase =
@@ -547,6 +609,24 @@ class OnlineGameNotifier extends GameNotifier {
         handleWinOrDraw();
       }
     }
+  }
+
+  TimerDisplayState get timerDisplayState {
+    if (!_isLocalPlayerTurn || state.isGameOver) {
+      return TimerDisplayState.static;
+    }
+
+    // local player + no cell selected
+    if (state.selectedCellIndex == null && _isInactivityTimerActive) {
+      return TimerDisplayState.inactivity;
+    }
+
+    // cell selected
+    if (state.selectedCellIndex != null && state.isTimerActive) {
+      return TimerDisplayState.countdown;
+    }
+
+    return TimerDisplayState.static;
   }
 
   // rematch methods
@@ -755,8 +835,23 @@ class OnlineGameNotifier extends GameNotifier {
       await _gameService.setPlayerRematchStatus(
           gameSessionId, currentUserId!, false);
     }
+    ref.read(navigationTargetProvider.notifier).state =
+        NavigationTarget.matchmaking;
+
     print(
         "[OnlineGameNotifier] Player chose to find new opponent. Leaving session $gameSessionId.");
+  }
+
+  Future<void> goHomeAndCleanupSession() async {
+    _rematchOfferTimer?.cancel();
+    _turnTimer?.cancel();
+
+    if (currentUserId != null && state.isGameOver) {
+      await _gameService.setPlayerRematchStatus(
+          gameSessionId, currentUserId!, false);
+    }
+
+    ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
   }
 
   bool get canLocalPlayerMakeMove {
@@ -765,9 +860,12 @@ class OnlineGameNotifier extends GameNotifier {
     return result;
   }
 
+  bool get isInactivityTimerActive => _isInactivityTimerActive;
+
   @override
   void dispose() {
     _turnTimer?.cancel();
+    _inactivityTimer?.cancel();
     _rematchOfferTimer?.cancel();
     _gameStateSubscription?.cancel();
     _gameStateSubscription = null;
