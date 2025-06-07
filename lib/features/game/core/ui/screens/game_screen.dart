@@ -52,6 +52,9 @@ class GameScreen extends ConsumerWidget {
     ref.listen<GameState>(GameProviders.getStateProvider(ref, gameConfig),
         (previous, next) {
       final wasGameOver = previous?.isGameOver ?? false;
+      final gameNotifier =
+          ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
+
       if (next.isGameOver && !wasGameOver) {
         WidgetsBinding.instance.addPostFrameCallback(
           (_) {
@@ -63,13 +66,7 @@ class GameScreen extends ConsumerWidget {
                   context,
                   gameConfig,
                   next,
-                  () {
-                    final gameNotifier = ref.read(
-                        GameProviders.getStateProvider(ref, gameConfig)
-                            .notifier);
-
-                    gameNotifier.rematch();
-                  },
+                  () => gameNotifier.rematch(),
                 );
               }
             }

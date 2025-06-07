@@ -630,7 +630,7 @@ class OnlineGameNotifier extends GameNotifier {
   }
 
   // rematch methods
-  Future<void> requestMatch() async {
+  Future<void> requestRematch() async {
     if (!state.isGameOver || currentUserId == null) return;
     _rematchOfferTimer?.cancel();
 
