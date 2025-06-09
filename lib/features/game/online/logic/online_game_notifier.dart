@@ -444,6 +444,12 @@ class OnlineGameNotifier extends GameNotifier {
     final bool wasLocalPlayerTurn = _isLocalPlayerTurn;
     _isLocalPlayerTurn = serverCurrentPlayerId == currentUserId;
 
+    print(
+        '[DEBUG TURN CALCULATION] remoteCurrentPlayerId: "$serverCurrentPlayerId"');
+    print('[DEBUG TURN CALCULATION] currentUserId: "$currentUserId"');
+    print(
+        '[DEBUG TURN CALCULATION] Are they equal? ${serverCurrentPlayerId == currentUserId}');
+
     if (_isLocalPlayerTurn != wasLocalPlayerTurn) {
       print(
           '[DEBUG TURN CHANGE] wasLocalPlayerTurn: $wasLocalPlayerTurn, _isLocalPlayerTurn: $_isLocalPlayerTurn');

@@ -250,11 +250,25 @@ class GameScreen extends ConsumerWidget {
     bool isOnlineMode,
     OnlineGameNotifier? onlineNotifier,
   ) {
+    const double textSize = 14.0;
+    const double padding = 9.0;
+    const double timerSize = textSize + (padding * 2);
+
+    Widget timerContainer({required Widget child}) {
+      return SizedBox(
+        height: timerSize,
+        width: timerSize,
+        child: child,
+      );
+    }
+
     if (!isOnlineMode) {
       final key = gameState.isTimerActive ? 'active' : 'inactive';
-      return TimerDisplay(
-        gameConfig: gameConfig,
-        key: ValueKey(key),
+      return timerContainer(
+        child: TimerDisplay(
+          gameConfig: gameConfig,
+          key: ValueKey(key),
+        ),
       );
     }
 
@@ -263,22 +277,28 @@ class GameScreen extends ConsumerWidget {
 
     switch (timerState) {
       case TimerDisplayState.inactivity:
-        return DualProgressIndicator(
-          key: ValueKey('inactivity'),
-          size: 25,
-          outerStrokeWidth: 1,
-          innerStrokeWidth: 1,
-          circleGap: 0.75,
+        return timerContainer(
+          child: DualProgressIndicator(
+            key: ValueKey('inactivity'),
+            size: timerSize,
+            outerStrokeWidth: 1,
+            innerStrokeWidth: 1,
+            circleGap: 0.75,
+          ),
         );
       case TimerDisplayState.countdown:
-        return TimerDisplay(
-          gameConfig: gameConfig,
-          key: ValueKey('countdown'),
+        return timerContainer(
+          child: TimerDisplay(
+            gameConfig: gameConfig,
+            key: ValueKey('countdown'),
+          ),
         );
       case TimerDisplayState.static:
-        return TimerDisplay(
-          gameConfig: gameConfig,
-          key: ValueKey('static'),
+        return timerContainer(
+          child: TimerDisplay(
+            gameConfig: gameConfig,
+            key: ValueKey('static'),
+          ),
         );
     }
   }
