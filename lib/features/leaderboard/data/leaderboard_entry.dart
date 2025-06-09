@@ -2,6 +2,7 @@ class LeaderboardEntry {
   final String id;
   final int rank;
   final String username;
+  final String countryCode;
   final int gamesPlayed;
   final int gamesWon;
   final int gamesDrawn;
@@ -13,6 +14,7 @@ class LeaderboardEntry {
     required this.id,
     required this.rank,
     required this.username,
+    required this.countryCode,
     required this.gamesPlayed,
     required this.gamesWon,
     required this.gamesDrawn,
@@ -26,6 +28,7 @@ class LeaderboardEntry {
       id: json['id'] as String,
       rank: json['rank'] as int? ?? 0,
       username: json['username'] as String? ?? 'Unbekannt',
+      countryCode: json['country_code'] as String? ?? '',
       gamesPlayed: json['games_played'] as int? ?? 0,
       gamesWon: json['games_won'] as int? ?? 0,
       gamesDrawn: json['games_drawn'] as int? ?? 0,
@@ -40,6 +43,7 @@ class LeaderboardEntry {
       'id': id,
       'rank': rank,
       'username': username,
+      'country_code': countryCode,
       'games_played': gamesPlayed,
       'games_won': gamesWon,
       'games_drawn': gamesDrawn,

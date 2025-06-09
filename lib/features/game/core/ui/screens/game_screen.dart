@@ -263,7 +263,13 @@ class GameScreen extends ConsumerWidget {
 
     switch (timerState) {
       case TimerDisplayState.inactivity:
-        return DualProgressIndicator(key: ValueKey('inactivity'));
+        return DualProgressIndicator(
+          key: ValueKey('inactivity'),
+          size: 25,
+          outerStrokeWidth: 1,
+          innerStrokeWidth: 1,
+          circleGap: 0.75,
+        );
       case TimerDisplayState.countdown:
         return TimerDisplay(
           gameConfig: gameConfig,

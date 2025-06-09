@@ -30,7 +30,7 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
           'Starte neues Spiel...',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 18,
-                color: colorBlack,
+                color: Colors.green,
               ),
         ),
       );
@@ -95,7 +95,7 @@ class _InitialGameOverView extends ConsumerWidget {
                 title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: colorBlack,
                     ),
               ),
 
@@ -110,7 +110,7 @@ class _InitialGameOverView extends ConsumerWidget {
                 child: Text(
                   '$localScore - $opponentScore',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorBlack,
+                        color: Colors.black87,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -135,7 +135,7 @@ class _InitialGameOverView extends ConsumerWidget {
                       onPressed: () => notifier.findNewOpponent(),
                       child: const Icon(
                         Icons.search_rounded,
-                        color: colorBlack,
+                        color: Colors.black87,
                         size: 30,
                       ),
                     ),
@@ -163,8 +163,10 @@ class _InitialGameOverView extends ConsumerWidget {
           child: Tooltip(
             message: 'Home',
             child: IconButton(
-              icon:
-                  Icon(Icons.home_rounded, color: colorBlack.withOpacity(0.5)),
+              icon: Icon(
+                Icons.home_rounded,
+                color: colorRed.withOpacity(0.5),
+              ),
               onPressed: () => notifier.goHomeAndCleanupSession(),
             ),
           ),
@@ -204,7 +206,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
             child: Text(
               'Abbrechen',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorBlack,
+                    color: Colors.black87,
                     fontSize: 16,
                   ),
             ),
@@ -220,7 +222,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
             child: Text(
               'Ablehnen',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorBlack,
+                    color: colorRed,
                     fontSize: 16,
                   ),
             ),
@@ -232,7 +234,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
             child: Text(
               'Akzeptieren',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorBlack,
+                    color: colorYellowAccent,
                     fontSize: 16,
                   ),
             ),
@@ -286,7 +288,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
                   onPressed: () => notifier.goHomeAndCleanupSession(),
                   icon: Icon(
                     Icons.home_rounded,
-                    color: colorBlack.withOpacity(0.5),
+                    color: colorRed.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -303,7 +305,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }

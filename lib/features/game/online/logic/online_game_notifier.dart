@@ -64,6 +64,8 @@ class OnlineGameNotifier extends GameNotifier {
         gameSessionId,
         lastStarterId: state.startingPlayer.userId,
       );
+
+      _startInitialDelayTimer();
     } else {
       if (gameSessionId.isEmpty) {
         print(
@@ -74,6 +76,21 @@ class OnlineGameNotifier extends GameNotifier {
             '[OnlineGameNotifier] Current User ID is null. Cannot initialize online game.');
       }
     }
+  }
+
+  void _startInitialDelayTimer() {
+    Timer(
+      Duration(milliseconds: 3900),
+      () {
+        _isInitialGameLoad = false;
+
+        if (_isLocalPlayerTurn &&
+            !state.isGameOver &&
+            state.onlineGamePhase == OnlineGamePhase.waiting) {
+          _startInactivityTimer();
+        }
+      },
+    );
   }
 
   void _startTurnTimer() {
@@ -95,31 +112,21 @@ class OnlineGameNotifier extends GameNotifier {
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
     _isInactivityTimerActive = true;
+    print('[ONLINEGAMENOTIFIER] inactivity timer is active');
     _inactivityRemainingSeconds = GameState.turnDurationSeconds;
 
     state = state.copyWith(
       remainingSeconds: GameState.turnDurationSeconds,
     );
 
-    Timer(
-      Duration(seconds: _isInitialGameLoad ? 4 : 0),
-      () {
-        if (!mounted || !_isInactivityTimerActive) return;
-
-        if (_isInitialGameLoad) {
-          _isInitialGameLoad = false;
+    _inactivityTimer = Timer.periodic(
+      Duration(seconds: 1),
+      (timer) {
+        if (_inactivityRemainingSeconds > 0) {
+          _inactivityRemainingSeconds--;
+        } else {
+          _handleInactivityTimeout();
         }
-
-        _inactivityTimer = Timer.periodic(
-          Duration(seconds: 1),
-          (timer) {
-            if (_inactivityRemainingSeconds > 0) {
-              _inactivityRemainingSeconds--;
-            } else {
-              _handleInactivityTimeout();
-            }
-          },
-        );
       },
     );
   }
@@ -137,7 +144,16 @@ class OnlineGameNotifier extends GameNotifier {
   }
 
   Future<void> selectCellOnline(int index) async {
-    if (state.lastPlayedPlayer == null && _isInitialGameLoad) return;
+    print('[DEBUG selectCellOnline] _isInitialGameLoad: $_isInitialGameLoad');
+    print(
+        '[DEBUG selectCellOnline] canLocalPlayerMakeMove: $canLocalPlayerMakeMove');
+    print(
+        '[DEBUG selectCellOnline] _isInactivityTimerActive: $_isInactivityTimerActive');
+    print('[DEBUG selectCellOnline] state.isGameOver: ${state.isGameOver}');
+    print(
+        '[DEBUG selectCellOnline] _processingRemoteUpdate: $_processingRemoteUpdate');
+    print('[DEBUG selectCellOnline] _isLocalPlayerTurn: $_isLocalPlayerTurn');
+    if (_isInitialGameLoad) return;
 
     if (state.isGameOver ||
         _processingRemoteUpdate ||
@@ -424,15 +440,28 @@ class OnlineGameNotifier extends GameNotifier {
 
     if (!mounted) return;
 
-    final String? remoteCurrentPlayerId = gameData['current_player_id'];
+    final String? serverCurrentPlayerId = gameData['current_player_id'];
     final bool wasLocalPlayerTurn = _isLocalPlayerTurn;
-    _isLocalPlayerTurn = remoteCurrentPlayerId == currentUserId;
+    _isLocalPlayerTurn = serverCurrentPlayerId == currentUserId;
 
     if (_isLocalPlayerTurn != wasLocalPlayerTurn) {
+      print(
+          '[DEBUG TURN CHANGE] wasLocalPlayerTurn: $wasLocalPlayerTurn, _isLocalPlayerTurn: $_isLocalPlayerTurn');
+      print('[DEBUG TURN CHANGE] _isInitialGameLoad: $_isInitialGameLoad');
+      print('[DEBUG TURN CHANGE] state.isGameOver: ${state.isGameOver}');
+      print(
+          '[DEBUG TURN CHANGE] state.onlineGamePhase: ${state.onlineGamePhase}');
       if (_isLocalPlayerTurn &&
           !state.isGameOver &&
           state.onlineGamePhase == OnlineGamePhase.waiting) {
-        _startInactivityTimer();
+        if (!_isInitialGameLoad) {
+          print(
+              '[DEBUG TURN CHANGE] Starting inactivity timer for subsequent turn');
+          _startInactivityTimer();
+        } else {
+          print(
+              '[DEBUG TURN CHANGE] Skipping inactivity timer - still initial load');
+        }
       } else if (!_isLocalPlayerTurn) {
         _cancelInactivityTimer();
         _turnTimer?.cancel();
@@ -518,7 +547,7 @@ class OnlineGameNotifier extends GameNotifier {
             )
           : null,
       allowNullWinningPlayer: true,
-      currentPlayerId: remoteCurrentPlayerId,
+      currentPlayerId: serverCurrentPlayerId,
       revealedArticle: gameData['online_game_phase'] ==
               OnlineGamePhase.articleRevealed.string
           ? gameData['revealed_article']
@@ -552,7 +581,9 @@ class OnlineGameNotifier extends GameNotifier {
         revealedArticle: null,
         revealedArticleIsCorrect: null,
         articleRevealedAt: null,
-        remainingSeconds: GameState.turnDurationSeconds,
+        remainingSeconds: _isInitialGameLoad
+            ? state.remainingSeconds
+            : GameState.turnDurationSeconds,
       );
     } else if (_isLocalPlayerTurn &&
         state.onlineGamePhase == OnlineGamePhase.cellSelected &&
@@ -612,6 +643,14 @@ class OnlineGameNotifier extends GameNotifier {
   }
 
   TimerDisplayState get timerDisplayState {
+    print('[DEBUG TIMER STATE] _isLocalPlayerTurn: $_isLocalPlayerTurn');
+    print('[DEBUG TIMER STATE] state.isGameOver: ${state.isGameOver}');
+    print(
+        '[DEBUG TIMER STATE] state.selectedCellIndex: ${state.selectedCellIndex}');
+    print(
+        '[DEBUG TIMER STATE] _isInactivityTimerActive: $_isInactivityTimerActive');
+    print('[DEBUG TIMER STATE] state.isTimerActive: ${state.isTimerActive}');
+
     if (!_isLocalPlayerTurn || state.isGameOver) {
       return TimerDisplayState.static;
     }

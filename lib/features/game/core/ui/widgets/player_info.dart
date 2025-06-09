@@ -48,8 +48,8 @@ class PlayerInfo extends ConsumerWidget {
               ),
               space,
               Container(
-                height: 30,
-                width: 30,
+                height: 25,
+                width: 25,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   color: colorRed,
@@ -58,7 +58,7 @@ class PlayerInfo extends ConsumerWidget {
                   child: Text(
                     xPlayer.symbolString,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: colorWhite,
                         ),
                   ),
@@ -79,8 +79,8 @@ class PlayerInfo extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Container(
-                height: 30,
-                width: 30,
+                height: 25,
+                width: 25,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   color: colorYellow,
@@ -89,7 +89,7 @@ class PlayerInfo extends ConsumerWidget {
                   child: Text(
                     oPlayer.symbolString,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: colorBlack,
                         ),
                   ),

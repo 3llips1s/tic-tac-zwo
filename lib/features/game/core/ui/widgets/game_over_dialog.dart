@@ -113,7 +113,7 @@ void showGameOverDialog(
           ),
           child: Icon(
             Icons.home_rounded,
-            color: colorBlack,
+            color: colorRed,
             size: 30,
           ),
         ),
