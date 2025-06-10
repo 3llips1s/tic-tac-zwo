@@ -261,7 +261,7 @@ class OnlineGameService {
   Future<void> recordGameRound(
     String gameSessionId, {
     required String playerId,
-    required String selectedArticle,
+    required String? selectedArticle,
     required bool isCorrect,
   }) async {
     try {

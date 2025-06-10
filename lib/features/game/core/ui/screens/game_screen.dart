@@ -250,7 +250,7 @@ class GameScreen extends ConsumerWidget {
     bool isOnlineMode,
     OnlineGameNotifier? onlineNotifier,
   ) {
-    const double textSize = 14.0;
+    const double textSize = 18.0;
     const double padding = 9.0;
     const double timerSize = textSize + (padding * 2);
 
@@ -258,7 +258,9 @@ class GameScreen extends ConsumerWidget {
       return SizedBox(
         height: timerSize,
         width: timerSize,
-        child: child,
+        child: Center(
+          child: child,
+        ),
       );
     }
 
@@ -275,15 +277,28 @@ class GameScreen extends ConsumerWidget {
     final timerState =
         onlineNotifier?.timerDisplayState ?? TimerDisplayState.static;
 
+    final outerCircleColors = const [
+      colorYellowAccent,
+      colorRed,
+      colorWhite,
+    ];
+    final innerCircleColors = const [
+      colorRed,
+      colorYellowAccent,
+      colorBlack,
+    ];
+
     switch (timerState) {
       case TimerDisplayState.inactivity:
         return timerContainer(
           child: DualProgressIndicator(
             key: ValueKey('inactivity'),
-            size: timerSize,
+            size: timerSize * 0.7,
             outerStrokeWidth: 1,
             innerStrokeWidth: 1,
-            circleGap: 0.75,
+            outerCircleColors: outerCircleColors,
+            innerCircleColors: innerCircleColors,
+            circleGap: 0.8,
           ),
         );
       case TimerDisplayState.countdown:

@@ -84,9 +84,7 @@ class OnlineGameNotifier extends GameNotifier {
       () {
         _isInitialGameLoad = false;
 
-        if (_isLocalPlayerTurn &&
-            !state.isGameOver &&
-            state.onlineGamePhase == OnlineGamePhase.waiting) {
+        if (_isLocalPlayerTurn && !state.isGameOver) {
           _startInactivityTimer();
         }
       },
@@ -134,6 +132,11 @@ class OnlineGameNotifier extends GameNotifier {
   void _handleInactivityTimeout() {
     _inactivityTimer?.cancel();
     _isInactivityTimerActive = false;
+
+    state = state.copyWith(
+      isTimerActive: true,
+      remainingSeconds: GameState.turnDurationSeconds,
+    );
     _startTurnTimer();
   }
 
@@ -320,80 +323,98 @@ class OnlineGameNotifier extends GameNotifier {
   Future<void> forfeitTurn() async {
     _turnTimer?.cancel();
 
-    if (!_isLocalPlayerTurn ||
-        _processingRemoteUpdate ||
-        state.selectedCellIndex == null ||
-        state.currentNoun == null ||
-        state.isGameOver) {
+    if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
       print(
           '[OnlineGameNotifier] Cannot forfeit turn: Invalid state for forfeiture.');
       return;
     }
 
-    final GermanNoun currentNoun = state.currentNoun!;
-    final String correctArticle = currentNoun.article;
     final Player previousPlayer = state.currentPlayer;
-
-    // local feedback
-    state = state.copyWith(
-      revealedArticle: correctArticle,
-      revealedArticleIsCorrect: false,
-      articleRevealedAt: DateTime.now(),
-      isTimerActive: false,
-      onlineGamePhase: OnlineGamePhase.articleRevealed,
-      lastPlayedPlayer: previousPlayer,
-    );
-
-    // remote update
-    final gameService = ref.read(onlineGameServiceProvider);
-    final nextPlayer = state.players
+    final Player nextPlayer = state.players
         .firstWhere((player) => player.userId != previousPlayer.userId);
-    final nextPlayerId = nextPlayer.userId;
+    final String nextPlayerId = nextPlayer.userId!;
 
-    try {
-      await gameService.updateGameSessionState(
-        gameSessionId,
-        board: state.board,
-        selectedCellIndex: null,
-        currentNounId: null,
+    final gameService = ref.read(onlineGameServiceProvider);
+
+    // player completely inactive and never selected cell
+    if (state.selectedCellIndex == null || state.currentNoun == null) {
+      print("[OnlineGameNotifier] Forfeiting turn due to total inactivity.");
+
+      state = state.copyWith(
+        isTimerActive: false,
+        onlineGamePhase: OnlineGamePhase.waiting,
+      );
+
+      try {
+        await gameService.updateGameSessionState(
+          gameSessionId,
+          currentPlayerId: nextPlayerId,
+          onlineGamePhaseString: OnlineGamePhase.waiting.string,
+          selectedCellIndex: null,
+          currentNounId: null,
+          revealedArticle: null,
+          revealedArticleIsCorrect: null,
+        );
+        print(
+            '[OnlineGameNotifier] Total inactivity forfeit: Turn passed to $nextPlayerId.');
+      } catch (e) {
+        print(
+            '[OnlineGameNotifier] Error forfeiting turn (total inactivity): $e');
+      }
+    } else {
+      print(
+          "[OnlineGameNotifier] Forfeiting turn due to expired article selection timer.");
+      final GermanNoun currentNoun = state.currentNoun!;
+      final String correctArticle = currentNoun.article;
+
+      state = state.copyWith(
         revealedArticle: correctArticle,
         revealedArticleIsCorrect: false,
-        currentPlayerId: nextPlayerId,
-        isGameOver: state.isGameOver,
-        winnerId: state.winningPlayer?.userId,
-        onlineGamePhaseString: OnlineGamePhase.articleRevealed.string,
+        articleRevealedAt: DateTime.now(),
+        isTimerActive: false,
+        onlineGamePhase: OnlineGamePhase.articleRevealed,
+        lastPlayedPlayer: previousPlayer,
       );
 
-      Timer(Duration(milliseconds: 1500), () async {
-        if (!state.isGameOver && mounted) {
-          try {
-            await gameService.updateGameSessionState(
-              gameSessionId,
-              currentNounId: null,
-              selectedCellIndex: null,
-              revealedArticle: null,
-              revealedArticleIsCorrect: null,
-              onlineGamePhaseString: OnlineGamePhase.waiting.string,
-            );
-            print(
-                '[OnlineGameNotifier] Forfeit: Phase reset to waiting on server.');
-          } catch (e) {
-            print(
-                '[OnlineGameNotifier] Forfeit: Error resetting phase to waiting: $e');
+      try {
+        await gameService.updateGameSessionState(
+          gameSessionId,
+          board: state.board,
+          selectedCellIndex: null,
+          currentNounId: null,
+          revealedArticle: correctArticle,
+          revealedArticleIsCorrect: false,
+          currentPlayerId: nextPlayerId,
+          isGameOver: state.isGameOver,
+          winnerId: state.winningPlayer?.userId,
+          onlineGamePhaseString: OnlineGamePhase.articleRevealed.string,
+        );
+
+        Timer(Duration(milliseconds: 1500), () async {
+          if (!state.isGameOver && mounted) {
+            try {
+              await gameService.updateGameSessionState(
+                gameSessionId,
+                onlineGamePhaseString: OnlineGamePhase.waiting.string,
+              );
+            } catch (e) {
+              print(
+                  '[OnlineGameNotifier] Forfeit: Error resetting phase to waiting: $e');
+            }
           }
-        }
-      });
+        });
 
-      await gameService.recordGameRound(
-        gameSessionId,
-        playerId: currentUserId!,
-        selectedArticle: correctArticle,
-        isCorrect: false,
-      );
+        await gameService.recordGameRound(
+          gameSessionId,
+          playerId: currentUserId!,
+          selectedArticle: null,
+          isCorrect: false,
+        );
 
-      print('[OnlineGameNotifier] Turn forfeited and state sent to server.');
-    } catch (e) {
-      print('[OnlineGameNotifier] Error forfeiting turn in online mode: $e');
+        print('[OnlineGameNotifier] Timed-out forfeit sent to server.');
+      } catch (e) {
+        print('[OnlineGameNotifier] Error forfeiting turn (timed out): $e');
+      }
     }
   }
 
@@ -457,9 +478,12 @@ class OnlineGameNotifier extends GameNotifier {
       print('[DEBUG TURN CHANGE] state.isGameOver: ${state.isGameOver}');
       print(
           '[DEBUG TURN CHANGE] state.onlineGamePhase: ${state.onlineGamePhase}');
-      if (_isLocalPlayerTurn &&
-          !state.isGameOver &&
-          state.onlineGamePhase == OnlineGamePhase.waiting) {
+      if (_isLocalPlayerTurn && !state.isGameOver) {
+        // check incoming server phase
+        OnlineGamePhase serverPhase =
+            OnlineGamePhaseExtension.fromString(gameData['online_game_phase']);
+        print('[DEBUG TURN CHANGE] serverPhase: $serverPhase');
+
         if (!_isInitialGameLoad) {
           print(
               '[DEBUG TURN CHANGE] Starting inactivity timer for subsequent turn');
@@ -596,6 +620,13 @@ class OnlineGameNotifier extends GameNotifier {
         state.isTimerActive &&
         state.remainingSeconds == GameState.turnDurationSeconds) {
       _startTurnTimer();
+    }
+
+    if (_isInitialGameLoad &&
+        _isLocalPlayerTurn &&
+        stateUpdatePhase == OnlineGamePhase.waiting &&
+        !state.isGameOver) {
+      _isInitialGameLoad = false;
     }
 
     if (!state.isGameOver) {
