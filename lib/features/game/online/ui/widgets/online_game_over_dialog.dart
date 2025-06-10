@@ -52,7 +52,6 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
 
 class _InitialGameOverView extends ConsumerWidget {
   final GameConfig gameConfig;
-
   const _InitialGameOverView({super.key, required this.gameConfig});
 
   @override
@@ -73,31 +72,36 @@ class _InitialGameOverView extends ConsumerWidget {
       title = 'Unentschieden!';
     }
 
-    final Player xPlayer = gameState.players[0];
-    final localScore = xPlayer.userId == localPlayerId
+    final Player p1 = gameState.players[0];
+    final Player p2 = gameState.players[1];
+
+    final localScore = p1.userId == localPlayerId
         ? gameState.player1Score
         : gameState.player2Score;
-    final opponentScore = xPlayer.userId == localPlayerId
-        ? gameState.player2Score
-        : gameState.player1Score;
+    final opponentScore = p2.userId == localPlayerId
+        ? gameState.player1Score
+        : gameState.player2Score;
 
     final pointsEarned = gameState.pointsEarnedPerGame;
 
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
+              SizedBox(height: 24),
               // game outcome
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorBlack,
+                      fontSize: 20,
                     ),
               ),
+
+              SizedBox(height: 25),
 
               // scores
               Container(
@@ -111,28 +115,22 @@ class _InitialGameOverView extends ConsumerWidget {
                   '$localScore - $opponentScore',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.black87,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
               ),
 
-              // points
-              Text(
-                '+ $pointsEarned',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
-                      color: colorDarkGreen,
-                    ),
-              ),
+              SizedBox(height: 35),
 
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Tooltip(
-                    message: 'Neuer Gegner',
-                    child: GlassMorphicButton(
-                      onPressed: () => notifier.findNewOpponent(),
+                  GlassMorphicButton(
+                    onPressed: () => notifier.findNewOpponent(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 6.0),
                       child: const Icon(
                         Icons.search_rounded,
                         color: Colors.black87,
@@ -141,31 +139,33 @@ class _InitialGameOverView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 24),
-                  Tooltip(
-                    message: 'Revanche',
-                    child: GlassMorphicButton(
-                      onPressed: () => notifier.requestRematch(),
+                  GlassMorphicButton(
+                    onPressed: () => notifier.requestRematch(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 6.0),
                       child: const Icon(
                         Icons.refresh_rounded,
                         color: colorYellowAccent,
                         size: 30,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ],
           ),
         ),
         Positioned(
-          top: 0,
-          right: 4,
+          top: -8,
+          right: -8,
           child: Tooltip(
             message: 'Home',
             child: IconButton(
               icon: Icon(
                 Icons.home_rounded,
-                color: colorRed.withOpacity(0.5),
+                color: colorRed.withOpacity(0.7),
+                size: 30,
               ),
               onPressed: () => notifier.goHomeAndCleanupSession(),
             ),
@@ -178,7 +178,6 @@ class _InitialGameOverView extends ConsumerWidget {
 
 class _OnlineRematchStatusView extends ConsumerWidget {
   final GameConfig gameConfig;
-
   const _OnlineRematchStatusView({super.key, required this.gameConfig});
 
   @override
@@ -190,11 +189,12 @@ class _OnlineRematchStatusView extends ConsumerWidget {
             as OnlineGameNotifier;
     final localUserId = ref.watch(supabaseProvider).auth.currentUser?.id;
 
-    String message = '';
-    List<Widget> actionButtons = [];
     final opponent =
         gameState.players.firstWhere((player) => player.userId != localUserId);
     final opponentName = opponent.userName;
+
+    String message = '';
+    List<Widget> actionButtons = [];
 
     switch (gameState.onlineRematchStatus) {
       case OnlineRematchStatus.localOffered:
@@ -202,7 +202,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         actionButtons = [
           GlassMorphicButton(
             onPressed: () => notifier.cancelRematchRequest(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
             child: Text(
               'Abbrechen',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -218,25 +218,21 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         actionButtons = [
           GlassMorphicButton(
             onPressed: () => notifier.declineRematch(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            child: Text(
-              'Ablehnen',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorRed,
-                    fontSize: 16,
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Icon(
+              Icons.close_rounded,
+              color: colorBlack,
+              size: 30,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 40),
           GlassMorphicButton(
             onPressed: () => notifier.acceptRematch(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            child: Text(
-              'Akzeptieren',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorYellowAccent,
-                    fontSize: 16,
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Icon(
+              Icons.check_rounded,
+              color: colorYellowAccent,
+              size: 30,
             ),
           ),
         ];
@@ -249,58 +245,52 @@ class _OnlineRematchStatusView extends ConsumerWidget {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20.0, 56.0, 20.0, 20.0),
+          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Expanded(
-                child: Center(
-                  child: Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorBlack,
-                          fontSize: 20,
-                        ),
-                  ),
-                ),
+              SizedBox(height: 88),
+              // rematch status
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorBlack,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
               ),
-              if (actionButtons.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: actionButtons,
-                  ),
-                ),
+
+              SizedBox(height: 36),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: actionButtons,
+              ),
             ],
           ),
         ),
         Positioned(
-          top: 0,
-          right: 4,
+          top: -8,
+          right: -8,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Tooltip(
-                message: 'Startseite',
-                child: IconButton(
-                  onPressed: () => notifier.goHomeAndCleanupSession(),
-                  icon: Icon(
-                    Icons.home_rounded,
-                    color: colorRed.withOpacity(0.5),
-                  ),
+              IconButton(
+                onPressed: () => notifier.goHomeAndCleanupSession(),
+                icon: Icon(
+                  Icons.home_rounded,
+                  color: colorRed.withOpacity(0.5),
+                  size: 30,
                 ),
               ),
-              SizedBox(height: 4),
-              Tooltip(
-                message: 'Neuer Gegner',
-                child: IconButton(
-                  onPressed: () => notifier.findNewOpponent(),
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: colorBlack.withOpacity(0.5),
-                  ),
+              IconButton(
+                onPressed: () => notifier.findNewOpponent(),
+                icon: Icon(
+                  Icons.search_rounded,
+                  color: colorBlack.withOpacity(0.5),
+                  size: 30,
                 ),
               ),
             ],
@@ -320,9 +310,9 @@ void showOnlineGameOverDialog(
 
   if (context.mounted) {
     await showCustomDialog(
+        height: 320,
+        width: 320,
         context: context,
-        height: 300,
-        width: 300,
         child: _OnlineGameOverDialogContent(gameConfig: gameConfig));
   }
 }

@@ -91,7 +91,7 @@ void showGameOverDialog(
   GameState gameState,
   VoidCallback onRematch,
 ) async {
-  await Future.delayed(Duration(milliseconds: 900));
+  await Future.delayed(Duration(milliseconds: 600));
 
   if (context.mounted) {
     await showCustomDialog(
