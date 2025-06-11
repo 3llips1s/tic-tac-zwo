@@ -26,7 +26,6 @@ class GameState {
   final int gamesPlayed;
   final List<int>? winningCells;
   final bool showArticleFeedback;
-  final int correctMovesPerGame;
   final int? pointsEarnedPerGame;
 
   final bool isOpponentReady;
@@ -64,7 +63,6 @@ class GameState {
     required this.gamesPlayed,
     this.winningCells,
     this.showArticleFeedback = false,
-    this.correctMovesPerGame = 0,
     this.pointsEarnedPerGame,
 
     // online mode
@@ -104,7 +102,6 @@ class GameState {
     int? gamesPlayed,
     List<int>? winningCells,
     bool? showArticleFeedback,
-    int? correctMovesPerGame,
     int? pointsEarnedPerGame,
     bool allowNullPointsEarnedPerGame = false,
 
@@ -154,7 +151,6 @@ class GameState {
       winningCells: winningCells ?? this.winningCells,
       showArticleFeedback: showArticleFeedback ?? this.showArticleFeedback,
       isOpponentReady: isOpponentReady ?? this.isOpponentReady,
-      correctMovesPerGame: correctMovesPerGame ?? this.correctMovesPerGame,
       pointsEarnedPerGame: allowNullPointsEarnedPerGame
           ? pointsEarnedPerGame
           : (pointsEarnedPerGame ?? this.pointsEarnedPerGame),

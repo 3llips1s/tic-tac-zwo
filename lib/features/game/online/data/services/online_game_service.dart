@@ -179,6 +179,8 @@ class OnlineGameService {
     String? lastStarterId,
     bool? player1Ready,
     bool? player2Ready,
+    int? player1Score,
+    int? player2Score,
   }) async {
     const debounceDuration = Duration(milliseconds: 100);
 
@@ -217,6 +219,9 @@ class OnlineGameService {
             updatePayload['player2_ready'] = false;
           }
         }
+
+        if (player1Score != null) updatePayload['player1_score'] = player1Score;
+        if (player2Score != null) updatePayload['player1_score'] = player2Score;
 
         if (player1Ready != null) updatePayload['player1_ready'] = player1Ready;
         if (player2Ready != null) updatePayload['player2_ready'] = player2Ready;
@@ -281,6 +286,24 @@ class OnlineGameService {
     }
   }
 
+  // fetch points per round
+  Future<int> getCorrectMoves(String gameSessionId, String playerId) async {
+    try {
+      final count = await _supabase
+          .from('game_rounds')
+          .count(CountOption.exact)
+          .eq('game_id', gameSessionId)
+          .eq('player_id', playerId)
+          .eq('is_correct', true);
+
+      return count;
+    } catch (e) {
+      print(
+          '[OnlineGameService] Error fetching correct moves for player $playerId: $e');
+      return 0;
+    }
+  }
+
   Future<void> setPlayerRematchStatus(
       String gameSessionId, String playerIdToSetReady, bool isReady) async {
     final sessionDetails = await _supabase
@@ -325,8 +348,8 @@ class OnlineGameService {
         'revealed_article_is_correct': null,
         'current_player_id': newStarterId,
         'last_starter_id': newStarterId,
-        'player1_ready': true,
-        'player2_ready': true,
+        'player1_ready': false,
+        'player2_ready': false,
         'online_game_phase': OnlineGamePhase.waiting.string,
       }).eq('id', gameSessionId);
       print('[OnlineGameService] Session $gameSessionId reset successfully.');

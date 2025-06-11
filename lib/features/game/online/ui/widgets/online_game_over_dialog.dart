@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
 import 'package:tic_tac_zwo/config/game_config/game_providers.dart';
@@ -37,7 +38,10 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
     }
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 600),
+      duration: 600.ms,
+      reverseDuration: 600.ms,
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
       transitionBuilder: (child, animation) {
         return FadeTransition(opacity: animation, child: child);
       },
@@ -73,14 +77,13 @@ class _InitialGameOverView extends ConsumerWidget {
     }
 
     final Player p1 = gameState.players[0];
-    final Player p2 = gameState.players[1];
 
     final localScore = p1.userId == localPlayerId
         ? gameState.player1Score
         : gameState.player2Score;
-    final opponentScore = p2.userId == localPlayerId
-        ? gameState.player1Score
-        : gameState.player2Score;
+    final opponentScore = p1.userId == localPlayerId
+        ? gameState.player2Score
+        : gameState.player1Score;
 
     final pointsEarned = gameState.pointsEarnedPerGame;
 
@@ -90,7 +93,7 @@ class _InitialGameOverView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
           child: Column(
             children: <Widget>[
-              SizedBox(height: 24),
+              SizedBox(height: 28),
               // game outcome
               Text(
                 title,
@@ -101,27 +104,44 @@ class _InitialGameOverView extends ConsumerWidget {
                     ),
               ),
 
-              SizedBox(height: 25),
+              SizedBox(height: 36),
 
-              // scores
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha((255 * 0.3).toInt()),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  '$localScore - $opponentScore',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+              // scores and points earned
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 40),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Text(
+                      '$localScore - $opponentScore',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  // if (pointsEarned != null) ...[
+                  Text('+ $pointsEarned',
+                          style: TextStyle(
+                            fontSize: 22,
+                            color: Colors.lightGreenAccent,
+                          )).animate(delay: 600.ms).fadeIn(
+                        duration: 900.ms,
+                        curve: Curves.easeInOut,
                       ),
-                ),
+                  // ],
+                ],
               ),
 
-              SizedBox(height: 35),
+              SizedBox(height: 44),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -202,12 +222,12 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         actionButtons = [
           GlassMorphicButton(
             onPressed: () => notifier.cancelRematchRequest(),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
             child: Text(
               'Abbrechen',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.black87,
-                    fontSize: 16,
+                    fontSize: 18,
                   ),
             ),
           ),
@@ -247,10 +267,9 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              SizedBox(height: 88),
+              SizedBox(height: 68),
+
               // rematch status
               Text(
                 message,
@@ -258,11 +277,11 @@ class _OnlineRematchStatusView extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: colorBlack,
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 20,
                     ),
               ),
 
-              SizedBox(height: 36),
+              SizedBox(height: 40),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -285,6 +304,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
                   size: 30,
                 ),
               ),
+              SizedBox(height: 8),
               IconButton(
                 onPressed: () => notifier.findNewOpponent(),
                 icon: Icon(
@@ -310,9 +330,9 @@ void showOnlineGameOverDialog(
 
   if (context.mounted) {
     await showCustomDialog(
+        context: context,
         height: 320,
         width: 320,
-        context: context,
         child: _OnlineGameOverDialogContent(gameConfig: gameConfig));
   }
 }

@@ -34,6 +34,7 @@ class GameOverDialog extends StatelessWidget {
 
     return Column(
       children: [
+        SizedBox(height: 16),
         // game outcome
         if (gameState.winningPlayer != null) ...[
           Row(
@@ -61,7 +62,7 @@ class GameOverDialog extends StatelessWidget {
                 ),
           ),
         ],
-        const SizedBox(height: kToolbarHeight / 1.25),
+        const SizedBox(height: 30),
 
         // scores
         Container(
@@ -79,7 +80,7 @@ class GameOverDialog extends StatelessWidget {
                 ),
           ),
         ),
-        const SizedBox(height: kToolbarHeight / 3),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -106,6 +107,10 @@ void showGameOverDialog(
       actions: [
         // home
         GlassMorphicButton(
+          padding: EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 12,
+          ),
           onPressed: () => Navigator.pushNamedAndRemoveUntil(
             context,
             RouteNames.home,
@@ -120,6 +125,10 @@ void showGameOverDialog(
 
         // rematch
         GlassMorphicButton(
+          padding: EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 12,
+          ),
           onPressed: () {
             Navigator.of(context).pop();
             onRematch();
