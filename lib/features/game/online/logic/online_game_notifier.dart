@@ -84,6 +84,7 @@ class OnlineGameNotifier extends GameNotifier {
     Timer(
       Duration(milliseconds: 3900),
       () {
+        if (!mounted) return;
         _isInitialGameLoad = false;
 
         if (_isLocalPlayerTurn && !state.isGameOver) {
@@ -112,7 +113,6 @@ class OnlineGameNotifier extends GameNotifier {
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
     _isInactivityTimerActive = true;
-    print('[ONLINEGAMENOTIFIER] inactivity timer is active');
     _inactivityRemainingSeconds = GameState.turnDurationSeconds;
 
     state = state.copyWith(
@@ -120,7 +120,7 @@ class OnlineGameNotifier extends GameNotifier {
     );
 
     _inactivityTimer = Timer.periodic(
-      Duration(seconds: 1),
+      const Duration(seconds: 1),
       (timer) {
         if (_inactivityRemainingSeconds > 0) {
           _inactivityRemainingSeconds--;
@@ -158,20 +158,15 @@ class OnlineGameNotifier extends GameNotifier {
     print(
         '[DEBUG selectCellOnline] _processingRemoteUpdate: $_processingRemoteUpdate');
     print('[DEBUG selectCellOnline] _isLocalPlayerTurn: $_isLocalPlayerTurn');
-    if (_isInitialGameLoad) return;
 
-    if (state.isGameOver ||
+    if (_isInitialGameLoad ||
+        state.isGameOver ||
         _processingRemoteUpdate ||
         !_isLocalPlayerTurn ||
-        state.board[index] != null) {
+        state.board[index] != null ||
+        state.selectedCellIndex != null) {
       print(
           '[OnlineGameNotifier] Cannot select cell: Game over, processing remote update, not local player\'s turn, or cell already taken.');
-      return;
-    }
-
-    if (state.selectedCellIndex != null) {
-      print(
-          '[OnlineGameNotifier] Cell already selected, cannot select another.');
       return;
     }
 
@@ -179,28 +174,19 @@ class OnlineGameNotifier extends GameNotifier {
 
     final noun = await ref.read(germanNounRepoProvider).loadRandomNoun();
 
-    var newCellPressed = List<bool>.from(state.cellPressed);
-    newCellPressed[index] = true;
-
     state = state.copyWith(
-      cellPressed: newCellPressed,
       selectedCellIndex: index,
       currentNoun: noun,
-      revealedArticle: null,
-      revealedArticleIsCorrect: null,
       isTimerActive: true,
       onlineGamePhase: OnlineGamePhase.cellSelected,
-      lastPlayedPlayer: null,
+      remainingSeconds: GameState.turnDurationSeconds,
     );
 
-    final gameService = ref.read(onlineGameServiceProvider);
     try {
-      await gameService.updateGameSessionState(
+      await _gameService.updateGameSessionState(
         gameSessionId,
         selectedCellIndex: index,
         currentNounId: noun.id,
-        revealedArticle: null,
-        revealedArticleIsCorrect: null,
         onlineGamePhaseString: OnlineGamePhase.cellSelected.string,
       );
       print(
@@ -209,9 +195,10 @@ class OnlineGameNotifier extends GameNotifier {
       print('[OnlineGameNotifier] Error sending cell selection to server: $e');
 
       state = state.copyWith(
-        cellPressed: List<bool>.from(state.cellPressed),
         selectedCellIndex: null,
+        allowNullSelectedCellIndex: true,
         currentNoun: null,
+        allowNullCurrentNoun: true,
         isTimerActive: false,
         onlineGamePhase: OnlineGamePhase.waiting,
       );
@@ -245,74 +232,51 @@ class OnlineGameNotifier extends GameNotifier {
 
     // active player determines outcome
     var updatedBoard = List<String?>.from(state.board);
-    bool isGameOver = false;
-    Player? winner;
-    List<int>? winningPattern;
-    int p1Score = state.player1Score;
-    int p2Score = state.player2Score;
-    int gamesPlayed = state.gamesPlayed;
-
     if (isCorrectMove) {
       updatedBoard[cellIndex] = previousPlayer.symbolString;
-      final (gameResult, pattern) = state.checkWinner();
-
-      if (gameResult != null) {
-        isGameOver = true;
-        gamesPlayed++;
-        winningPattern = pattern;
-        if (gameResult != 'Draw') {
-          winner = state.players
-              .firstWhere((player) => player.symbolString == gameResult);
-          if (winner.userId == state.players[0].userId) {
-            p1Score++;
-          } else {
-            p2Score++;
-          }
-        }
-      }
     }
 
-    // update local state immediately
-    state = state.copyWith(
-      board: updatedBoard,
-      revealedArticle: selectedArticle,
-      revealedArticleIsCorrect: isCorrectMove,
-      articleRevealedAt: DateTime.now(),
-      isTimerActive: false,
-      onlineGamePhase: OnlineGamePhase.articleRevealed,
-      lastPlayedPlayer: previousPlayer,
-      isGameOver: isGameOver,
-      winningPlayer: winner,
-      allowNullWinningPlayer: true,
-      winningCells: winningPattern,
-      player1Score: p1Score,
-      player2Score: p2Score,
-      gamesPlayed: gamesPlayed,
-    );
+    final (gameResult, winningPattern) = state.checkWinner(board: updatedBoard);
+    final bool isGameOver = gameResult != null;
 
-    // remote state update
-    final gameService = ref.read(onlineGameServiceProvider);
+    if (isGameOver) {
+      _handleLocalWinOrDraw(gameResult, winningPattern, updatedBoard);
+    } else {
+      state = state.copyWith(
+        board: updatedBoard,
+        revealedArticle: selectedArticle,
+        revealedArticleIsCorrect: isCorrectMove,
+        articleRevealedAt: DateTime.now(),
+        isTimerActive: false,
+        onlineGamePhase: OnlineGamePhase.articleRevealed,
+        lastPlayedPlayer: previousPlayer,
+      );
 
-    try {
-      await gameService.updateGameSessionState(
+      await _gameService.updateGameSessionState(
         gameSessionId,
         board: updatedBoard,
         currentPlayerId: nextPlayer.userId,
-        isGameOver: isGameOver,
-        winnerId: winner?.userId,
-        player1Score: p1Score,
-        player2Score: p2Score,
         revealedArticle: selectedArticle,
         revealedArticleIsCorrect: isCorrectMove,
         selectedCellIndex: cellIndex,
         currentNounId: currentNoun.id,
         onlineGamePhaseString: OnlineGamePhase.articleRevealed.string,
       );
+    }
 
-      Timer(Duration(milliseconds: 1500), () async {
+    await _gameService.recordGameRound(
+      gameSessionId,
+      playerId: currentUserId!,
+      selectedArticle: selectedArticle,
+      isCorrect: isCorrectMove,
+    );
+
+    Timer(
+      Duration(milliseconds: 1500),
+      () async {
         if (!state.isGameOver && mounted) {
           try {
-            await gameService.updateGameSessionState(
+            await _gameService.updateGameSessionState(
               gameSessionId,
               selectedCellIndex: null,
               currentNounId: null,
@@ -324,25 +288,76 @@ class OnlineGameNotifier extends GameNotifier {
             print('[OnlineGameNotifier] Error resetting phase to waiting: $e');
           }
         }
-      });
+      },
+    );
+  }
 
-      await gameService.recordGameRound(
-        gameSessionId,
-        playerId: currentUserId!,
-        selectedArticle: selectedArticle,
-        isCorrect: isCorrectMove,
-      );
+  void _handleLocalWinOrDraw(
+      String? gameResult, List<int>? winningPattern, List<String?> board) {
+    if (_gameOverHandled) return;
+    _gameOverHandled = true;
 
-      print(
-          '[OnlineGameNotifier] Move sent to server. Waiting for remote update.');
-    } catch (e) {
-      print('[OnlineGameNotifier] Error making move in online mode: $e');
+    Player? winner;
+    int p1Score = state.player1Score;
+    int p2Score = state.player2Score;
+
+    if (gameResult != 'Draw' && gameResult != null) {
+      winner = state.players.firstWhere((p) => p.symbolString == gameResult);
+      if (winner.userId == state.players[0].userId) {
+        p1Score++;
+      } else {
+        p2Score++;
+      }
+    }
+
+    state = state.copyWith(
+      isGameOver: true,
+      winningPlayer: winner,
+      allowNullWinningPlayer: true,
+      winningCells: winningPattern,
+      board: board,
+      player1Score: p1Score,
+      player2Score: p2Score,
+      gamesPlayed: state.gamesPlayed + 1,
+    );
+
+    _calculatePointsForDialog();
+
+    _gameService.updateGameSessionState(
+      gameSessionId,
+      isGameOver: true,
+      winnerId: winner?.userId,
+      board: board,
+      player1Score: p1Score,
+      player2Score: p2Score,
+    );
+  }
+
+  void _handleRemoteWinOrDraw() {
+    if (_gameOverHandled) return;
+    _gameOverHandled = true;
+    _calculatePointsForDialog();
+  }
+
+  void _calculatePointsForDialog() async {
+    if (currentUserId == null) return;
+    final correctMoves =
+        await _gameService.getCorrectMoves(gameSessionId, currentUserId!);
+    int pointsPerGame = correctMoves;
+    if (state.winningPlayer?.userId == currentUserId) {
+      pointsPerGame += 3;
+    } else if (state.winningPlayer == null) {
+      pointsPerGame += 1;
+    }
+    if (mounted) {
+      state = state.copyWith(pointsEarnedPerGame: pointsPerGame);
     }
   }
 
   @override
   Future<void> forfeitTurn() async {
     _turnTimer?.cancel();
+    _cancelInactivityTimer();
 
     if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
       print(
@@ -353,97 +368,30 @@ class OnlineGameNotifier extends GameNotifier {
     final Player previousPlayer = state.currentPlayer;
     final Player nextPlayer = state.players
         .firstWhere((player) => player.userId != previousPlayer.userId);
-    final String nextPlayerId = nextPlayer.userId!;
 
-    final gameService = ref.read(onlineGameServiceProvider);
+    await _gameService.updateGameSessionState(
+      gameSessionId,
+      currentPlayerId: nextPlayer.userId,
+      onlineGamePhaseString: OnlineGamePhase.waiting.string,
+      selectedCellIndex: null,
+      currentNounId: null,
+      revealedArticle: null,
+      revealedArticleIsCorrect: null,
+    );
 
-    // player completely inactive and never selected cell
-    if (state.selectedCellIndex == null || state.currentNoun == null) {
-      print("[OnlineGameNotifier] Forfeiting turn due to total inactivity.");
-
-      state = state.copyWith(
-        isTimerActive: false,
-        onlineGamePhase: OnlineGamePhase.waiting,
-      );
-
-      try {
-        await gameService.updateGameSessionState(
-          gameSessionId,
-          currentPlayerId: nextPlayerId,
-          onlineGamePhaseString: OnlineGamePhase.waiting.string,
-          selectedCellIndex: null,
-          currentNounId: null,
-          revealedArticle: null,
-          revealedArticleIsCorrect: null,
-        );
-        print(
-            '[OnlineGameNotifier] Total inactivity forfeit: Turn passed to $nextPlayerId.');
-      } catch (e) {
-        print(
-            '[OnlineGameNotifier] Error forfeiting turn (total inactivity): $e');
-      }
-    } else {
-      print(
-          "[OnlineGameNotifier] Forfeiting turn due to expired article selection timer.");
-      final GermanNoun currentNoun = state.currentNoun!;
-      final String correctArticle = currentNoun.article;
-
-      state = state.copyWith(
-        revealedArticle: correctArticle,
-        revealedArticleIsCorrect: false,
-        articleRevealedAt: DateTime.now(),
-        isTimerActive: false,
-        onlineGamePhase: OnlineGamePhase.articleRevealed,
-        lastPlayedPlayer: previousPlayer,
-      );
-
-      try {
-        await gameService.updateGameSessionState(
-          gameSessionId,
-          board: state.board,
-          selectedCellIndex: null,
-          currentNounId: null,
-          revealedArticle: correctArticle,
-          revealedArticleIsCorrect: false,
-          currentPlayerId: nextPlayerId,
-          isGameOver: state.isGameOver,
-          winnerId: state.winningPlayer?.userId,
-          onlineGamePhaseString: OnlineGamePhase.articleRevealed.string,
-        );
-
-        Timer(Duration(milliseconds: 1500), () async {
-          if (!state.isGameOver && mounted) {
-            try {
-              await gameService.updateGameSessionState(
-                gameSessionId,
-                onlineGamePhaseString: OnlineGamePhase.waiting.string,
-              );
-            } catch (e) {
-              print(
-                  '[OnlineGameNotifier] Forfeit: Error resetting phase to waiting: $e');
-            }
-          }
-        });
-
-        await gameService.recordGameRound(
-          gameSessionId,
-          playerId: currentUserId!,
-          selectedArticle: null,
-          isCorrect: false,
-        );
-
-        print('[OnlineGameNotifier] Timed-out forfeit sent to server.');
-      } catch (e) {
-        print('[OnlineGameNotifier] Error forfeiting turn (timed out): $e');
-      }
-    }
+    await _gameService.recordGameRound(
+      gameSessionId,
+      playerId: currentUserId!,
+      selectedArticle: null,
+      isCorrect: false,
+    );
   }
 
   void _listenToGameSessionUpdates() {
     _gameStateSubscription =
         _gameService.getGameStateStream(gameSessionId).listen((gameData) async {
       final newTimeStamp = gameData['updated_at'] != null
-          ? DateTime.tryParse(gameData['udpated_at'])
+          ? DateTime.tryParse(gameData['updated_at'])
           : null;
 
       if (newTimeStamp != null &&
@@ -457,7 +405,6 @@ class OnlineGameNotifier extends GameNotifier {
       _processingRemoteUpdate = true;
       print('[OnlineGameNotifier] Received remote update: $gameData');
 
-      final previousTimestamp = _lastUpdateTimestamp;
       _lastUpdateTimestamp = newTimeStamp;
 
       print('[OnlineGameNotifier] Received remote update: $gameData');
@@ -465,7 +412,7 @@ class OnlineGameNotifier extends GameNotifier {
       try {
         await _handleRemoteUpdate(gameData);
       } catch (e) {
-        _lastUpdateTimestamp = previousTimestamp;
+        print('Error handling remote update: $e');
       }
       _processingRemoteUpdate = false;
     }, onError: (e) {
@@ -542,27 +489,20 @@ class OnlineGameNotifier extends GameNotifier {
 
     // handle rematch logic
     OnlineRematchStatus newOnlineRematchStatus = OnlineRematchStatus.none;
-    bool newLocalPlayerWantsRematch = false;
-    bool newRemotePlayerWantsRematch = false;
 
     if (serverIsGameOver) {
-      String? player1Id = gameData['player1_id'];
-      bool p1Ready = gameData['player1_ready'] ?? false;
-      bool p2Ready = gameData['player2_ready'] ?? false;
+      final p1Ready = gameData['player1_ready'] ?? false;
+      final p2Ready = gameData['player2_ready'] ?? false;
+      final localIsP1 = state.players[0].userId == currentUserId;
 
-      if (currentUserId == player1Id) {
-        newLocalPlayerWantsRematch = p1Ready;
-        newRemotePlayerWantsRematch = p2Ready;
-      } else {
-        newLocalPlayerWantsRematch = p2Ready;
-        newRemotePlayerWantsRematch = p1Ready;
-      }
+      final localPlayerWantsRematch = localIsP1 ? p1Ready : p2Ready;
+      final remotePlayerWantsRematch = localIsP1 ? p2Ready : p1Ready;
 
-      if (newLocalPlayerWantsRematch && newRemotePlayerWantsRematch) {
+      if (localPlayerWantsRematch && remotePlayerWantsRematch) {
         newOnlineRematchStatus = OnlineRematchStatus.bothAccepted;
-      } else if (newLocalPlayerWantsRematch) {
+      } else if (localPlayerWantsRematch) {
         newOnlineRematchStatus = OnlineRematchStatus.localOffered;
-      } else if (newRemotePlayerWantsRematch) {
+      } else if (remotePlayerWantsRematch) {
         newOnlineRematchStatus = OnlineRematchStatus.remoteOffered;
       } else {
         newOnlineRematchStatus = OnlineRematchStatus.none;
@@ -601,230 +541,104 @@ class OnlineGameNotifier extends GameNotifier {
       onlineGamePhase: serverPhase,
       lastStarterId: gameData['last_starter_id'] ?? state.lastStarterId,
       onlineRematchStatus: newOnlineRematchStatus,
-      localPlayerWantsRematch: newLocalPlayerWantsRematch,
-      remotePlayerWantsRematch: newRemotePlayerWantsRematch,
     );
 
-    if (_isLocalPlayerTurn &&
-        state.onlineGamePhase == OnlineGamePhase.cellSelected) {
-      if (state.remainingSeconds == GameState.turnDurationSeconds) {
-        _startTurnTimer();
-      }
+    if (state.isGameOver && !previousState.isGameOver) {
+      _handleRemoteWinOrDraw();
     }
 
-    if (_isInitialGameLoad &&
-        _isLocalPlayerTurn &&
-        serverPhase == OnlineGamePhase.waiting &&
-        !serverIsGameOver) {
-      _isInitialGameLoad = false;
-    }
-
-    if (serverIsGameOver && !previousState.isGameOver) {
-      _handleGameOver();
+    if (state.onlineRematchStatus == OnlineRematchStatus.bothAccepted &&
+        previousState.onlineRematchStatus != OnlineRematchStatus.bothAccepted) {
+      initiateNewGameAfterRematch();
     }
 
     // reset ui for rematch
     if (!serverIsGameOver && previousState.isGameOver) {
+      _gameOverHandled = false;
       state = state.copyWith(
         pointsEarnedPerGame: null,
         allowNullPointsEarnedPerGame: true,
         winningCells: null,
-        onlineRematchStatus: OnlineRematchStatus.none,
       );
-      _gameOverHandled = false;
       print(
           '[OnlineGameNotifier] Final state after remote update: Phase: ${state.onlineGamePhase}, isLocalTurn: $_isLocalPlayerTurn, CurrentPlayerID: ${state.currentPlayerId}');
     }
   }
 
-  void _handleGameOver() async {
-    if (_gameOverHandled) return;
-    _gameOverHandled = true;
-
-    _turnTimer?.cancel();
-    _cancelInactivityTimer();
-
-    final correctMoves =
-        await _gameService.getCorrectMoves(gameSessionId, currentUserId!);
-    int pointsPerGame = correctMoves;
-    if (state.winningPlayer?.userId == currentUserId) {
-      pointsPerGame += 3;
-    } else if (state.winningPlayer == null) {
-      pointsPerGame += 1;
-    }
-    state = state.copyWith(pointsEarnedPerGame: pointsPerGame);
-
-    if (state.winningPlayer != null) {
-      final (_, winningPattern) = state.checkWinner();
-      if (winningPattern != null) {
-        state = state.copyWith(winningCells: winningPattern);
-      }
-    }
-  }
-
-  TimerDisplayState get timerDisplayState {
-    print('[DEBUG TIMER STATE] _isLocalPlayerTurn: $_isLocalPlayerTurn');
-    print('[DEBUG TIMER STATE] state.isGameOver: ${state.isGameOver}');
-    print(
-        '[DEBUG TIMER STATE] state.selectedCellIndex: ${state.selectedCellIndex}');
-    print(
-        '[DEBUG TIMER STATE] _isInactivityTimerActive: $_isInactivityTimerActive');
-    print('[DEBUG TIMER STATE] state.isTimerActive: ${state.isTimerActive}');
-
-    if (state.isGameOver) {
-      return TimerDisplayState.static;
-    }
-
-    if (_isLocalPlayerTurn) {
-      if (state.selectedCellIndex == null) {
-        return _isInactivityTimerActive
-            ? TimerDisplayState.inactivity
-            : TimerDisplayState.static;
-      } else {
-        return state.isTimerActive
-            ? TimerDisplayState.countdown
-            : TimerDisplayState.static;
-      }
-    }
-
-    return TimerDisplayState.static;
-  }
-
   // rematch methods
   Future<void> requestRematch() async {
     if (!state.isGameOver || currentUserId == null) return;
-    _rematchOfferTimer?.cancel();
-
-    state = state.copyWith(
-      onlineRematchStatus: OnlineRematchStatus.localOffered,
-      localPlayerWantsRematch: true,
-    );
-    try {
-      await _gameService.setPlayerRematchStatus(
-          gameSessionId, currentUserId!, true);
-      _rematchOfferTimer = Timer(const Duration(seconds: 30), () {
-        if (state.onlineRematchStatus == OnlineRematchStatus.localOffered) {
-          handleRematchTimeout();
-        }
-      });
-    } catch (e) {
-      print("[OnlineGameNotifier] Error requesting rematch: $e");
-    }
+    await _gameService.setPlayerRematchStatus(
+        gameSessionId, currentUserId!, true);
   }
 
   Future<void> cancelRematchRequest() async {
     if (!state.isGameOver || currentUserId == null) return;
-    _rematchOfferTimer?.cancel();
-
-    try {
-      await _gameService.setPlayerRematchStatus(
-          gameSessionId, currentUserId!, false);
-    } catch (e) {
-      print("[OnlineGameNotifier] Error cancelling rematch request: $e");
-    }
+    await _gameService.setPlayerRematchStatus(
+        gameSessionId, currentUserId!, false);
   }
 
   Future<void> acceptRematch() async {
     if (!state.isGameOver || currentUserId == null) return;
-    _rematchOfferTimer?.cancel();
-
-    try {
-      await _gameService.setPlayerRematchStatus(
-          gameSessionId, currentUserId!, true);
-    } catch (e) {
-      print("[OnlineGameNotifier] Error accepting rematch: $e");
-    }
+    await _gameService.setPlayerRematchStatus(
+        gameSessionId, currentUserId!, true);
   }
 
   Future<void> declineRematch() async {
     if (!state.isGameOver || currentUserId == null) return;
-    _rematchOfferTimer?.cancel();
-
-    try {
-      await _gameService.setPlayerRematchStatus(
-          gameSessionId, currentUserId!, false);
-    } catch (e) {
-      print("[OnlineGameNotifier] Error declining rematch: $e");
-    }
+    await _gameService.setPlayerRematchStatus(
+        gameSessionId, currentUserId!, false);
   }
 
   Future<void> initiateNewGameAfterRematch() async {
-    if (currentUserId == null ||
-        state.lastStarterId == null ||
-        _processingRemoteUpdate) {
-      print(
-          "[OnlineGameNotifier] Cannot initiate rematch: missing user ID or last starter ID.");
-      return;
-    }
-
-    final Player newStarter =
-        state.players.firstWhere((p) => p.userId != state.lastStarterId);
-
-    if (currentUserId != newStarter.userId) return;
+    if (state.lastStarterId == null) return;
 
     _rematchOfferTimer?.cancel();
 
-    print(
-        "[OnlineGameNotifier] Both players accepted. This client is initiating the new game.");
+    // The new starter is the one who was NOT the last starter.
+    final newStarterId = state.players
+        .firstWhere((p) => p.userId != state.lastStarterId)
+        .userId!;
 
-    state = state.copyWith(
-      onlineRematchStatus: OnlineRematchStatus.bothAccepted,
-      pointsEarnedPerGame: null,
-      allowNullPointsEarnedPerGame: true,
-    );
+    print(
+        "[OnlineGameNotifier] Both players accepted. Attempting to reset game. New starter: $newStarterId");
 
     try {
-      await _gameService.resetSessionForRematch(
-          gameSessionId, newStarter.userId!);
-      print(
-          "[OnlineGameNotifier] New game initiated after rematch. New starter: ${newStarter.userName}");
+      await _gameService.resetSessionForRematch(gameSessionId, newStarterId);
     } catch (e) {
       print("[OnlineGameNotifier] Error initiating new game after rematch: $e");
-      state = state.copyWith(onlineRematchStatus: OnlineRematchStatus.none);
-    }
-  }
-
-  void handleRematchTimeout() {
-    if (state.onlineRematchStatus == OnlineRematchStatus.localOffered) {
-      state = state.copyWith(onlineRematchStatus: OnlineRematchStatus.timeout);
-
-      if (currentUserId != null) {
-        cancelRematchRequest();
-      }
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted &&
-            state.onlineRematchStatus == OnlineRematchStatus.timeout) {
-          state = state.copyWith(onlineRematchStatus: OnlineRematchStatus.none);
-        }
-      });
     }
   }
 
   Future<void> findNewOpponent() async {
-    _rematchOfferTimer?.cancel();
-    _turnTimer?.cancel();
-
     if (currentUserId != null) {
       await _gameService.setPlayerRematchStatus(
           gameSessionId, currentUserId!, false);
     }
     ref.read(navigationTargetProvider.notifier).state =
         NavigationTarget.matchmaking;
-
-    print(
-        "[OnlineGameNotifier] Player chose to find new opponent. Leaving session $gameSessionId.");
   }
 
   Future<void> goHomeAndCleanupSession() async {
-    _rematchOfferTimer?.cancel();
-    _turnTimer?.cancel();
-
-    if (currentUserId != null && state.isGameOver) {
+    if (currentUserId != null) {
       await _gameService.setPlayerRematchStatus(
           gameSessionId, currentUserId!, false);
     }
-
     ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
+  }
+
+  TimerDisplayState get timerDisplayState {
+    if (state.isGameOver || !_isLocalPlayerTurn) {
+      return TimerDisplayState.static;
+    }
+    if (state.selectedCellIndex != null) {
+      return state.isTimerActive
+          ? TimerDisplayState.countdown
+          : TimerDisplayState.static;
+    }
+    return _isInactivityTimerActive
+        ? TimerDisplayState.inactivity
+        : TimerDisplayState.static;
   }
 
   bool get canLocalPlayerMakeMove {

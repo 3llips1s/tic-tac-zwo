@@ -402,7 +402,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   child: Text(
-                    'abbrechen',
+                    'Abbrechen',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colorBlack,
                           fontSize: 20,
@@ -458,7 +458,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   child: Text(
-                    'abbrechen',
+                    'Abbrechen',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: colorBlack,
                           fontSize: 20,

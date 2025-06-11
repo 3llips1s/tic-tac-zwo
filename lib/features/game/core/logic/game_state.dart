@@ -299,7 +299,8 @@ class GameState {
   String get currentSymbol =>
       currentPlayer.symbol == PlayerSymbol.X ? symbolX : symbolO;
 
-  (String?, List<int>?) checkWinner() {
+  (String?, List<int>?) checkWinner({List<String?>? board}) {
+    final boardToCheck = board ?? this.board;
     final winPatterns = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
@@ -307,14 +308,15 @@ class GameState {
     ];
 
     for (final pattern in winPatterns) {
-      if (board[pattern[0]] != null &&
-          board[pattern[0]] == board[pattern[1]] &&
-          board[pattern[0]] == board[pattern[2]]) {
-        return (board[pattern[0]], pattern);
+      final p1 = boardToCheck[pattern[0]];
+      final p2 = boardToCheck[pattern[1]];
+      final p3 = boardToCheck[pattern[2]];
+      if (p1 != null && p1 == p2 && p1 == p3) {
+        return (p1, pattern);
       }
     }
 
-    if (!board.contains(null)) {
+    if (!boardToCheck.contains(null)) {
       return ('Draw', null);
     }
 

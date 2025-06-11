@@ -18,23 +18,53 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(GameProviders.getStateProvider(ref, gameConfig)
-        .select((state) => state.onlineRematchStatus));
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, gameConfig));
+    final status = gameState.onlineRematchStatus;
+
+    ref.listen(
+      GameProviders.getStateProvider(ref, gameConfig)
+          .select((state) => state.onlineRematchStatus),
+      (previous, next) {
+        if (next == OnlineRematchStatus.bothAccepted) {
+          final notifier =
+              ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier)
+                  as OnlineGameNotifier;
+          notifier.initiateNewGameAfterRematch();
+        }
+      },
+    );
 
     // determine whether to show rematch ui
     final showRematchUI = status == OnlineRematchStatus.localOffered ||
         status == OnlineRematchStatus.remoteOffered;
 
+    Widget currentView;
+
     if (status == OnlineRematchStatus.bothAccepted) {
-      return Center(
-        child: Text(
-          'Starte neues Spiel...',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 18,
-                color: Colors.green,
-              ),
+      currentView = Container(
+        height: 280,
+        key: const ValueKey('starting_new_game'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Starte neues Spiel...',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 18,
+                    color: Colors.green,
+                  ),
+            ),
+          ],
         ),
       );
+    } else if (showRematchUI) {
+      currentView = _OnlineRematchStatusView(
+          key: const ValueKey('rematch_view'), gameConfig: gameConfig);
+    } else {
+      currentView = _InitialGameOverView(
+          key: const ValueKey('initial_view'), gameConfig: gameConfig);
     }
 
     return AnimatedSwitcher(
@@ -45,11 +75,7 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
       transitionBuilder: (child, animation) {
         return FadeTransition(opacity: animation, child: child);
       },
-      child: showRematchUI
-          ? _OnlineRematchStatusView(
-              key: const ValueKey('rematch_view'), gameConfig: gameConfig)
-          : _InitialGameOverView(
-              key: const ValueKey('initial_view'), gameConfig: gameConfig),
+      child: currentView,
     );
   }
 }
@@ -77,21 +103,27 @@ class _InitialGameOverView extends ConsumerWidget {
     }
 
     final Player p1 = gameState.players[0];
+    final Player p2 = gameState.players[1];
 
-    final localScore = p1.userId == localPlayerId
+    final localPlayer = p1.userId == localPlayerId ? p1 : p2;
+    final opponent = p1.userId == localPlayerId ? p2 : p1;
+
+    final localScore = localPlayer.userId == p1.userId
         ? gameState.player1Score
         : gameState.player2Score;
-    final opponentScore = p1.userId == localPlayerId
-        ? gameState.player2Score
-        : gameState.player1Score;
+    final opponentScore = opponent.userId == p1.userId
+        ? gameState.player1Score
+        : gameState.player2Score;
 
     final pointsEarned = gameState.pointsEarnedPerGame;
 
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        Container(
+          height: 280,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               SizedBox(height: 28),
               // game outcome
@@ -103,8 +135,6 @@ class _InitialGameOverView extends ConsumerWidget {
                       fontSize: 20,
                     ),
               ),
-
-              SizedBox(height: 36),
 
               // scores and points earned
               Row(
@@ -128,20 +158,19 @@ class _InitialGameOverView extends ConsumerWidget {
                           ),
                     ),
                   ),
-                  // if (pointsEarned != null) ...[
-                  Text('+ $pointsEarned',
-                          style: TextStyle(
-                            fontSize: 22,
-                            color: Colors.lightGreenAccent,
-                          )).animate(delay: 600.ms).fadeIn(
-                        duration: 900.ms,
-                        curve: Curves.easeInOut,
-                      ),
-                  // ],
+                  if (pointsEarned != null)
+                    Text('+ $pointsEarned',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: Colors.lightGreenAccent,
+                            )).animate(delay: 600.ms).fadeIn(
+                          duration: 900.ms,
+                          curve: Curves.easeInOut,
+                        )
+                  else
+                    const SizedBox(width: 40),
                 ],
               ),
-
-              SizedBox(height: 44),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -179,16 +208,13 @@ class _InitialGameOverView extends ConsumerWidget {
         Positioned(
           top: -8,
           right: -8,
-          child: Tooltip(
-            message: 'Home',
-            child: IconButton(
-              icon: Icon(
-                Icons.home_rounded,
-                color: colorRed.withOpacity(0.7),
-                size: 30,
-              ),
-              onPressed: () => notifier.goHomeAndCleanupSession(),
+          child: IconButton(
+            icon: Icon(
+              Icons.home_rounded,
+              color: colorRed.withOpacity(0.7),
+              size: 30,
             ),
+            onPressed: () => notifier.goHomeAndCleanupSession(),
           ),
         ),
       ],
@@ -222,7 +248,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         actionButtons = [
           GlassMorphicButton(
             onPressed: () => notifier.cancelRematchRequest(),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Text(
               'Abbrechen',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -258,18 +284,18 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         ];
         break;
       default:
-        message = 'Warte auf $opponentName...';
+        message = 'Status wird geladen...';
         break;
     }
 
     return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        Container(
+          height: 280,
+          padding: const EdgeInsets.fromLTRB(16, 112, 16, 24),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              SizedBox(height: 68),
-
               // rematch status
               Text(
                 message,
@@ -280,8 +306,6 @@ class _OnlineRematchStatusView extends ConsumerWidget {
                       fontSize: 20,
                     ),
               ),
-
-              SizedBox(height: 40),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
