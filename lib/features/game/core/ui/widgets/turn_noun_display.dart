@@ -281,8 +281,8 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     final currentPlayer = gameState.currentPlayer;
     final currentNoun = gameState.currentNoun;
 
-    final String localPlayerId =
-        ref.watch(supabaseProvider).auth.currentUser!.id;
+    final String? localPlayerId =
+        ref.watch(supabaseProvider).auth.currentUser?.id;
 
     final showNoun = _showNoun();
 
@@ -473,22 +473,22 @@ Widget _showCurrentPlayer(
   switch (gameMode) {
     case GameMode.online:
       final isLocalPlayerTurn = (currentPlayerId == localPlayerId);
-      displayName = isLocalPlayerTurn ? 'Du' : currentPlayer.userName;
+      displayName = isLocalPlayerTurn ? 'Du' : currentPlayer.username;
       verbText = isLocalPlayerTurn ? 'bist dran...' : 'spielt...';
       break;
     case GameMode.pass:
-      displayName = currentPlayer.userName;
+      displayName = currentPlayer.username;
       verbText = 'ist dran...';
     case GameMode.offline:
       if (currentPlayer.isAI) {
-        displayName = currentPlayer.userName;
+        displayName = currentPlayer.username;
         verbText = 'spielt...';
       } else {
         displayName = 'Du';
         verbText = 'bist dran...';
       }
     default:
-      displayName = currentPlayer.userName;
+      displayName = currentPlayer.username;
       verbText = 'spielt...';
   }
 

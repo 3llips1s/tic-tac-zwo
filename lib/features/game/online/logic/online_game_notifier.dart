@@ -56,7 +56,7 @@ class OnlineGameNotifier extends GameNotifier {
     print(
         '[DEBUG CONSTRUCTOR] _isLocalPlayerTurn initialized to: $_isLocalPlayerTurn');
     print(
-        '[DEBUG CONSTRUCTOR] Starting player: ${gameConfig.startingPlayer.userName}');
+        '[DEBUG CONSTRUCTOR] Starting player: ${gameConfig.startingPlayer.username}');
     print(
         '[DEBUG CONSTRUCTOR] Is local user the starting player? $_isLocalPlayerTurn');
 
@@ -227,8 +227,15 @@ class OnlineGameNotifier extends GameNotifier {
     final GermanNoun currentNoun = state.currentNoun!;
     final bool isCorrectMove = currentNoun.article == selectedArticle;
     final Player previousPlayer = state.currentPlayer;
-    final Player nextPlayer = state.players
-        .firstWhere((player) => player.userId != previousPlayer.userId);
+
+    state = state.copyWith(
+      revealedArticle: selectedArticle,
+      revealedArticleIsCorrect: isCorrectMove,
+      articleRevealedAt: DateTime.now(),
+      isTimerActive: false,
+      onlineGamePhase: OnlineGamePhase.articleRevealed,
+      lastPlayedPlayer: previousPlayer,
+    );
 
     // active player determines outcome
     var updatedBoard = List<String?>.from(state.board);
@@ -239,18 +246,18 @@ class OnlineGameNotifier extends GameNotifier {
     final (gameResult, winningPattern) = state.checkWinner(board: updatedBoard);
     final bool isGameOver = gameResult != null;
 
+    await _gameService.recordGameRound(
+      gameSessionId,
+      playerId: currentUserId!,
+      selectedArticle: selectedArticle,
+      isCorrect: isCorrectMove,
+    );
+
     if (isGameOver) {
       _handleLocalWinOrDraw(gameResult, winningPattern, updatedBoard);
     } else {
-      state = state.copyWith(
-        board: updatedBoard,
-        revealedArticle: selectedArticle,
-        revealedArticleIsCorrect: isCorrectMove,
-        articleRevealedAt: DateTime.now(),
-        isTimerActive: false,
-        onlineGamePhase: OnlineGamePhase.articleRevealed,
-        lastPlayedPlayer: previousPlayer,
-      );
+      final Player nextPlayer = state.players
+          .firstWhere((player) => player.userId != previousPlayer.userId);
 
       await _gameService.updateGameSessionState(
         gameSessionId,
@@ -263,13 +270,6 @@ class OnlineGameNotifier extends GameNotifier {
         onlineGamePhaseString: OnlineGamePhase.articleRevealed.string,
       );
     }
-
-    await _gameService.recordGameRound(
-      gameSessionId,
-      playerId: currentUserId!,
-      selectedArticle: selectedArticle,
-      isCorrect: isCorrectMove,
-    );
 
     Timer(
       Duration(milliseconds: 1500),
@@ -318,7 +318,6 @@ class OnlineGameNotifier extends GameNotifier {
       board: board,
       player1Score: p1Score,
       player2Score: p2Score,
-      gamesPlayed: state.gamesPlayed + 1,
     );
 
     _calculatePointsForDialog();
@@ -493,10 +492,11 @@ class OnlineGameNotifier extends GameNotifier {
     if (serverIsGameOver) {
       final p1Ready = gameData['player1_ready'] ?? false;
       final p2Ready = gameData['player2_ready'] ?? false;
-      final localIsP1 = state.players[0].userId == currentUserId;
+      final String? dbPlayer1Id = gameData['player1_id'];
+      final localUserIsDbPlayer1 = dbPlayer1Id == currentUserId;
 
-      final localPlayerWantsRematch = localIsP1 ? p1Ready : p2Ready;
-      final remotePlayerWantsRematch = localIsP1 ? p2Ready : p1Ready;
+      final localPlayerWantsRematch = localUserIsDbPlayer1 ? p1Ready : p2Ready;
+      final remotePlayerWantsRematch = localUserIsDbPlayer1 ? p2Ready : p1Ready;
 
       if (localPlayerWantsRematch && remotePlayerWantsRematch) {
         newOnlineRematchStatus = OnlineRematchStatus.bothAccepted;
@@ -535,7 +535,6 @@ class OnlineGameNotifier extends GameNotifier {
       allowNullArticleRevealedAt: true,
       player1Score: gameData['player1_score'] ?? previousState.player1Score,
       player2Score: gameData['player2_score'] ?? previousState.player2Score,
-      gamesPlayed: state.gamesPlayed,
       isTimerActive:
           _isLocalPlayerTurn && (serverPhase == OnlineGamePhase.cellSelected),
       onlineGamePhase: serverPhase,
@@ -555,10 +554,24 @@ class OnlineGameNotifier extends GameNotifier {
     // reset ui for rematch
     if (!serverIsGameOver && previousState.isGameOver) {
       _gameOverHandled = false;
+
+      final List<Player> newPlayersList = [state.players[1], state.players[0]];
+
+      final newStarterId = state.players
+          .firstWhere((player) => player.userId != state.lastStarterId)
+          .userId!;
+
+      final newStartingPlayer =
+          newPlayersList.firstWhere((player) => player.userId == newStarterId);
+
       state = state.copyWith(
         pointsEarnedPerGame: null,
         allowNullPointsEarnedPerGame: true,
         winningCells: null,
+        winningPlayer: null,
+        allowNullWinningPlayer: true,
+        players: newPlayersList,
+        startingPlayer: newStartingPlayer,
       );
       print(
           '[OnlineGameNotifier] Final state after remote update: Phase: ${state.onlineGamePhase}, isLocalTurn: $_isLocalPlayerTurn, CurrentPlayerID: ${state.currentPlayerId}');

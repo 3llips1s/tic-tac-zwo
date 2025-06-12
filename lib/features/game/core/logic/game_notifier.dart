@@ -19,7 +19,6 @@ class GameNotifier extends StateNotifier<GameState> {
   // track scores
   int player1Score = 0;
   int player2Score = 0;
-  int gamesPlayed = 0;
 
   GameNotifier(
     this.ref,
@@ -260,7 +259,6 @@ class GameNotifier extends StateNotifier<GameState> {
           player2Score++;
         }
       }
-      gamesPlayed++;
 
       // update game state
       state = state.copyWith(
@@ -270,7 +268,6 @@ class GameNotifier extends StateNotifier<GameState> {
             : state.players.firstWhere((p) => p.symbolString == winResult),
         player1Score: player1Score,
         player2Score: player2Score,
-        gamesPlayed: gamesPlayed,
       );
     }
   }
@@ -288,12 +285,12 @@ class GameNotifier extends StateNotifier<GameState> {
     // swap symbols between players
     final newPlayers = [
       Player(
-          userName: state.players[0].userName,
+          username: state.players[0].username,
           symbol: state.players[0].symbol == PlayerSymbol.X
               ? PlayerSymbol.O
               : PlayerSymbol.X),
       Player(
-          userName: state.players[1].userName,
+          username: state.players[1].username,
           symbol: state.players[1].symbol == PlayerSymbol.X
               ? PlayerSymbol.O
               : PlayerSymbol.X)
@@ -305,7 +302,6 @@ class GameNotifier extends StateNotifier<GameState> {
     state = GameState.initial(newPlayers, newStartingPlayer).copyWith(
       player1Score: player1Score,
       player2Score: player2Score,
-      gamesPlayed: gamesPlayed,
       winningCells: null,
     );
   }

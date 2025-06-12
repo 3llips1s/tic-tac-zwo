@@ -56,8 +56,7 @@ class GlassmorphicDialog extends StatelessWidget {
                 // gradient
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Colors.white.withAlpha((255 * 0.1).toInt())),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
                     borderRadius: borderRadius,
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,

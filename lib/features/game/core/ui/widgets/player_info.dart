@@ -38,7 +38,7 @@ class PlayerInfo extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                xPlayer.userName,
+                xPlayer.username,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 16,
                       fontStyle:
@@ -97,7 +97,7 @@ class PlayerInfo extends ConsumerWidget {
               ),
               space,
               Text(
-                oPlayer.userName,
+                oPlayer.username,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 16,
                       fontStyle:

@@ -9,7 +9,6 @@ import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_servi
 import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
 
 import '../../../../../config/game_config/constants.dart';
-import '../../../core/data/models/player.dart';
 
 class _OnlineGameOverDialogContent extends ConsumerWidget {
   final GameConfig gameConfig;
@@ -21,19 +20,6 @@ class _OnlineGameOverDialogContent extends ConsumerWidget {
     final gameState =
         ref.watch(GameProviders.getStateProvider(ref, gameConfig));
     final status = gameState.onlineRematchStatus;
-
-    ref.listen(
-      GameProviders.getStateProvider(ref, gameConfig)
-          .select((state) => state.onlineRematchStatus),
-      (previous, next) {
-        if (next == OnlineRematchStatus.bothAccepted) {
-          final notifier =
-              ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier)
-                  as OnlineGameNotifier;
-          notifier.initiateNewGameAfterRematch();
-        }
-      },
-    );
 
     // determine whether to show rematch ui
     final showRematchUI = status == OnlineRematchStatus.localOffered ||
@@ -97,23 +83,20 @@ class _InitialGameOverView extends ConsumerWidget {
     if (gameState.winningPlayer != null) {
       title = gameState.winningPlayer!.userId == localPlayerId
           ? 'Du gewinnst!'
-          : '${gameState.winningPlayer!.userName} gewinnt!';
+          : '${gameState.winningPlayer!.username} gewinnt!';
     } else {
       title = 'Unentschieden!';
     }
 
-    final Player p1 = gameState.players[0];
-    final Player p2 = gameState.players[1];
+    final dbPlayer1 = gameState.players[0];
+    final localPlayerIsDbPlayer1 = localPlayerId == dbPlayer1.userId;
 
-    final localPlayer = p1.userId == localPlayerId ? p1 : p2;
-    final opponent = p1.userId == localPlayerId ? p2 : p1;
-
-    final localScore = localPlayer.userId == p1.userId
+    final localScore = localPlayerIsDbPlayer1
         ? gameState.player1Score
         : gameState.player2Score;
-    final opponentScore = opponent.userId == p1.userId
-        ? gameState.player1Score
-        : gameState.player2Score;
+    final opponentScore = localPlayerIsDbPlayer1
+        ? gameState.player2Score
+        : gameState.player1Score;
 
     final pointsEarned = gameState.pointsEarnedPerGame;
 
@@ -237,7 +220,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
 
     final opponent =
         gameState.players.firstWhere((player) => player.userId != localUserId);
-    final opponentName = opponent.userName;
+    final opponentName = opponent.username;
 
     String message = '';
     List<Widget> actionButtons = [];
@@ -352,7 +335,10 @@ void showOnlineGameOverDialog(
 ) async {
   await Future.delayed(const Duration(milliseconds: 600));
 
-  if (context.mounted) {
+  final currentGameState =
+      ref.read(GameProviders.getStateProvider(ref, gameConfig));
+
+  if (context.mounted && currentGameState.isGameOver) {
     await showCustomDialog(
         context: context,
         height: 320,

@@ -5,14 +5,14 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import '../../../../../config/game_config/config.dart';
 
 class Player {
-  final String userName;
+  final String username;
   PlayerSymbol symbol;
   String? userId;
   String? countryCode;
   final bool isAI;
 
   Player({
-    required this.userName,
+    required this.username,
     required this.symbol,
     this.isAI = false,
     this.countryCode,
@@ -25,7 +25,7 @@ class Player {
 
   Map<String, dynamic> toJson() {
     return {
-      'userName': userName,
+      'username': username,
       'symbol': symbol.index,
       'isAI': isAI,
       'user_id': userId,
@@ -34,7 +34,7 @@ class Player {
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
-      userName: json['userName'],
+      username: json['username'],
       symbol: PlayerSymbol.values[json['symbol']],
       isAI: json['isAI'] ?? false,
       userId: json['user_id'] ?? '',
@@ -42,14 +42,14 @@ class Player {
   }
 
   Player copyWith({
-    String? userName,
+    String? username,
     String? userId,
     String? countryCode,
     PlayerSymbol? symbol,
     bool? isAI,
   }) {
     return Player(
-      userName: userName ?? this.userName,
+      username: username ?? this.username,
       userId: userId ?? this.userId,
       countryCode: countryCode ?? this.countryCode,
       symbol: symbol ?? this.symbol,

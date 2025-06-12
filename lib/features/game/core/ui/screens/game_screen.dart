@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
@@ -19,6 +22,7 @@ import '../../../../../config/game_config/constants.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../../online/ui/widgets/online_game_over_dialog.dart';
+import '../../data/models/player.dart';
 
 class GameScreen extends ConsumerWidget {
   final GameConfig gameConfig;
@@ -27,6 +31,63 @@ class GameScreen extends ConsumerWidget {
     super.key,
     required this.gameConfig,
   });
+
+  void _showSnackBar(BuildContext context, Player nextStartingPlayer) {
+    final supabase = Supabase.instance.client;
+    final localUserId = supabase.auth.currentUser?.id;
+    final isLocalUser = nextStartingPlayer.userId == localUserId;
+
+    final message =
+        isLocalUser ? 'Du beginnst.' : '${nextStartingPlayer.username} beginnt';
+
+    final snackBar = SnackBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+      margin: EdgeInsets.symmetric(horizontal: 40).copyWith(
+        bottom: kToolbarHeight,
+      ),
+      content: ClipRRect(
+        borderRadius: BorderRadius.circular(9),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: 5,
+            sigmaY: 5,
+          ),
+          child: Container(
+            height: kToolbarHeight,
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: Colors.white.withAlpha((255 * 0.1).toInt())),
+              borderRadius: const BorderRadius.all(Radius.circular(9)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.7),
+                  Colors.white.withOpacity(0.1),
+                ],
+              ),
+            ),
+            child: Center(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: colorBlack,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,8 +113,6 @@ class GameScreen extends ConsumerWidget {
     ref.listen<GameState>(GameProviders.getStateProvider(ref, gameConfig),
         (previous, next) {
       final wasGameOver = previous?.isGameOver ?? false;
-      final gameNotifier =
-          ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
 
       if (next.isGameOver && !wasGameOver) {
         WidgetsBinding.instance.addPostFrameCallback(
@@ -62,6 +121,9 @@ class GameScreen extends ConsumerWidget {
               if (gameConfig.gameMode == GameMode.online) {
                 showOnlineGameOverDialog(context, ref, gameConfig);
               } else {
+                final gameNotifier = ref.read(
+                    GameProviders.getStateProvider(ref, gameConfig).notifier);
+
                 showGameOverDialog(
                   context,
                   gameConfig,
@@ -72,6 +134,14 @@ class GameScreen extends ConsumerWidget {
             }
           },
         );
+      } else if (wasGameOver && !next.isGameOver) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+
+        final nextStartingPlayer = next.currentPlayer;
+
+        _showSnackBar(context, nextStartingPlayer);
       }
     });
 

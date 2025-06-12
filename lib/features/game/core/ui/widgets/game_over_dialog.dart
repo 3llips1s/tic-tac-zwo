@@ -41,9 +41,9 @@ class GameOverDialog extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                gameState.winningPlayer!.userName == 'Du'
-                    ? '${gameState.winningPlayer!.userName} gewinnst!'
-                    : '${gameState.winningPlayer!.userName} gewinnt!',
+                gameState.winningPlayer!.username == 'Du'
+                    ? '${gameState.winningPlayer!.username} gewinnst!'
+                    : '${gameState.winningPlayer!.username} gewinnt!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -167,9 +167,9 @@ void showGameOverDialog(
                       // message
                       Center(
                           child: Text(
-                    nextStartingPlayer.userName == 'Du'
-                        ? '${nextStartingPlayer.userName} beginnst.'
-                        : '${nextStartingPlayer.userName} beginnt.',
+                    nextStartingPlayer.username == 'Du'
+                        ? '${nextStartingPlayer.username} beginnst.'
+                        : '${nextStartingPlayer.username} beginnt.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

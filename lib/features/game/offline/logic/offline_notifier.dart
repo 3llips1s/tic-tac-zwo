@@ -40,7 +40,7 @@ class OfflineNotifier extends GameNotifier {
   void rematch() {
     final swappedPlayers = state.players
         .map((player) => Player(
-            userName: player.userName,
+            username: player.username,
             symbol: player.symbol == PlayerSymbol.X
                 ? PlayerSymbol.O
                 : PlayerSymbol.X,
@@ -52,10 +52,10 @@ class OfflineNotifier extends GameNotifier {
     );
 
     state = GameState.initial(swappedPlayers, newStartingPlayer).copyWith(
-        player1Score: player1Score,
-        player2Score: player2Score,
-        gamesPlayed: gamesPlayed,
-        winningCells: null);
+      player1Score: player1Score,
+      player2Score: player2Score,
+      winningCells: null,
+    );
 
     if (state.currentPlayer.isAI) {
       _scheduleAIMove();

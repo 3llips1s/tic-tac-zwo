@@ -28,8 +28,8 @@ class _PlayerNameDialogState extends State<PlayerNameDialog> {
   @override
   void initState() {
     super.initState();
-    player1Controller = TextEditingController(text: widget.players[0].userName);
-    player2Controller = TextEditingController(text: widget.players[1].userName);
+    player1Controller = TextEditingController(text: widget.players[0].username);
+    player2Controller = TextEditingController(text: widget.players[1].username);
   }
 
   void handleSubmittedNames() {
@@ -55,13 +55,13 @@ class _PlayerNameDialogState extends State<PlayerNameDialog> {
         ),
         const SizedBox(height: kToolbarHeight / 3),
         if (!widget.singlePlayerEdit ||
-            widget.players[0].userName == widget.players[0].userName)
+            widget.players[0].username == widget.players[0].username)
           _buildPlayerInput(
             context: context,
             symbol: widget.players[0].symbol,
             controller: player1Controller,
             enabled: !widget.singlePlayerEdit ||
-                widget.players[0].userName == widget.players[0].userName,
+                widget.players[0].username == widget.players[0].username,
           ),
         if (!widget.singlePlayerEdit)
           const SizedBox(height: kToolbarHeight / 3),

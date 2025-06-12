@@ -38,25 +38,25 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
     if (widget.gameMode == GameMode.offline) {
       players = [
-        Player(userName: 'Du', symbol: playerSymbols[0], isAI: false),
-        Player(userName: 'KI', symbol: playerSymbols[1], isAI: true),
+        Player(username: 'Du', symbol: playerSymbols[0], isAI: false),
+        Player(username: 'KI', symbol: playerSymbols[1], isAI: true),
       ];
     } else if (widget.gameMode == GameMode.pass) {
       players = [
-        Player(userName: 'Spieler 1', symbol: playerSymbols[0]),
-        Player(userName: 'Spieler 2', symbol: playerSymbols[1]),
+        Player(username: 'Spieler 1', symbol: playerSymbols[0]),
+        Player(username: 'Spieler 2', symbol: playerSymbols[1]),
       ];
     } else {
       players = [
-        Player(userName: 'Tic', symbol: playerSymbols[0]),
-        Player(userName: 'Tac', symbol: playerSymbols[1]),
+        Player(username: 'Tic', symbol: playerSymbols[0]),
+        Player(username: 'Tac', symbol: playerSymbols[1]),
       ];
     }
 
     print('Players initialized:');
     players.forEach((player) {
       print(
-          'Name: ${player.userName}, Symbol: ${player.symbol}, Is AI: ${player.isAI}');
+          'Name: ${player.username}, Symbol: ${player.symbol}, Is AI: ${player.isAI}');
     });
 
     startingPlayer =
@@ -70,8 +70,8 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       (String player1Name, String player2Name) {
         setState(() {
           players = [
-            Player(userName: player1Name, symbol: players[0].symbol),
-            Player(userName: player2Name, symbol: players[1].symbol),
+            Player(username: player1Name, symbol: players[0].symbol),
+            Player(username: player2Name, symbol: players[1].symbol),
           ];
         });
       },
@@ -283,7 +283,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
     final playerSymbol = _buildPlayerSymbol(player);
     const space = SizedBox(width: 30);
     final playerName = Text(
-      player.userName,
+      player.username,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 20,
             fontStyle: player.isAI ? FontStyle.italic : FontStyle.normal,

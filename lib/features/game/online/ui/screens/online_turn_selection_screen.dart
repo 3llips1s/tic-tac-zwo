@@ -75,7 +75,7 @@ class _OnlineTurnSelectionScreenState
 
   Player _createPlayer(Map<String, dynamic> playerData, PlayerSymbol symbol) {
     return Player(
-      userName: playerData['username'] ?? 'Unbekannt',
+      username: playerData['username'] ?? 'Unbekannt',
       userId: playerData['id'] ?? '',
       countryCode: playerData['country_code'] ?? '',
       symbol: symbol,
@@ -428,7 +428,7 @@ class _OnlineTurnSelectionScreenState
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          player.userName,
+          player.username,
           style: TextStyle(
             fontSize: 20,
             color: colorBlack,

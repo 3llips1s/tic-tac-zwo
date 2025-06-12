@@ -221,7 +221,7 @@ class OnlineGameService {
         }
 
         if (player1Score != null) updatePayload['player1_score'] = player1Score;
-        if (player2Score != null) updatePayload['player1_score'] = player2Score;
+        if (player2Score != null) updatePayload['player2_score'] = player2Score;
 
         if (player1Ready != null) updatePayload['player1_ready'] = player1Ready;
         if (player2Ready != null) updatePayload['player2_ready'] = player2Ready;
@@ -289,12 +289,23 @@ class OnlineGameService {
   // fetch points per round
   Future<int> getCorrectMoves(String gameSessionId, String playerId) async {
     try {
+      final sessionData = await _supabase
+          .from('game_sessions')
+          .select('current_game_started_at')
+          .eq('id', gameSessionId)
+          .single();
+
+      final String? gameStartTime = sessionData['current_game_started_at'];
+
+      if (gameStartTime == null) return 0;
+
       final count = await _supabase
           .from('game_rounds')
           .count(CountOption.exact)
           .eq('game_id', gameSessionId)
           .eq('player_id', playerId)
-          .eq('is_correct', true);
+          .eq('is_correct', true)
+          .gt('created_at', gameStartTime);
 
       return count;
     } catch (e) {
@@ -335,6 +346,10 @@ class OnlineGameService {
 
   Future<void> resetSessionForRematch(
       String gameSessionId, String newStarterId) async {
+    if (_updateDebounceTimers[gameSessionId]?.isActive ?? false) {
+      _updateDebounceTimers[gameSessionId]!.cancel();
+    }
+    _updateDebounceTimers.remove(gameSessionId);
     try {
       print(
           '[OnlineGameService] Resetting session $gameSessionId for rematch. New starter: $newStarterId.');
@@ -351,6 +366,7 @@ class OnlineGameService {
         'player1_ready': false,
         'player2_ready': false,
         'online_game_phase': OnlineGamePhase.waiting.string,
+        'current_game_started_at': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
       print('[OnlineGameService] Session $gameSessionId reset successfully.');
     } catch (e) {
