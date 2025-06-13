@@ -228,7 +228,13 @@ class OnlineGameNotifier extends GameNotifier {
     final bool isCorrectMove = currentNoun.article == selectedArticle;
     final Player previousPlayer = state.currentPlayer;
 
+    var updatedBoard = List<String?>.from(state.board);
+    if (isCorrectMove) {
+      updatedBoard[cellIndex] = previousPlayer.symbolString;
+    }
+
     state = state.copyWith(
+      board: updatedBoard,
       revealedArticle: selectedArticle,
       revealedArticleIsCorrect: isCorrectMove,
       articleRevealedAt: DateTime.now(),
@@ -236,12 +242,6 @@ class OnlineGameNotifier extends GameNotifier {
       onlineGamePhase: OnlineGamePhase.articleRevealed,
       lastPlayedPlayer: previousPlayer,
     );
-
-    // active player determines outcome
-    var updatedBoard = List<String?>.from(state.board);
-    if (isCorrectMove) {
-      updatedBoard[cellIndex] = previousPlayer.symbolString;
-    }
 
     final (gameResult, winningPattern) = state.checkWinner(board: updatedBoard);
     final bool isGameOver = gameResult != null;
@@ -551,18 +551,30 @@ class OnlineGameNotifier extends GameNotifier {
       initiateNewGameAfterRematch();
     }
 
-    // reset ui for rematch
+    // reset ui and symbols for rematch
     if (!serverIsGameOver && previousState.isGameOver) {
       _gameOverHandled = false;
 
-      final List<Player> newPlayersList = [state.players[1], state.players[0]];
+      final Player previousRoundPlayer1 = previousState.players[0];
+      final Player previousRoundPlayer2 = previousState.players[1];
+      final newStarterId =
+          previousRoundPlayer1.userId == previousState.lastStarterId
+              ? previousRoundPlayer2.userId!
+              : previousRoundPlayer1.userId!;
 
-      final newStarterId = state.players
-          .firstWhere((player) => player.userId != state.lastStarterId)
-          .userId!;
+      final Player starter = newStarterId == previousRoundPlayer1.userId
+          ? previousRoundPlayer1
+          : previousRoundPlayer2;
+      final Player opponent = newStarterId == previousRoundPlayer1.userId
+          ? previousRoundPlayer2
+          : previousRoundPlayer1;
 
-      final newStartingPlayer =
-          newPlayersList.firstWhere((player) => player.userId == newStarterId);
+      final List<Player> newPlayersList = [
+        starter.copyWith(symbol: previousState.players[0].symbol),
+        opponent.copyWith(symbol: previousState.players[1].symbol),
+      ];
+
+      final newStartingPlayer = newPlayersList[0];
 
       state = state.copyWith(
         pointsEarnedPerGame: null,
@@ -573,6 +585,11 @@ class OnlineGameNotifier extends GameNotifier {
         players: newPlayersList,
         startingPlayer: newStartingPlayer,
       );
+
+      if (_isLocalPlayerTurn) {
+        _startInactivityTimer();
+      }
+
       print(
           '[OnlineGameNotifier] Final state after remote update: Phase: ${state.onlineGamePhase}, isLocalTurn: $_isLocalPlayerTurn, CurrentPlayerID: ${state.currentPlayerId}');
     }

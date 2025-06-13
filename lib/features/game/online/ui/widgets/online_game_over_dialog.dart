@@ -10,47 +10,53 @@ import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart
 
 import '../../../../../config/game_config/constants.dart';
 
-class _OnlineGameOverDialogContent extends ConsumerWidget {
+class _OnlineGameOverDialogContent extends ConsumerStatefulWidget {
   final GameConfig gameConfig;
-
   const _OnlineGameOverDialogContent({required this.gameConfig});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final gameState =
-        ref.watch(GameProviders.getStateProvider(ref, gameConfig));
-    final status = gameState.onlineRematchStatus;
+  ConsumerState<_OnlineGameOverDialogContent> createState() =>
+      _OnlineGameOverDialogContentState();
+}
 
-    // determine whether to show rematch ui
-    final showRematchUI = status == OnlineRematchStatus.localOffered ||
-        status == OnlineRematchStatus.remoteOffered;
+class _OnlineGameOverDialogContentState
+    extends ConsumerState<_OnlineGameOverDialogContent> {
+  late OnlineRematchStatus _uiStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _uiStatus = ref
+        .read(GameProviders.getStateProvider(ref, widget.gameConfig))
+        .onlineRematchStatus;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<OnlineRematchStatus>(
+      GameProviders.getStateProvider(ref, widget.gameConfig)
+          .select((state) => state.onlineRematchStatus),
+      (previous, next) {
+        if (_uiStatus != OnlineRematchStatus.bothAccepted) {
+          if (mounted) {
+            setState(() {
+              _uiStatus = next;
+            });
+          }
+        }
+      },
+    );
 
     Widget currentView;
 
-    if (status == OnlineRematchStatus.bothAccepted) {
-      currentView = Container(
-        height: 280,
-        key: const ValueKey('starting_new_game'),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Starte neues Spiel...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 18,
-                    color: Colors.green,
-                  ),
-            ),
-          ],
-        ),
-      );
-    } else if (showRematchUI) {
+    if (_uiStatus == OnlineRematchStatus.localOffered ||
+        _uiStatus == OnlineRematchStatus.remoteOffered ||
+        _uiStatus == OnlineRematchStatus.bothAccepted) {
       currentView = _OnlineRematchStatusView(
-          key: const ValueKey('rematch_view'), gameConfig: gameConfig);
+          key: const ValueKey('rematch_view'), gameConfig: widget.gameConfig);
     } else {
       currentView = _InitialGameOverView(
-          key: const ValueKey('initial_view'), gameConfig: gameConfig);
+          key: const ValueKey('initial_view'), gameConfig: widget.gameConfig);
     }
 
     return AnimatedSwitcher(
@@ -114,7 +120,7 @@ class _InitialGameOverView extends ConsumerWidget {
                 title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: colorBlack,
+                      color: Colors.black87,
                       fontSize: 20,
                     ),
               ),
@@ -142,14 +148,7 @@ class _InitialGameOverView extends ConsumerWidget {
                     ),
                   ),
                   if (pointsEarned != null)
-                    Text('+ $pointsEarned',
-                            style: TextStyle(
-                              fontSize: 22,
-                              color: Colors.lightGreenAccent,
-                            )).animate(delay: 600.ms).fadeIn(
-                          duration: 900.ms,
-                          curve: Curves.easeInOut,
-                        )
+                    _displayPointsEarned(pointsEarned)
                   else
                     const SizedBox(width: 40),
                 ],
@@ -202,6 +201,36 @@ class _InitialGameOverView extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Widget _displayPointsEarned(int points) {
+    return Text(
+      '+ $points',
+      style: TextStyle(
+        fontSize: 22,
+        color: Colors.lightGreenAccent,
+        shadows: [
+          Shadow(
+            color: Colors.lightGreenAccent,
+            blurRadius: 10.0,
+          ),
+          Shadow(
+            color: colorBlack.withOpacity(0.5),
+            blurRadius: 1.0,
+            offset: Offset(1, 1),
+          )
+        ],
+      ),
+    )
+        .animate(delay: 300.ms)
+        .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+        .scale(
+            duration: 900.ms,
+            curve: Curves.elasticOut,
+            begin: const Offset(0.1, 0.1))
+        .then(delay: 200.ms)
+        .shimmer(duration: 600.ms, color: colorWhite, angle: 45)
+        .shake(hz: 5, duration: 600.ms, curve: Curves.easeInOut);
   }
 }
 
@@ -266,6 +295,8 @@ class _OnlineRematchStatusView extends ConsumerWidget {
           ),
         ];
         break;
+      case OnlineRematchStatus.bothAccepted:
+        message = 'Lade neues Spiel...';
       default:
         message = 'Status wird geladen...';
         break;
@@ -284,7 +315,8 @@ class _OnlineRematchStatusView extends ConsumerWidget {
                 message,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorBlack,
+                      color:
+                          _rematchMessageColor(gameState.onlineRematchStatus),
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                     ),
@@ -325,6 +357,19 @@ class _OnlineRematchStatusView extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Color _rematchMessageColor(OnlineRematchStatus status) {
+    switch (status) {
+      case OnlineRematchStatus.localOffered:
+        return Colors.black54;
+      case OnlineRematchStatus.remoteOffered:
+        return Colors.yellowAccent;
+      case OnlineRematchStatus.bothAccepted:
+        return Colors.lightGreenAccent;
+      default:
+        return Colors.blueGrey;
+    }
   }
 }
 

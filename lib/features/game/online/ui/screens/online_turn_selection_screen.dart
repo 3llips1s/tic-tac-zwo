@@ -512,7 +512,7 @@ class _OnlineTurnSelectionScreenState
       return Text(
         "Warten auf Gegner...",
         style: TextStyle(
-          color: Colors.amber,
+          color: Colors.orange[800]?.withOpacity(0.5),
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -521,7 +521,7 @@ class _OnlineTurnSelectionScreenState
       return Text(
         "Gegner ist bereit. Drücke Play!",
         style: TextStyle(
-          color: colorRed.withOpacity(0.5),
+          color: Colors.orange[800]?.withOpacity(0.5),
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),

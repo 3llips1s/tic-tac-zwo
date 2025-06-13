@@ -44,43 +44,26 @@ class GameScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
       margin: EdgeInsets.symmetric(horizontal: 40).copyWith(
-        bottom: kToolbarHeight,
+        bottom: kToolbarHeight / 2,
       ),
-      content: ClipRRect(
-        borderRadius: BorderRadius.circular(9),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: 5,
-            sigmaY: 5,
-          ),
-          child: Container(
-            height: kToolbarHeight,
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                  color: Colors.white.withAlpha((255 * 0.1).toInt())),
-              borderRadius: const BorderRadius.all(Radius.circular(9)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.7),
-                  Colors.white.withOpacity(0.1),
-                ],
-              ),
-            ),
-            child: Center(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: colorBlack,
-                    ),
-              ),
-            ),
+      content: Container(
+        height: kToolbarHeight,
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          borderRadius: const BorderRadius.all(Radius.circular(9)),
+        ),
+        child: Center(
+          child: Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: colorWhite,
+                ),
           ),
         ),
       ),
