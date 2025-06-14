@@ -117,7 +117,9 @@ class GameScreen extends ConsumerWidget {
             }
           },
         );
-      } else if (wasGameOver && !next.isGameOver) {
+      } else if (wasGameOver &&
+          !next.isGameOver &&
+          gameConfig.gameMode == GameMode.online) {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }
