@@ -31,11 +31,14 @@ class _LeaderboardListState extends State<LeaderboardList> {
   Widget build(BuildContext context) {
     return SliverList.separated(
       itemCount: widget.players.length + 1,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 6),
       itemBuilder: (context, index) {
         if (index == 0) {
           return Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             child: _buildHeader(context),
           );
         }
@@ -51,29 +54,38 @@ class _LeaderboardListState extends State<LeaderboardList> {
             isExpanded,
             onTap: () => _handleExpansion(playerIndex),
           ),
-        );
+        )
+            .animate(delay: (600 + (playerIndex * 50)).ms)
+            .fadeIn(duration: 600.ms)
+            .slideX(
+              begin: -0.3,
+              duration: 600.ms,
+            );
       },
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    final headerTheme = Theme.of(context).textTheme.titleMedium;
+    final headerTheme = Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: colorGrey600,
+        );
 
     return Row(
       children: [
         SizedBox(
-          width: 50,
+          width: 75,
           child: Text(
             '#',
             textAlign: TextAlign.center,
             style: headerTheme,
           ),
         ),
-        const SizedBox(width: 12),
         Expanded(
           flex: 3,
           child: Text(
             'Spieler',
+            textAlign: TextAlign.start,
             style: headerTheme,
           ),
         ),
@@ -85,12 +97,12 @@ class _LeaderboardListState extends State<LeaderboardList> {
             style: headerTheme,
           ),
         ),
-        const SizedBox(width: 24),
+        const SizedBox(width: 32),
       ],
     );
   }
 
-  Widget _StatCapsule({
+  Widget _statCapsule({
     required String value,
     required String label,
     Color valueColor = colorBlack,
@@ -133,10 +145,10 @@ class _LeaderboardListState extends State<LeaderboardList> {
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: isCurrentUser ? Colors.blue.withOpacity(0.1) : colorWhite,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isCurrentUser ? Colors.blue : colorGrey300,
             width: isCurrentUser ? 1.5 : 1,
@@ -158,13 +170,13 @@ class _LeaderboardListState extends State<LeaderboardList> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 24),
                 Flag(
                   countryCode: player.countryCode,
-                  height: 20,
-                  width: 30,
+                  height: 12,
+                  width: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Text(
                   player.username,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -180,15 +192,16 @@ class _LeaderboardListState extends State<LeaderboardList> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Colors.amber.shade600,
+                      color: Colors.green.shade800,
                     ),
                   ),
                 ),
+                SizedBox(width: 8),
                 Icon(
                   isExpanded
                       ? Icons.expand_less_rounded
                       : Icons.expand_more_rounded,
-                  color: colorGrey600,
+                  color: colorGrey400,
                 )
               ],
             ),
@@ -199,21 +212,23 @@ class _LeaderboardListState extends State<LeaderboardList> {
                 padding: const EdgeInsets.only(top: 16),
                 child: Column(
                   children: [
-                    const Divider(),
+                    const Divider(
+                      color: colorGrey100,
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _StatCapsule(
+                        _statCapsule(
                           value: '${player.gamesPlayed}',
-                          label: 'Sp',
+                          label: 'Spiele',
                         ),
-                        _StatCapsule(
+                        _statCapsule(
                           value:
                               '${player.gamesWon}-${player.gamesDrawn}-$losses',
                           label: 'S-U-N',
                         ),
-                        _StatCapsule(
+                        _statCapsule(
                           value: '${player.accuracy.toStringAsFixed(0)}%',
                           label: 'Akk',
                           valueColor: getAccuracyColor(player.accuracy),

@@ -1,4 +1,3 @@
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
@@ -60,12 +59,13 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             // refresh button
             Positioned(
               top: 40,
-              right: 16,
+              right: 4,
               child: IconButton(
                 onPressed: _refresh,
                 icon: Icon(
                   Icons.refresh_rounded,
                   color: Colors.black54,
+                  size: 25,
                 ),
               ),
             ),
@@ -154,16 +154,13 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
         if (state.top3.isNotEmpty)
           SliverToBoxAdapter(
             child: PodiumWidget(top3Players: state.top3),
-          ).animate().fadeIn(delay: 300.ms, duration: 600.ms),
+          ),
 
         // remaining
         if (state.remaining.isNotEmpty)
           LeaderboardList(
             players: state.remaining,
-          )
-              .animate()
-              .slideY(begin: 0.1, delay: 600.ms, duration: 600.ms)
-              .fadeIn(),
+          ),
 
         SliverToBoxAdapter(
           child: SizedBox(height: kToolbarHeight),
