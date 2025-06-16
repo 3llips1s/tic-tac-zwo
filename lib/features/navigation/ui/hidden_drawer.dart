@@ -162,8 +162,8 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   const SizedBox(width: 10),
                   Flag(
                     countryCode: countryCode,
-                    height: 15,
-                    width: 22.5,
+                    height: 16,
+                    width: 24,
                   )
                 ],
               ),
@@ -173,27 +173,45 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
             Column(
               children: drawerItems
                   .map(
-                    (drawerItem) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 30),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            drawerItem['title'],
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: colorWhite, fontSize: 16),
-                          ),
-                          const SizedBox(
-                            width: 15,
-                          ),
-                          Icon(
-                            drawerItem['icon'],
-                            color: colorYellowAccent,
-                            size: 30,
-                          ),
-                        ],
+                    (drawerItem) => InkWell(
+                      onTap: () {
+                        final routeName = drawerItem['route'] as String;
+
+                        if (routeName == RouteNames.leaderboard) {
+                          final userId = authService.currentUserId;
+                          if (userId != null) {
+                            Navigator.pushNamed(
+                              context,
+                              routeName,
+                              arguments: {'userId': userId},
+                            );
+                          }
+                        } else {
+                          Navigator.pushNamed(context, routeName);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              drawerItem['title'],
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: colorWhite, fontSize: 16),
+                            ),
+                            const SizedBox(
+                              width: 15,
+                            ),
+                            Icon(
+                              drawerItem['icon'],
+                              color: colorYellowAccent,
+                              size: 30,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
@@ -234,13 +252,16 @@ final drawerItems = <Map<String, dynamic>>[
   {
     'icon': Icons.leaderboard_rounded,
     'title': 'l e a d e r b o a r d',
+    'route': RouteNames.leaderboard,
   },
   {
     'icon': Icons.favorite_rounded,
     'title': 'w o r t s c h a t z',
+    'route': RouteNames.wortschatz,
   },
   {
     'icon': Icons.info_outline_rounded,
     'title': 'i n f o',
+    'route': RouteNames.info,
   }
 ];

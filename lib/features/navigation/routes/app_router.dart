@@ -4,6 +4,7 @@ import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/matchmaking_screen.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/screens/online_turn_selection_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
+import 'package:tic_tac_zwo/features/leaderboard/ui/screens/leaderboard_screen.dart';
 
 import '../../../config/game_config/config.dart';
 import '../../game/core/ui/screens/game_screen.dart';
@@ -137,6 +138,32 @@ class AppRouter {
               opacity: CurvedAnimation(
                 parent: animation,
                 curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      // leaderboard
+      case RouteNames.leaderboard:
+        final arguments = settings.arguments as Map<String, dynamic>?;
+        final userId = arguments?['userId'] as String?;
+
+        if (userId == null) {
+          return PageRouteBuilder(
+            pageBuilder: (context, _, __) => const HomeScreen(),
+          );
+        }
+
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              LeaderboardScreen(userId: userId),
+          transitionDuration: const Duration(milliseconds: 900),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeIn,
               ),
               child: child,
             );
