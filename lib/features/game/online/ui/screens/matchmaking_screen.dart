@@ -209,7 +209,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     );
 
     return PopScope(
-      canPop: true,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
           final currentState = ref.read(matchmakingStateProvider).value;

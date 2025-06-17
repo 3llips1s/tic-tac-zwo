@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
@@ -16,15 +15,15 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/timer_display.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart';
 import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
 import 'package:tic_tac_zwo/features/navigation/navigation_provider.dart';
+import 'package:tic_tac_zwo/features/wortschatz/logic/saved_nouns_notifier.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../../online/ui/widgets/online_game_over_dialog.dart';
-import '../../data/models/player.dart';
 
-class GameScreen extends ConsumerWidget {
+class GameScreen extends ConsumerStatefulWidget {
   final GameConfig gameConfig;
 
   const GameScreen({
@@ -32,13 +31,23 @@ class GameScreen extends ConsumerWidget {
     required this.gameConfig,
   });
 
-  void _showSnackBar(BuildContext context, Player nextStartingPlayer) {
-    final supabase = Supabase.instance.client;
-    final localUserId = supabase.auth.currentUser?.id;
-    final isLocalUser = nextStartingPlayer.userId == localUserId;
+  @override
+  ConsumerState<GameScreen> createState() => _GameScreenState();
+}
 
-    final message =
-        isLocalUser ? 'Du beginnst.' : '${nextStartingPlayer.username} beginnt';
+class _GameScreenState extends ConsumerState<GameScreen>
+    with WidgetsBindingObserver {
+  bool _isCurrentNounSaved = false;
+
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    Color? backgroundColor,
+    Color? textColor,
+  }) {
+    final activeBackgroundColor =
+        backgroundColor ?? colorBlack.withOpacity(0.8);
+    final activeTextColor = textColor ?? colorWhite;
 
     final snackBar = SnackBar(
       backgroundColor: Colors.transparent,
@@ -52,17 +61,18 @@ class GameScreen extends ConsumerWidget {
         height: kToolbarHeight,
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.black87,
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          color: activeBackgroundColor,
+          border: Border.all(color: activeTextColor.withOpacity(0.1)),
           borderRadius: const BorderRadius.all(Radius.circular(9)),
         ),
         child: Center(
           child: Text(
             message,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: colorWhite,
+                  color: activeTextColor,
                 ),
           ),
         ),
@@ -72,70 +82,134 @@ class GameScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
+  Future<void> _checkIfCurrentNounIsSaved(String nounId) async {
+    final savedNounsNotifier = ref.read(savedNounsProvider.notifier);
+    final bool saved = await savedNounsNotifier.isNounSaved(nounId);
+    if (mounted) {
+      setState(() {
+        _isCurrentNounSaved = saved;
+      });
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     // navigation listener
-    ref.listen<NavigationTarget?>(navigationTargetProvider, (previous, next) {
-      if (next != null) {
-        String routeName;
-        switch (next) {
-          case NavigationTarget.home:
-            routeName = RouteNames.home;
-            break;
-          case NavigationTarget.matchmaking:
-            routeName = RouteNames.matchmaking;
-            break;
+    ref.listenManual<NavigationTarget?>(
+      navigationTargetProvider,
+      (previous, next) {
+        if (next != null) {
+          String routeName;
+          switch (next) {
+            case NavigationTarget.home:
+              routeName = RouteNames.home;
+              break;
+            case NavigationTarget.matchmaking:
+              routeName = RouteNames.matchmaking;
+              break;
+          }
+
+          Navigator.pushNamedAndRemoveUntil(
+              context, routeName, (route) => false);
+          ref.read(navigationTargetProvider.notifier).state = null;
         }
+      },
+      fireImmediately: false,
+    );
 
-        Navigator.pushNamedAndRemoveUntil(context, routeName, (route) => false);
-        ref.read(navigationTargetProvider.notifier).state = null;
-      }
-    });
+    // game over dialog listener
+    ref.listenManual<GameState>(
+      GameProviders.getStateProvider(ref, widget.gameConfig),
+      (previous, next) {
+        final wasGameOver = previous?.isGameOver ?? false;
 
-    // dialog trigger listener
-    ref.listen<GameState>(GameProviders.getStateProvider(ref, gameConfig),
-        (previous, next) {
-      final wasGameOver = previous?.isGameOver ?? false;
+        if (next.isGameOver && !wasGameOver) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) {
+              if (context.mounted) {
+                if (widget.gameConfig.gameMode == GameMode.online) {
+                  showOnlineGameOverDialog(context, ref, widget.gameConfig);
+                } else {
+                  final gameNotifier = ref.read(
+                      GameProviders.getStateProvider(ref, widget.gameConfig)
+                          .notifier);
 
-      if (next.isGameOver && !wasGameOver) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) {
-            if (context.mounted) {
-              if (gameConfig.gameMode == GameMode.online) {
-                showOnlineGameOverDialog(context, ref, gameConfig);
-              } else {
-                final gameNotifier = ref.read(
-                    GameProviders.getStateProvider(ref, gameConfig).notifier);
-
-                showGameOverDialog(
-                  context,
-                  gameConfig,
-                  next,
-                  () => gameNotifier.rematch(),
-                );
+                  showGameOverDialog(
+                    context,
+                    widget.gameConfig,
+                    next,
+                    () => gameNotifier.rematch(),
+                  );
+                }
               }
-            }
-          },
-        );
-      } else if (wasGameOver &&
-          !next.isGameOver &&
-          gameConfig.gameMode == GameMode.online) {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
+            },
+          );
+        } else if (wasGameOver &&
+            !next.isGameOver &&
+            widget.gameConfig.gameMode == GameMode.online) {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+
+          final nextStartingPlayer = next.currentPlayer;
+          final supabase = Supabase.instance.client;
+          final localUserId = supabase.auth.currentUser?.id;
+          final isLocalUser = nextStartingPlayer.userId == localUserId;
+          final message = isLocalUser
+              ? 'Du beginnst.'
+              : '${nextStartingPlayer.username} beginnt.';
+
+          _showSnackBar(context, message);
         }
+      },
+      fireImmediately: false,
+    );
+  }
 
-        final nextStartingPlayer = next.currentPlayer;
-
-        _showSnackBar(context, nextStartingPlayer);
-      }
-    });
-
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     final gameState =
-        ref.watch(GameProviders.getStateProvider(ref, gameConfig));
-    final isOnlineMode = gameConfig.gameMode == GameMode.online;
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
+    final currentNoun = gameState.currentNoun;
+    if (currentNoun != null) {
+      _checkIfCurrentNounIsSaved(currentNoun.id);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // todo: implement this functionality
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // when the goes to the background (e.g., pause game)
+    } else if (state == AppLifecycleState.resumed) {
+      // when the comes to the foreground (e.g., resume game)
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gameState =
+        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+
+    final isOnlineMode = widget.gameConfig.gameMode == GameMode.online;
     final onlineNotifier = isOnlineMode
-        ? ref.read(onlineGameStateNotifierProvider(gameConfig).notifier)
+        ? ref.read(onlineGameStateNotifierProvider(widget.gameConfig).notifier)
         : null;
+
+    final savedNounsNotifier = ref.read(savedNounsProvider.notifier);
+
+    final currentNoun = gameState.currentNoun;
 
     final bool activateSaveButton =
         gameState.selectedCellIndex != null && gameState.isTimerActive;
@@ -145,153 +219,205 @@ class GameScreen extends ConsumerWidget {
     final halfSpace = SizedBox(height: kToolbarHeight / 2);
     final quarterSpace = SizedBox(height: kToolbarHeight / 4);
 
-    if (gameState.isGameOver) {}
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          return;
+        }
 
-    return Scaffold(
-      backgroundColor: colorGrey300,
-      body: Container(
-        color: colorGrey300,
-        padding: EdgeInsets.only(bottom: 10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            space,
+        // TODO: implement onlinegamenotifier.exitgame logic
+        /*  final navigator = Navigator.of(context);
+        onlineNotifier?.exitGame(navigator); */
+      },
+      child: Scaffold(
+        backgroundColor: colorGrey300,
+        body: Container(
+          color: colorGrey300,
+          padding: EdgeInsets.only(bottom: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              space,
 
-            // timer
-            Align(
-              alignment: Alignment.center,
-              child: AnimatedSwitcher(
-                duration: Duration(milliseconds: 600),
-                switchInCurve: Curves.easeInOut,
-                switchOutCurve: Curves.easeInOut,
-                child: _buildTimerWidget(context, ref, gameConfig, gameState,
-                    isOnlineMode, onlineNotifier),
+              // timer
+              Align(
+                alignment: Alignment.center,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 600),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  child: _buildTimerWidget(context, ref, widget.gameConfig,
+                      gameState, isOnlineMode, onlineNotifier),
+                ),
+              ).animate().fadeIn(
+                    delay: 3300.ms,
+                    duration: 600.ms,
+                    curve: Curves.easeInOut,
+                  ),
+
+              halfSpace,
+
+              // players
+              PlayerInfo(gameConfig: widget.gameConfig)
+                  .animate(delay: 1800.ms)
+                  .slideY(
+                    begin: -0.5,
+                    end: 0.0,
+                    duration: 1500.ms,
+                    curve: Curves.easeInOut,
+                  )
+                  .fadeIn(
+                    duration: 1500.ms,
+                    curve: Curves.easeInOut,
+                  ),
+
+              quarterSpace,
+
+              // word display
+              TurnNounDisplay(gameConfig: widget.gameConfig).animate().fadeIn(
+                    delay: 3300.ms,
+                    duration: 600.ms,
+                    curve: Curves.easeInOut,
+                  ),
+
+              quarterSpace,
+
+              // game board
+              Center(
+                child: GameBoard(
+                  gameConfig: widget.gameConfig,
+                ),
+              )
+                  .animate(
+                    delay: 300.ms,
+                  )
+                  .scale(
+                    duration: 1500.ms,
+                    curve: Curves.easeInOut,
+                  )
+                  .fadeIn(
+                    begin: 0.0,
+                    duration: 1500.ms,
+                    curve: Curves.easeInOut,
+                  ),
+
+              space,
+
+              // article buttons
+              ArticleButtons(
+                gameConfig: widget.gameConfig,
+                overlayColor:
+                    gameState.getArticleOverlayColor(gameState.currentPlayer),
               ),
-            ).animate().fadeIn(
-                  delay: 3300.ms,
-                  duration: 600.ms,
-                  curve: Curves.easeInOut,
+
+              halfSpace,
+
+              // save word
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 35),
+                  child: GestureDetector(
+                    onTap: activateSaveButton
+                        ? () async {
+                            if (_isCurrentNounSaved) {
+                              _showSnackBar(
+                                context,
+                                '${currentNoun!.noun} ist schon gespeichert!',
+                                backgroundColor: colorWhite,
+                                textColor: Colors.black54,
+                              );
+                            } else {
+                              final bool success = await savedNounsNotifier
+                                  .addNoun(currentNoun!);
+                              if (success) {
+                                _showSnackBar(
+                                  context,
+                                  '${currentNoun.noun} gespeichert!',
+                                  backgroundColor: colorWhite,
+                                  textColor: colorBlack,
+                                );
+                                setState(() {
+                                  _isCurrentNounSaved = true;
+                                });
+                              } else {
+                                _showSnackBar(
+                                  context,
+                                  '${currentNoun.noun} nicht gespeichert!',
+                                  backgroundColor: colorRed,
+                                  textColor: colorWhite,
+                                );
+                              }
+                            }
+                          }
+                        : null,
+                    child: Container(
+                      height: 40,
+                      width: 40,
+                      color: Colors.transparent,
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/images/bookmark.svg',
+                          colorFilter: activateSaveButton
+                              ? ColorFilter.mode(
+                                  _isCurrentNounSaved
+                                      ? colorYellow
+                                      : colorBlack,
+                                  BlendMode.srcIn,
+                                )
+                              : ColorFilter.mode(
+                                  Colors.black26,
+                                  BlendMode.srcIn,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-
-            halfSpace,
-
-            // players
-            PlayerInfo(gameConfig: gameConfig)
-                .animate(delay: 1800.ms)
-                .slideY(
-                  begin: -0.5,
-                  end: 0.0,
-                  duration: 1500.ms,
-                  curve: Curves.easeInOut,
-                )
-                .fadeIn(
-                  duration: 1500.ms,
-                  curve: Curves.easeInOut,
-                ),
-
-            quarterSpace,
-
-            // word display
-            TurnNounDisplay(gameConfig: gameConfig).animate().fadeIn(
-                  delay: 3300.ms,
-                  duration: 600.ms,
-                  curve: Curves.easeInOut,
-                ),
-
-            quarterSpace,
-
-            // game board
-            Center(
-              child: GameBoard(
-                gameConfig: gameConfig,
               ),
-            )
-                .animate(
-                  delay: 300.ms,
-                )
-                .scale(
-                  duration: 1500.ms,
-                  curve: Curves.easeInOut,
-                )
-                .fadeIn(
-                  begin: 0.0,
-                  duration: 1500.ms,
-                  curve: Curves.easeInOut,
-                ),
 
-            space,
-
-            // article buttons
-            ArticleButtons(
-              gameConfig: gameConfig,
-              overlayColor:
-                  gameState.getArticleOverlayColor(gameState.currentPlayer),
-            ),
-
-            halfSpace,
-
-            // save word
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 35),
-                child: GestureDetector(
-                  onTap: activateSaveButton ? () {} : () {},
+              // back home
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, bottom: 10),
                   child: Container(
                     height: 40,
                     width: 40,
-                    color: Colors.transparent,
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
                     child: Center(
-                      child: SvgPicture.asset(
-                        'assets/images/bookmark.svg',
-                        colorFilter: activateSaveButton
-                            ? ColorFilter.mode(
-                                colorBlack,
-                                BlendMode.srcIn,
-                              )
-                            : ColorFilter.mode(
-                                Colors.black26,
-                                BlendMode.srcIn,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+                      child: IconButton(
+                        onPressed: activateHomeButton
+                            ? () => Navigator.pushNamedAndRemoveUntil(
+                                  context,
+                                  RouteNames.home,
+                                  (route) => false,
+                                )
 
-            // back home
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20, bottom: 10),
-                child: Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Center(
-                    child: IconButton(
-                      onPressed: activateHomeButton
-                          ? () => Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                RouteNames.home,
-                                (route) => false,
-                              )
-                          : () => {},
-                      icon: Icon(
-                        Icons.home_rounded,
-                        color: colorWhite,
-                        size: 24,
+                            // todo: implement onlinegamenotifer.exitgame
+                            /*  
+                                () {
+                                final navigator = Navigator.of(context);
+                                onlineGameNotifier.exitGame(navigator);
+                                }
+                                */
+                            : null,
+                        icon: Icon(
+                          Icons.home_rounded,
+                          color: colorWhite,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

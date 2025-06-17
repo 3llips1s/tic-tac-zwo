@@ -180,14 +180,19 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                         if (routeName == RouteNames.leaderboard) {
                           final userId = authService.currentUserId;
                           if (userId != null) {
-                            Navigator.pushNamed(
+                            Navigator.pushNamedAndRemoveUntil(
                               context,
                               routeName,
+                              (route) => false,
                               arguments: {'userId': userId},
                             );
                           }
                         } else {
-                          Navigator.pushNamed(context, routeName);
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            routeName,
+                            (route) => false,
+                          );
                         }
                       },
                       child: Padding(

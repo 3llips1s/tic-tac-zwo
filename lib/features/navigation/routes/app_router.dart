@@ -5,6 +5,7 @@ import 'package:tic_tac_zwo/features/game/online/ui/screens/matchmaking_screen.d
 import 'package:tic_tac_zwo/features/game/online/ui/screens/online_turn_selection_screen.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/screens/wordle_game_screen.dart';
 import 'package:tic_tac_zwo/features/leaderboard/ui/screens/leaderboard_screen.dart';
+import 'package:tic_tac_zwo/features/wortschatz/ui/wortschatz_screen.dart';
 
 import '../../../config/game_config/config.dart';
 import '../../game/core/ui/screens/game_screen.dart';
@@ -175,6 +176,23 @@ class AppRouter {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
               WordleGameScreen(),
+          transitionDuration: Duration(milliseconds: 900),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      // wortschatz
+      case RouteNames.wortschatz:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              WortschatzScreen(),
           transitionDuration: Duration(milliseconds: 900),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
