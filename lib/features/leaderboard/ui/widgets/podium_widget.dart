@@ -39,8 +39,16 @@ class PodiumWidget extends StatelessWidget {
             color: const Color(0xFFC0C0C0),
           )
               .animate()
-              .slideY(begin: 0.5, delay: 600.ms, duration: 600.ms)
-              .fadeIn(),
+              .slideY(
+                begin: -0.3,
+                delay: 600.ms,
+                duration: 900.ms,
+                curve: Curves.easeInOut,
+              )
+              .fadeIn(
+                curve: Curves.easeInOut,
+                duration: 900.ms,
+              ),
 
           // 1st
           _buildPodiumPlace(
@@ -50,8 +58,16 @@ class PodiumWidget extends StatelessWidget {
             color: const Color(0xFFD4AF37),
           )
               .animate()
-              .slideY(begin: 0.5, delay: 300.ms, duration: 600.ms)
-              .fadeIn(),
+              .slideY(
+                begin: -0.3,
+                delay: 300.ms,
+                duration: 900.ms,
+                curve: Curves.easeInOut,
+              )
+              .fadeIn(
+                curve: Curves.easeInOut,
+                duration: 900.ms,
+              ),
 
           // 3rd
           _buildPodiumPlace(
@@ -61,8 +77,16 @@ class PodiumWidget extends StatelessWidget {
             color: const Color(0xFFCD7F32),
           )
               .animate()
-              .slideY(begin: 0.5, delay: 900.ms, duration: 600.ms)
-              .fadeIn()
+              .slideY(
+                begin: -0.3,
+                delay: 900.ms,
+                duration: 900.ms,
+                curve: Curves.easeInOut,
+              )
+              .fadeIn(
+                curve: Curves.easeInOut,
+                duration: 900.ms,
+              )
         ],
       ),
     );
@@ -89,6 +113,21 @@ class PodiumWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Text(
+                  '🏆 ${player.gamesWon}    🎯 ${player.accuracy.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                  ),
+                ),
+              )
+            ],
           ),
         )
       ],
@@ -140,7 +179,6 @@ class _PlayerInfoCard extends StatelessWidget {
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Flag(
                           countryCode: player.countryCode,
@@ -155,6 +193,7 @@ class _PlayerInfoCard extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
+                          textAlign: TextAlign.start,
                           overflow: TextOverflow.ellipsis,
                         ),
                       )
@@ -169,19 +208,68 @@ class _PlayerInfoCard extends StatelessWidget {
                       color: Colors.green.shade700,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '🏆 ${player.gamesWon}  |  🎯 ${player.accuracy.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  )
                 ],
               ),
             ),
           ],
         ));
+  }
+}
+
+class _PlayerInfoCardPlaceHolder extends StatelessWidget {
+  final LeaderboardEntry player;
+
+  const _PlayerInfoCardPlaceHolder({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final isCurrentUser = player.isCurrentUser;
+
+    return Container(
+      width: 100,
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: isCurrentUser
+            ? Colors.blue.withOpacity(0.25)
+            : colorWhite.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isCurrentUser
+              ? Colors.blue.withOpacity(0.4)
+              : colorWhite.withOpacity(0.3),
+          width: isCurrentUser ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Flag(countryCode: player.countryCode, height: 10, width: 15),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  player.username,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                  textAlign: TextAlign.start,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${player.points} Pkt',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.green.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

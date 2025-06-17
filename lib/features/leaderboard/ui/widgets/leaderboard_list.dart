@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
@@ -39,7 +38,9 @@ class _LeaderboardListState extends State<LeaderboardList> {
               horizontal: 16,
               vertical: 16,
             ),
-            child: _buildHeader(context),
+            child: _buildHeader(context)
+                .animate(delay: 1200.ms)
+                .fadeIn(duration: 600.ms),
           );
         }
 
@@ -55,12 +56,9 @@ class _LeaderboardListState extends State<LeaderboardList> {
             onTap: () => _handleExpansion(playerIndex),
           ),
         )
-            .animate(delay: (600 + (playerIndex * 50)).ms)
+            .animate(delay: (1800 + (playerIndex * 50)).ms)
             .fadeIn(duration: 600.ms)
-            .slideX(
-              begin: -0.3,
-              duration: 600.ms,
-            );
+            .slideX(begin: -0.3, duration: 900.ms, curve: Curves.easeInOut);
       },
     );
   }

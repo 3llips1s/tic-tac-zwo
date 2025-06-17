@@ -82,7 +82,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                     (route) => false,
                   );
                 },
-                backgroundColor: colorBlack,
+                backgroundColor: colorBlack.withOpacity(0.75),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
                 child: const Icon(
                   Icons.home_rounded,
                   color: colorWhite,

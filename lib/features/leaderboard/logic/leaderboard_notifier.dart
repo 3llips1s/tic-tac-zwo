@@ -120,15 +120,20 @@ List<Map<String, dynamic>> _generateMockLeaderboardData({
     'CyberCat',
     'ZeroCool',
     'AcidBurn',
-    'LordNikon',
+    'Marindany',
     'Cereal',
     'Phantom',
-    'Neo',
+    'Gaicha',
     'Trinity',
     'Morpheus',
     'Rogue',
     'Ghost',
-    'Viper'
+    'Viper',
+    'Chwakie',
+    'Yoyo',
+    'Boi',
+    'Neo',
+    'Bo'
   ];
 
   final List<String> mockCountries = [
