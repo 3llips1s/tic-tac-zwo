@@ -194,6 +194,8 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                         padding: const EdgeInsets.symmetric(vertical: 30),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
                               drawerItem['title'],

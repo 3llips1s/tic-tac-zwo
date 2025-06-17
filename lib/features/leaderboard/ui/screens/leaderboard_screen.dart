@@ -48,8 +48,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
         child: Stack(
           children: [
             RefreshIndicator(
-              backgroundColor: colorBlack,
-              color: colorYellowAccent,
+              backgroundColor: colorGrey500,
+              color: colorBlack,
               strokeWidth: 1.5,
               elevation: 3.0,
               onRefresh: _refresh,

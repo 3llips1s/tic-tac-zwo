@@ -163,7 +163,7 @@ class AppRouter {
             return FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,
-                curve: Curves.easeIn,
+                curve: Curves.easeInOut,
               ),
               child: child,
             );

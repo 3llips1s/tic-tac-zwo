@@ -29,6 +29,7 @@ void main() async {
     ..registerAdapters();
 
   await Hive.openBox<GermanNounHive>('german_nouns');
+  await Hive.openBox<GermanNounHive>('saved_nouns');
   await Hive.openBox('sync_info');
   await Hive.openBox('user_preferences');
 

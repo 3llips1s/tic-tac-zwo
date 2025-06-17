@@ -39,7 +39,7 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
     if (widget.gameMode == GameMode.offline) {
       players = [
         Player(username: 'Du', symbol: playerSymbols[0], isAI: false),
-        Player(username: 'KI', symbol: playerSymbols[1], isAI: true),
+        Player(username: 'Zwö', symbol: playerSymbols[1], isAI: true),
       ];
     } else if (widget.gameMode == GameMode.pass) {
       players = [

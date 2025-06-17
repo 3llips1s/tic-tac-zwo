@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         size: 28,
                       )
                     : const Icon(
-                        Icons.filter_none_rounded,
+                        Icons.more_vert_rounded,
                         color: Colors.black45,
                         size: 24,
                       ),

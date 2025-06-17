@@ -257,7 +257,6 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   bool _validateEmail(String email, {bool showError = true}) {
-    // Trim the email to remove leading and trailing whitespace
     email = email.trim();
     if (email.isEmpty) {
       if (showError) {

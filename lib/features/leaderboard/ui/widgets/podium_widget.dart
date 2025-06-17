@@ -54,7 +54,7 @@ class PodiumWidget extends StatelessWidget {
           _buildPodiumPlace(
             player: podiumPlayers[0],
             rank: 1,
-            height: 180,
+            height: 150,
             color: const Color(0xFFD4AF37),
           )
               .animate()
@@ -73,7 +73,7 @@ class PodiumWidget extends StatelessWidget {
           _buildPodiumPlace(
             player: podiumPlayers[2],
             rank: 3,
-            height: 60,
+            height: 90,
             color: const Color(0xFFCD7F32),
           )
               .animate()
@@ -115,10 +115,10 @@ class PodiumWidget extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 12.0),
+                padding: const EdgeInsets.only(bottom: 12.0),
                 child: Text(
                   '🏆 ${player.gamesWon}    🎯 ${player.accuracy.toStringAsFixed(0)}%',
                   style: TextStyle(
@@ -148,13 +148,6 @@ class _PlayerInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         child: Stack(
           children: [
-            BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: 5.0,
-                sigmaY: 5.0,
-              ),
-              child: Container(),
-            ),
             Container(
               width: 100,
               padding: const EdgeInsets.all(8.0),

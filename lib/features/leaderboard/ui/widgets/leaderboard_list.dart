@@ -38,9 +38,10 @@ class _LeaderboardListState extends State<LeaderboardList> {
               horizontal: 16,
               vertical: 16,
             ),
-            child: _buildHeader(context)
-                .animate(delay: 1200.ms)
-                .fadeIn(duration: 600.ms),
+            child: _buildHeader(context).animate().fadeIn(
+                  duration: 2400.ms,
+                  curve: Curves.easeInOut,
+                ),
           );
         }
 
@@ -56,8 +57,8 @@ class _LeaderboardListState extends State<LeaderboardList> {
             onTap: () => _handleExpansion(playerIndex),
           ),
         )
-            .animate(delay: (1800 + (playerIndex * 50)).ms)
-            .fadeIn(duration: 600.ms)
+            .animate(delay: (2000 + (playerIndex * 50)).ms)
+            .fadeIn(duration: 900.ms)
             .slideX(begin: -0.3, duration: 900.ms, curve: Curves.easeInOut);
       },
     );
@@ -82,7 +83,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
         Expanded(
           flex: 3,
           child: Text(
-            'Spieler',
+            'Spieler*in',
             textAlign: TextAlign.start,
             style: headerTheme,
           ),
