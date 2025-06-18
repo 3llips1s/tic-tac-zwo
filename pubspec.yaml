@@ -50,3 +50,7 @@ flutter:
       fonts: 
         - asset: assets/fonts/sniglet.regular.ttf
         - asset: assets/fonts/sniglet.extrabold.ttf
+    
+    - family: MaterialSymbolsRounded
+      fonts:
+        - asset: assets/fonts/MaterialSymbolsRounded.ttf

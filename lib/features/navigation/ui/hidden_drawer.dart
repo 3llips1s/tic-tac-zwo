@@ -199,7 +199,6 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                         padding: const EdgeInsets.symmetric(vertical: 30),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
@@ -209,9 +208,7 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                                   .bodyMedium
                                   ?.copyWith(color: colorWhite, fontSize: 16),
                             ),
-                            const SizedBox(
-                              width: 15,
-                            ),
+                            const SizedBox(width: 20),
                             Icon(
                               drawerItem['icon'],
                               color: colorYellowAccent,

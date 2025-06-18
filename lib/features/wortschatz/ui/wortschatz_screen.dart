@@ -21,7 +21,7 @@ class WortschatzScreen extends ConsumerWidget {
         children: [
           // title
           Padding(
-            padding: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.only(top: 30),
             child: SizedBox(
               height: kToolbarHeight * 2,
               child: Align(
@@ -29,7 +29,7 @@ class WortschatzScreen extends ConsumerWidget {
                 child: Text(
                   'wortschatz',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: colorBlack,
                       ),
@@ -94,7 +94,7 @@ class WortschatzScreen extends ConsumerWidget {
                 size: 24,
               ),
             ),
-          )
+          ),
         ],
       ),
     );

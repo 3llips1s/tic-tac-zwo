@@ -61,19 +61,19 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
-              padding: const EdgeInsets.only(right: 20, bottom: 20),
+              padding: const EdgeInsets.only(right: 4, bottom: 12),
               child: IconButton(
                 onPressed: toggleDrawer,
                 icon: _isDrawerOpen
-                    ? const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: Colors.black45,
-                        size: 28,
+                    ? Icon(
+                        arrowMenuClose,
+                        color: Colors.grey.shade900,
+                        size: 44,
                       )
-                    : const Icon(
-                        Icons.more_vert_rounded,
-                        color: Colors.black45,
-                        size: 24,
+                    : Icon(
+                        arrowMenuOpen,
+                        color: Colors.grey.shade600,
+                        size: 40,
                       ),
               ),
             ),
@@ -83,3 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+const IconData arrowMenuOpen =
+    IconData(0xf3d3, fontFamily: 'MaterialSymbolsRounded');
+const IconData arrowMenuClose =
+    IconData(0xf3d2, fontFamily: 'MaterialSymbolsRounded');

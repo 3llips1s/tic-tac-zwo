@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/app.dart';
 import 'package:tic_tac_zwo/config/auth_config/auth_config.dart';
+import 'package:tic_tac_zwo/features/wortschatz/data/models/saved_noun_hive.dart';
 import 'package:tic_tac_zwo/hive/hive_registrar.g.dart';
 
 import 'config/game_config/theme.dart';
@@ -29,7 +30,7 @@ void main() async {
     ..registerAdapters();
 
   await Hive.openBox<GermanNounHive>('german_nouns');
-  await Hive.openBox<GermanNounHive>('saved_nouns');
+  await Hive.openBox<SavedNounHive>('saved_nouns');
   await Hive.openBox('sync_info');
   await Hive.openBox('user_preferences');
 
