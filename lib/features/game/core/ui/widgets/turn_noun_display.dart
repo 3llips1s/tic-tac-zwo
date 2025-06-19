@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
@@ -281,8 +282,7 @@ class _TurnNounDisplayState extends ConsumerState<TurnNounDisplay>
     final currentPlayer = gameState.currentPlayer;
     final currentNoun = gameState.currentNoun;
 
-    final String? localPlayerId =
-        ref.watch(supabaseProvider).auth.currentUser?.id;
+    final String? localPlayerId = ref.watch(currentUserIdProvider);
 
     final showNoun = _showNoun();
 

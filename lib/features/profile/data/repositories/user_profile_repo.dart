@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart';
 
 import '../models/user_profile.dart';
 
@@ -91,5 +92,26 @@ class UserProfileRepo {
         .maybeSingle();
 
     return response == null;
+  }
+
+  Future<List<GameHistoryEntry>> getGameHistory(String userId) async {
+    try {
+      final response = await _supabase.rpc(
+        'get_game_history',
+        params: {
+          'p_user_id': userId,
+        },
+      );
+
+      final history = (response as List<dynamic>)
+          .map(
+              (item) => GameHistoryEntry.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      return history;
+    } catch (e) {
+      print('Error fetching game history: $e');
+      return [];
+    }
   }
 }

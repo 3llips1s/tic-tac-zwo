@@ -3,9 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
 import 'package:tic_tac_zwo/config/game_config/game_providers.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
-import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
 
 import '../../../../../config/game_config/constants.dart';
@@ -83,7 +83,7 @@ class _InitialGameOverView extends ConsumerWidget {
     final notifier =
         ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier)
             as OnlineGameNotifier;
-    final localPlayerId = ref.watch(supabaseProvider).auth.currentUser?.id;
+    final localPlayerId = ref.watch(currentUserIdProvider);
 
     String title;
     if (gameState.winningPlayer != null) {
@@ -245,7 +245,7 @@ class _OnlineRematchStatusView extends ConsumerWidget {
     final notifier =
         ref.watch(GameProviders.getStateProvider(ref, gameConfig).notifier)
             as OnlineGameNotifier;
-    final localUserId = ref.watch(supabaseProvider).auth.currentUser?.id;
+    final localUserId = ref.watch(currentUserIdProvider);
 
     final opponent =
         gameState.players.firstWhere((player) => player.userId != localUserId);

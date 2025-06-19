@@ -31,6 +31,20 @@ class UserProfile {
     required this.totalCorrectArticles,
   });
 
+  int get gamesLost => gamesPlayed - gamesWon - gamesDrawn;
+
+  double get winRate {
+    if (gamesPlayed == 0) return 0.0;
+    final winRate = gamesWon / gamesPlayed;
+    return winRate;
+  }
+
+  double get articleAccuracy {
+    if (totalArticleAttempts == 0) return 0.0;
+    final accuracy = totalCorrectArticles / totalArticleAttempts;
+    return accuracy;
+  }
+
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'],

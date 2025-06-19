@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
@@ -48,7 +49,7 @@ class _OnlineTurnSelectionScreenState
   @override
   void initState() {
     super.initState();
-    _localUserId = ref.read(supabaseProvider).auth.currentUser?.id;
+    _localUserId = ref.read(currentUserIdProvider);
 
     _loadGameSession();
     _initHoverAnimation();

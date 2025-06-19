@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/auth/data/repositories/user_profile_repo.dart';
+import 'package:tic_tac_zwo/features/profile/data/repositories/user_profile_repo.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/otp_input_field.dart';
