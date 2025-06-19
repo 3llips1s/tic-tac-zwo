@@ -41,3 +41,5 @@ final savedNounsProvider =
     return SavedNounsNotifier();
   },
 );
+
+final searchQueryProvider = StateProvider<String>((ref) => '');

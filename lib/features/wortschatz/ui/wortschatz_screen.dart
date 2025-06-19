@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,13 +9,57 @@ import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 import 'package:tic_tac_zwo/features/wortschatz/data/models/saved_noun_hive.dart';
 import 'package:tic_tac_zwo/features/wortschatz/logic/saved_nouns_notifier.dart';
 
-class WortschatzScreen extends ConsumerWidget {
+class WortschatzScreen extends ConsumerStatefulWidget {
   const WortschatzScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WortschatzScreen> createState() => _WortschatzScreenState();
+}
+
+class _WortschatzScreenState extends ConsumerState<WortschatzScreen> {
+  late TextEditingController _searchController;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchController.text = ref.read(searchQueryProvider);
+
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 300),
+      () {
+        ref.read(searchQueryProvider.notifier).state = _searchController.text;
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final savedNouns = ref.watch(savedNounsProvider);
     final savedNounsNotifier = ref.read(savedNounsProvider.notifier);
+    final searchQuery = ref.watch(searchQueryProvider);
+
+    // filtering
+    final filteredNouns = savedNouns.where((noun) {
+      if (searchQuery.isEmpty) return true;
+      final queryInLower = searchQuery.toLowerCase();
+      return noun.noun.toLowerCase().contains(queryInLower) ||
+          noun.english.toLowerCase().contains(queryInLower);
+    }).toList();
 
     return Scaffold(
       backgroundColor: colorGrey300,
@@ -37,46 +83,114 @@ class WortschatzScreen extends ConsumerWidget {
               ),
             ),
 
-            Positioned.fill(
+            // search bar
+            Positioned(
+              left: 16,
+              right: 16,
               top: kToolbarHeight * 2,
-              child: savedNouns.isEmpty
+              child: Container(
+                padding:
+                    const EdgeInsets.only(left: 16.0, top: 2.0, bottom: 2.0),
+                decoration: BoxDecoration(
+                  color: colorWhite.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  cursorColor: colorGrey600,
+                  decoration: InputDecoration(
+                    hintText: 'Suche...',
+                    hintStyle: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: colorGrey500),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 16.0),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              color: colorGrey600,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).state = '';
+                            },
+                          )
+                        : Icon(
+                            Icons.search_rounded,
+                            color: colorGrey400,
+                          ),
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorBlack,
+                      ),
+                ),
+              ),
+            ).animate(delay: 300.ms).slideX(
+                  begin: 0.3,
+                  duration: 900.ms,
+                  curve: Curves.easeInOut,
+                ),
+
+            Positioned.fill(
+              top: kToolbarHeight * 3.5,
+              child: filteredNouns.isEmpty && searchQuery.isNotEmpty
                   ? Padding(
                       padding:
-                          const EdgeInsets.only(bottom: kToolbarHeight * 2),
+                          const EdgeInsets.only(bottom: kToolbarHeight * 4),
                       child: Center(
                         child: Text(
-                          'Dein Wortschatz ist leer!\n\nSpeichere Wörter aus dem Spiel.',
+                          'Keine Wörter gefunden.',
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontSize: 18,
                                     color: colorGrey600,
                                   ),
-                        ).animate().fadeIn(duration: 600.ms),
+                        ),
                       ),
                     )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      itemCount: savedNouns.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final noun = savedNouns[index];
-                        return SavedNounTile(
-                          noun: noun,
-                          onDelete: () {
-                            savedNounsNotifier.deleteNoun(noun.id);
-                          },
+                  : filteredNouns.isEmpty && searchQuery.isEmpty
+                      ? Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: kToolbarHeight * 4),
+                          child: Center(
+                            child: Text(
+                              'Dein Wortschatz ist leer.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontSize: 18,
+                                    color: colorGrey600,
+                                  ),
+                            ),
+                          ),
                         )
-                            .animate(delay: (900 + (index * 100)).ms)
-                            .slideX(
-                                begin: -0.3,
-                                curve: Curves.easeInOut,
-                                duration: 600.ms)
-                            .fadeIn(duration: 600.ms);
-                      },
-                    ),
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 8.0),
+                          itemCount: filteredNouns.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final noun = filteredNouns[index];
+                            return SavedNounTile(
+                              noun: noun,
+                              onDelete: () {
+                                savedNounsNotifier.deleteNoun(noun.id);
+                              },
+                            )
+                                .animate(delay: (1200 + (index * 100)).ms)
+                                .slideX(
+                                    begin: -0.3,
+                                    curve: Curves.easeInOut,
+                                    duration: 600.ms)
+                                .fadeIn(duration: 600.ms);
+                          },
+                        ),
             ),
             Align(
               alignment: Alignment.bottomRight,
@@ -145,15 +259,16 @@ class SavedNounTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
         decoration: BoxDecoration(
-            color: colorWhite,
-            borderRadius: BorderRadius.circular(6),
-            boxShadow: [
-              BoxShadow(
-                color: colorBlack.withOpacity(0.2),
-                blurRadius: 3,
-                offset: const Offset(0, 3),
-              )
-            ]),
+          color: colorWhite,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: [
+            BoxShadow(
+              color: colorBlack.withOpacity(0.2),
+              blurRadius: 3,
+              offset: const Offset(0, 3),
+            )
+          ],
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
