@@ -3,7 +3,7 @@ import 'package:tic_tac_zwo/features/game/core/data/models/german_noun.dart';
 
 part 'german_noun_hive.g.dart';
 
-@HiveType(typeId: 1)
+@HiveType(typeId: 0)
 class GermanNounHive extends HiveObject {
   @HiveField(0)
   String id;

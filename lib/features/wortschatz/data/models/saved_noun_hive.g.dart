@@ -8,7 +8,7 @@ part of 'saved_noun_hive.dart';
 
 class SavedNounHiveAdapter extends TypeAdapter<SavedNounHive> {
   @override
-  final int typeId = 2;
+  final typeId = 1;
 
   @override
   SavedNounHive read(BinaryReader reader) {

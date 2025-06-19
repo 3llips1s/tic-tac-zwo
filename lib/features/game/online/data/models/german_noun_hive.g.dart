@@ -8,7 +8,7 @@ part of 'german_noun_hive.dart';
 
 class GermanNounHiveAdapter extends TypeAdapter<GermanNounHive> {
   @override
-  final int typeId = 1;
+  final typeId = 0;
 
   @override
   GermanNounHive read(BinaryReader reader) {

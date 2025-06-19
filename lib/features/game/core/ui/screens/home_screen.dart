@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
           boxShadow: _isDrawerOpen
               ? [
                   BoxShadow(
-                    color: Colors.grey.shade100.withAlpha((255 / 0.4).toInt()),
+                    color: Colors.grey.shade100.withOpacity(0.3),
                     offset: const Offset(10, 10),
                     blurRadius: 15,
                   )
@@ -61,13 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: Padding(
-              padding: const EdgeInsets.only(right: 4, bottom: 12),
+              padding: const EdgeInsets.only(right: 8, bottom: 16),
               child: IconButton(
                 onPressed: toggleDrawer,
                 icon: _isDrawerOpen
                     ? Icon(
                         arrowMenuClose,
-                        color: Colors.grey.shade900,
+                        color: colorBlack,
                         size: 44,
                       )
                     : Icon(

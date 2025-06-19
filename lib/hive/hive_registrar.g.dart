@@ -4,10 +4,16 @@
 
 import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/features/game/online/data/models/german_noun_hive.dart';
-
-import '../features/wortschatz/data/models/saved_noun_hive.dart';
+import 'package:tic_tac_zwo/features/wortschatz/data/models/saved_noun_hive.dart';
 
 extension HiveRegistrar on HiveInterface {
+  void registerAdapters() {
+    registerAdapter(GermanNounHiveAdapter());
+    registerAdapter(SavedNounHiveAdapter());
+  }
+}
+
+extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(GermanNounHiveAdapter());
     registerAdapter(SavedNounHiveAdapter());

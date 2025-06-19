@@ -70,7 +70,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
               ),
             ),
 
-            // home buttons
+            // home button
             Positioned(
               bottom: 24,
               right: 16,

@@ -220,7 +220,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final quarterSpace = SizedBox(height: kToolbarHeight / 4);
 
     return PopScope(
-      canPop: false,
+      canPop: isOnlineMode ? false : true,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) {
           return;
@@ -362,7 +362,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           colorFilter: activateSaveButton
                               ? ColorFilter.mode(
                                   _isCurrentNounSaved
-                                      ? colorYellow
+                                      ? Colors.green.shade600
                                       : colorBlack,
                                   BlendMode.srcIn,
                                 )
