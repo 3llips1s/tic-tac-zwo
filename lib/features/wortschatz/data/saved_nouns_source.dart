@@ -12,6 +12,7 @@ class SavedNounsSource {
       return false;
     }
     await _savedNounsBox.put(noun.id, noun);
+
     return true;
   }
 
@@ -20,11 +21,14 @@ class SavedNounsSource {
   }
 
   List<SavedNounHive> getAllSavedNouns() {
-    return _savedNounsBox.values.toList();
+    final List<SavedNounHive> nouns = _savedNounsBox.values.toList();
+    nouns.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return nouns;
   }
 
   Future<bool> isNounSaved(String nounId) async {
-    return _savedNounsBox.containsKey(nounId);
+    final bool contains = _savedNounsBox.containsKey(nounId);
+    return contains;
   }
 }
 

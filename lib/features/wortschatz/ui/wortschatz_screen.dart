@@ -69,7 +69,7 @@ class WortschatzScreen extends ConsumerWidget {
                             savedNounsNotifier.deleteNoun(noun.id);
                           },
                         )
-                            .animate(delay: (index * 100).ms)
+                            .animate(delay: (900 + (index * 100)).ms)
                             .slideX(
                                 begin: -0.3,
                                 curve: Curves.easeInOut,
@@ -187,11 +187,9 @@ class SavedNounTile extends StatelessWidget {
             const SizedBox(width: 4),
             Expanded(
               child: Text(
-                noun.plural.isNotEmpty ? '${noun.plural}' : 'ohne Plural',
+                noun.plural,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontSize: 14,
-                      // fontStyle: FontStyle.italic,
-                      // fontWeight: FontWeight.bold,
                       color: Colors.grey.shade600,
                     ),
                 overflow: TextOverflow.ellipsis,

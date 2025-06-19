@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
+import 'package:tic_tac_zwo/features/game/core/data/models/german_noun.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
@@ -83,11 +84,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
   }
 
   Future<void> _checkIfCurrentNounIsSaved(String nounId) async {
+    if (!mounted) return;
     final savedNounsNotifier = ref.read(savedNounsProvider.notifier);
-    final bool saved = await savedNounsNotifier.isNounSaved(nounId);
+    final bool isSaved = await savedNounsNotifier.isNounSaved(nounId);
     if (mounted) {
       setState(() {
-        _isCurrentNounSaved = saved;
+        _isCurrentNounSaved = isSaved;
       });
     }
   }
@@ -167,18 +169,22 @@ class _GameScreenState extends ConsumerState<GameScreen>
       },
       fireImmediately: false,
     );
-  }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final gameState =
-        ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
-
-    final currentNoun = gameState.currentNoun;
-    if (currentNoun != null) {
-      _checkIfCurrentNounIsSaved(currentNoun.id);
-    }
+    // current noun listener
+    ref.listenManual<GermanNoun?>(
+      GameProviders.getStateProvider(ref, widget.gameConfig)
+          .select((state) => state.currentNoun),
+      (previousNoun, nextNoun) {
+        if (nextNoun != null) {
+          _checkIfCurrentNounIsSaved(nextNoun.id);
+        } else {
+          setState(() {
+            _isCurrentNounSaved = false;
+          });
+        }
+      },
+      fireImmediately: true,
+    );
   }
 
   @override
@@ -313,7 +319,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
               halfSpace,
 
-              // save word
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
@@ -321,33 +326,42 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   child: GestureDetector(
                     onTap: activateSaveButton
                         ? () async {
+                            // save word
                             if (_isCurrentNounSaved) {
-                              _showSnackBar(
-                                context,
-                                '${currentNoun!.noun} ist schon gespeichert!',
-                                backgroundColor: colorWhite,
-                                textColor: Colors.black54,
-                              );
-                            } else {
-                              final bool success = await savedNounsNotifier
-                                  .addNoun(currentNoun!);
-                              if (success) {
+                              if (context.mounted) {
                                 _showSnackBar(
                                   context,
-                                  '${currentNoun.noun} gespeichert!',
+                                  '${currentNoun!.noun} ist schon gespeichert!',
                                   backgroundColor: colorWhite,
-                                  textColor: colorBlack,
+                                  textColor: Colors.black54,
                                 );
-                                setState(() {
-                                  _isCurrentNounSaved = true;
-                                });
+                              }
+                            } else {
+                              final bool saved = await savedNounsNotifier
+                                  .addNoun(currentNoun!);
+                              if (saved) {
+                                if (context.mounted) {
+                                  _showSnackBar(
+                                    context,
+                                    '${currentNoun.noun} gespeichert!',
+                                    backgroundColor: colorWhite,
+                                    textColor: colorBlack,
+                                  );
+                                }
+                                if (mounted) {
+                                  setState(() {
+                                    _isCurrentNounSaved = true;
+                                  });
+                                }
                               } else {
-                                _showSnackBar(
-                                  context,
-                                  '${currentNoun.noun} nicht gespeichert!',
-                                  backgroundColor: colorRed,
-                                  textColor: colorWhite,
-                                );
+                                if (context.mounted) {
+                                  _showSnackBar(
+                                    context,
+                                    '${currentNoun.noun} nicht gespeichert!',
+                                    backgroundColor: colorRed,
+                                    textColor: colorWhite,
+                                  );
+                                }
                               }
                             }
                           }
