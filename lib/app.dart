@@ -66,6 +66,31 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
+  double _xOffset = 0;
+  double _yOffset = 0;
+  double _scaleFactor = 1;
+  bool _isDrawerOpen = false;
+
+  void _toggleDrawer() {
+    setState(() {
+      _isDrawerOpen = !_isDrawerOpen;
+      _xOffset = _isDrawerOpen ? -225 : 0;
+      _yOffset = _isDrawerOpen ? 86.5 : 0;
+      _scaleFactor = _isDrawerOpen ? 0.8 : 1;
+    });
+  }
+
+  void _closeDrawer() {
+    if (_isDrawerOpen) {
+      setState(() {
+        _isDrawerOpen = false;
+        _xOffset = 0;
+        _yOffset = 0;
+        _scaleFactor = 1;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,9 +99,37 @@ class _AppState extends ConsumerState<App> {
         color: Colors.transparent,
         child: Stack(
           children: [
-            HiddenDrawer(),
-            HomeScreen(),
+            HiddenDrawer(onCloseDrawer: _closeDrawer),
+            _buildHomeScreenWithDrawer(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeScreenWithDrawer() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.decelerate,
+      transform: Matrix4.translationValues(_xOffset, _yOffset, 0)
+        ..scale(_scaleFactor),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorGrey300,
+          borderRadius: BorderRadius.circular(_isDrawerOpen ? 30 : 0),
+          boxShadow: _isDrawerOpen
+              ? [
+                  BoxShadow(
+                    color: Colors.grey.shade100.withOpacity(0.3),
+                    offset: const Offset(10, 10),
+                    blurRadius: 15,
+                  )
+                ]
+              : [],
+        ),
+        child: HomeScreen(
+          isDrawerOpen: _isDrawerOpen,
+          onToggleDrawer: _toggleDrawer,
         ),
       ),
     );

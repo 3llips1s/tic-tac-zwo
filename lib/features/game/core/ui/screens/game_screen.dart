@@ -15,7 +15,7 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_info.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/timer_display.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart';
 import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
-import 'package:tic_tac_zwo/features/navigation/navigation_provider.dart';
+import 'package:tic_tac_zwo/features/navigation/logic/navigation_provider.dart';
 import 'package:tic_tac_zwo/features/wortschatz/logic/saved_nouns_notifier.dart';
 
 import '../../../../../config/game_config/config.dart';

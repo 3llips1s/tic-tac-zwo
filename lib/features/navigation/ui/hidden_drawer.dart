@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
+import 'package:tic_tac_zwo/features/navigation/logic/navigation_service.dart';
 
 import '../../../config/game_config/constants.dart';
 import '../routes/route_names.dart';
 
 class HiddenDrawer extends StatefulWidget {
-  const HiddenDrawer({super.key});
+  final VoidCallback onCloseDrawer;
+
+  const HiddenDrawer({super.key, required this.onCloseDrawer});
 
   @override
   State<HiddenDrawer> createState() => _HiddenDrawerState();
@@ -18,6 +21,7 @@ class HiddenDrawer extends StatefulWidget {
 
 class _HiddenDrawerState extends State<HiddenDrawer> {
   final authService = AuthService();
+  late final NavigationService _navigationService;
 
   final String _defaultDisplayName = 'User${Random().nextInt(100000)}';
   final String _defaultCountryCode = '';
@@ -29,6 +33,8 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
   @override
   void initState() {
     super.initState();
+
+    _navigationService = NavigationService(authService);
 
     displayName = _defaultDisplayName;
     countryCode = _defaultCountryCode;
@@ -62,9 +68,18 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
 
   void _navigateToLogin() {
     if (mounted) {
-      Navigator.pushNamed(context, RouteNames.home);
-      Future.delayed(Duration(milliseconds: 300));
-      Navigator.pushNamed(context, RouteNames.login);
+      Navigator.pushNamedAndRemoveUntil(
+          context, RouteNames.login, (route) => false);
+    }
+  }
+
+  void _navigateToProfile() {
+    if (mounted) {
+      _navigationService.navigateFromDrawer(
+        context: context,
+        routeName: RouteNames.profile,
+        closeDrawer: widget.onCloseDrawer,
+      );
     }
   }
 
@@ -137,35 +152,31 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // user profile
+            // log out
             Padding(
-              padding: EdgeInsets.only(top: kToolbarHeight / 1.5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                      padding: EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle, color: colorYellowAccent),
-                      child: Icon(
-                        Icons.face_5_rounded,
-                        size: 25,
-                      )),
-                  const SizedBox(width: 15),
-                  Text(
-                    displayName,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: colorYellowAccent,
-                          fontSize: 20.0,
-                        ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flag(
-                    countryCode: countryCode,
-                    height: 16,
-                    width: 24,
-                  )
-                ],
+              padding: const EdgeInsets.only(top: 16.0),
+              child: GestureDetector(
+                onTap: authService.isAuthenticated ? _logout : _navigateToLogin,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // logout
+                    Icon(
+                      Icons.logout_rounded,
+                      color: colorRed,
+                      size: 26,
+                    ),
+
+                    const SizedBox(width: 10),
+                    Text(
+                      authService.isAuthenticated ? 'ausloggen' : 'einloggen',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: colorWhite, fontSize: 18),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -176,24 +187,11 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                     (drawerItem) => InkWell(
                       onTap: () {
                         final routeName = drawerItem['route'] as String;
-
-                        if (routeName == RouteNames.leaderboard) {
-                          final userId = authService.currentUserId;
-                          if (userId != null) {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              routeName,
-                              (route) => false,
-                              arguments: {'userId': userId},
-                            );
-                          }
-                        } else {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            routeName,
-                            (route) => false,
-                          );
-                        }
+                        _navigationService.navigateFromDrawer(
+                          context: context,
+                          routeName: routeName,
+                          closeDrawer: widget.onCloseDrawer,
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 30),
@@ -222,27 +220,38 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                   .toList(),
             ),
 
-            GestureDetector(
-              onTap: authService.isAuthenticated ? _logout : _navigateToLogin,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // logout
-                  Icon(
-                    Icons.logout_rounded,
-                    color: colorRed,
-                    size: 26,
-                  ),
-
-                  const SizedBox(width: 10),
-                  Text(
-                    authService.isAuthenticated ? 'ausloggen' : 'einloggen',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: colorWhite, fontSize: 18),
-                  ),
-                ],
+            // profile
+            InkWell(
+              onTap: _navigateToProfile,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: kToolbarHeight * 0.5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                        padding: EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle, color: colorYellowAccent),
+                        child: Icon(
+                          Icons.face_5_rounded,
+                          size: 25,
+                        )),
+                    const SizedBox(width: 15),
+                    Text(
+                      displayName,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: colorYellowAccent,
+                            fontSize: 20.0,
+                          ),
+                    ),
+                    const SizedBox(width: 10),
+                    Flag(
+                      countryCode: countryCode,
+                      height: 16,
+                      width: 24,
+                    )
+                  ],
+                ),
               ),
             ),
           ],

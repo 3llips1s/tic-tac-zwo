@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+
+import '../routes/route_names.dart';
+
+class NavigationService {
+  final AuthService _authService;
+
+  NavigationService(this._authService);
+
+  static const Set<String> _routesWithAuth = {
+    RouteNames.leaderboard,
+    RouteNames.profile,
+  };
+
+  void navigateFromDrawer({
+    required BuildContext context,
+    required String routeName,
+    required VoidCallback closeDrawer,
+  }) {
+    closeDrawer();
+
+    if (_routesWithAuth.contains(routeName)) {
+      _navigateAuthenticatedRoute(context, routeName);
+    } else {
+      _navigatePublicRoute(context, routeName);
+    }
+  }
+
+  void _navigateAuthenticatedRoute(BuildContext context, String routeName) {
+    final userId = _authService.currentUserId;
+
+    if (userId != null) {
+      _navigate(
+          context: context,
+          routeName: routeName,
+          arguments: {'userId': userId});
+    } else {
+      _navigate(
+        context: context,
+        routeName: RouteNames.login,
+      );
+    }
+  }
+
+  void _navigatePublicRoute(BuildContext context, String routeName) {
+    _navigate(
+      context: context,
+      routeName: routeName,
+    );
+  }
+
+  void _navigate({
+    required BuildContext context,
+    required String routeName,
+    Map<String, dynamic>? arguments,
+  }) {
+    try {
+      Navigator.pushReplacementNamed(
+        context,
+        routeName,
+        arguments: arguments,
+      );
+    } catch (e) {
+      debugPrint('Navigation failed for route: $routeName, Error: $e');
+      Navigator.pushReplacementNamed(context, RouteNames.home);
+    }
+  }
+}

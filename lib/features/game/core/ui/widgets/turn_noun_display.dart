@@ -4,7 +4,6 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
-import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/game_providers.dart';

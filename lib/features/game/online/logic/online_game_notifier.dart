@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
-import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/german_noun.dart';
 import 'package:tic_tac_zwo/features/game/core/data/repositories/german_noun_repo.dart';
@@ -11,7 +10,7 @@ import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
-import 'package:tic_tac_zwo/features/navigation/navigation_provider.dart';
+import 'package:tic_tac_zwo/features/navigation/logic/navigation_provider.dart';
 
 import '../../core/data/models/player.dart';
 

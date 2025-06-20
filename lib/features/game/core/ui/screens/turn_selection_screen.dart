@@ -178,7 +178,8 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
                     width: 30,
                     color: Colors.transparent,
                     child: Center(
-                        child: SvgPicture.asset('assets/images/edit.svg')),
+                      child: SvgPicture.asset('assets/images/edit.svg'),
+                    ),
                   ),
                 ),
               ),

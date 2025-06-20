@@ -94,12 +94,16 @@ class UserProfileRepo {
     return response == null;
   }
 
-  Future<List<GameHistoryEntry>> getGameHistory(String userId) async {
+  Future<List<GameHistoryEntry>> getGameHistory(
+    String userId, {
+    int limit = 9,
+  }) async {
     try {
       final response = await _supabase.rpc(
         'get_game_history',
         params: {
           'p_user_id': userId,
+          'p_limit': limit,
         },
       );
 

@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
+import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart';
+import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
+import 'package:tic_tac_zwo/features/profile/ui/widgets/avatar_flag.dart';
+
+import '../../../../config/game_config/constants.dart';
+import 'wdl_bar.dart';
+
+class GamesHistoryList extends ConsumerWidget {
+  final String userId;
+
+  const GamesHistoryList({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gamesHistoryAsync = ref.watch(gamesHistoryProvider(userId));
+    return gamesHistoryAsync.when(
+      loading: () => const Center(child: DualProgressIndicator()),
+      error: (error, stackTrace) => Center(
+        child: Text(
+          'Spielverlauf konnte nicht geladen werden.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorGrey600,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+        ),
+      ),
+      data: (history) {
+        if (history.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: Text(
+                'Du hast noch keine online Spiele gespielt.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey600,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          itemCount: history.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          separatorBuilder: (context, index) => const SizedBox(height: 8.0),
+          itemBuilder: (context, index) {
+            return _GameHistoryTile(entry: history[index]);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _GameHistoryTile extends StatelessWidget {
+  final GameHistoryEntry entry;
+
+  const _GameHistoryTile({required this.entry});
+
+  (Color, String) _getResultStyle() {
+    switch (entry.result) {
+      case 'Win':
+        return (WdlBar.winColor, 'S');
+      case 'Draw':
+        return (WdlBar.drawColor, 'U');
+      case 'Loss':
+        return (WdlBar.lossColor, 'N');
+      default:
+        return (WdlBar.drawColor, 'N');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (resultColor, resultText) = _getResultStyle();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      decoration: BoxDecoration(
+        color: colorWhite,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: colorGrey300,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Du',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colorGrey400,
+                ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            ' — ',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorGrey400,
+                ),
+          ),
+          const SizedBox(width: 8),
+
+          // opponent avatar
+          AvatarFlag(
+              radius: 24,
+              avatarUrl: entry.opponentAvatarUrl,
+              countryCode: entry.opponentCountyCode),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              entry.opponentUsername,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colorGrey400,
+                  ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: resultColor,
+              borderRadius: BorderRadius.circular(6.0),
+            ),
+            child: Center(
+              child: Text(
+                resultText,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 14,
+                      color: colorBlack,
+                    ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -24,7 +24,7 @@ final userProfileProvider =
   return userProfile;
 });
 
-final gameHistoryProvider =
+final gamesHistoryProvider =
     FutureProvider.family<List<GameHistoryEntry>, String>(
   (ref, userId) {
     final repo = ref.watch(userProfileRepoProvider);
