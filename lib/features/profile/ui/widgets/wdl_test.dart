@@ -13,10 +13,6 @@ class WdlBarTest extends StatelessWidget {
     this.gamesLost = 8,
   });
 
-  static const Color winColor = colorYellow;
-  static const Color drawColor = colorGrey400;
-  static const Color lossColor = colorRed;
-
   @override
   Widget build(BuildContext context) {
     final totalGames = gamesWon + gamesDrawn + gamesLost;
@@ -64,9 +60,11 @@ class WdlBarTest extends StatelessWidget {
         borderRadius: BorderRadius.circular(27.0),
         child: Row(
           children: [
-            buildBarSegment(gamesWon, winColor, '$gamesWon'),
-            buildBarSegment(gamesDrawn, drawColor, '$gamesDrawn'),
-            buildBarSegment(gamesLost, lossColor, '$gamesLost')
+            buildBarSegment(gamesWon, winColor.withOpacity(0.75), '$gamesWon'),
+            buildBarSegment(
+                gamesDrawn, drawColor.withOpacity(0.5), '$gamesDrawn'),
+            buildBarSegment(
+                gamesLost, lossColor.withOpacity(0.75), '$gamesLost')
           ],
         ),
       ),

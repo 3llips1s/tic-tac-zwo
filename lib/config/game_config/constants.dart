@@ -15,6 +15,10 @@ const Color colorGrey500 = Color.fromRGBO(158, 158, 158, 1);
 const Color colorGrey600 = Color.fromRGBO(117, 117, 117, 1);
 const Color colorDarkGreen = Color.fromRGBO(0, 100, 0, 1); // Deep Forest Green
 
+const Color winColor = Color(0xFFFFCE00);
+const Color drawColor = Color(0xFF000000);
+const Color lossColor = Color(0xFFDD0000);
+
 // country codes
 const List<String> countryCodes = [
   'AD',

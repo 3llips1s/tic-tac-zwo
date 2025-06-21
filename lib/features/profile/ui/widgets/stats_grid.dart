@@ -11,6 +11,12 @@ class StatsGrid extends StatelessWidget {
     return '${(value * 100).toStringAsFixed(decimals)}%';
   }
 
+  Color _getColorForPercentage(double value) {
+    if (value > 0.8) return Colors.green.shade700;
+    if (value > 0.4) return Colors.yellow.shade900;
+    return Colors.red.shade700;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -27,20 +33,23 @@ class StatsGrid extends StatelessWidget {
           childAspectRatio: 1,
           children: [
             _StatCard(
-              label: 'Spiele',
-              value: userProfile.gamesPlayed.toString(),
-            ),
-            _StatCard(
               label: 'Punkte',
               value: userProfile.points.toString(),
             ),
             _StatCard(
-              label: 'Genauigkeit',
-              value: _formatPercentage(userProfile.articleAccuracy),
-            ),
-            _StatCard(
               label: 'Siegquote',
               value: _formatPercentage(userProfile.winRate),
+              valueColor: _getColorForPercentage(userProfile.winRate),
+            ),
+            _StatCard(
+              label: 'Artikel Acc.',
+              value: _formatPercentage(userProfile.articleAccuracy),
+              valueColor: _getColorForPercentage(userProfile.articleAccuracy),
+            ),
+            _StatCard(
+              label: 'Spiele',
+              value: userProfile.gamesPlayed.toString(),
+              valueColor: Colors.brown,
             ),
           ],
         ),
@@ -52,8 +61,10 @@ class StatsGrid extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
+  final Color valueColor;
 
-  const _StatCard({required this.label, required this.value});
+  const _StatCard(
+      {required this.label, required this.value, this.valueColor = colorBlack});
 
   @override
   Widget build(BuildContext context) {
@@ -68,28 +79,28 @@ class _StatCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: colorGrey500,
-              offset: Offset(5, 5),
-              blurRadius: 5,
-              spreadRadius: 0.1,
+              offset: Offset(3, 3),
+              blurRadius: 3,
+              spreadRadius: 0.3,
             ),
             BoxShadow(
                 color: colorGrey200,
-                offset: -Offset(5, 5),
-                blurRadius: 5,
-                spreadRadius: 0.1),
+                offset: -Offset(3, 3),
+                blurRadius: 3,
+                spreadRadius: 0.3),
           ]),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: colorBlack,
+              color: valueColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(

@@ -35,7 +35,7 @@ class ProfileScreen extends ConsumerWidget {
               return SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
                   32.0,
-                  MediaQuery.of(context).padding.top + 24.0,
+                  MediaQuery.of(context).padding.top + 40.0,
                   32.0,
                   MediaQuery.of(context).padding.bottom + 60.0,
                 ),

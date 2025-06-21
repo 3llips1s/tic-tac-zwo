@@ -35,7 +35,7 @@ class WdlBar extends StatelessWidget {
       return Expanded(
         flex: flex,
         child: Container(
-          height: 32,
+          height: 40,
           color: color,
           child: Center(
             child: Text(
@@ -51,17 +51,20 @@ class WdlBar extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(9.0),
-      child: Row(
-        children: [
-          buildBarSegment(
-              userProfile.gamesWon, winColor, '${userProfile.gamesWon}S'),
-          buildBarSegment(
-              userProfile.gamesDrawn, drawColor, '${userProfile.gamesDrawn}U'),
-          buildBarSegment(
-              userProfile.gamesLost, lossColor, '${userProfile.gamesLost}N')
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(27.0),
+        child: Row(
+          children: [
+            buildBarSegment(
+                userProfile.gamesWon, winColor, '${userProfile.gamesWon}S'),
+            buildBarSegment(userProfile.gamesDrawn, drawColor,
+                '${userProfile.gamesDrawn}U'),
+            buildBarSegment(
+                userProfile.gamesLost, lossColor, '${userProfile.gamesLost}N')
+          ],
+        ),
       ),
     );
   }

@@ -7,7 +7,6 @@ import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 import 'package:tic_tac_zwo/features/profile/ui/widgets/avatar_flag.dart';
 
 import '../../../../config/game_config/constants.dart';
-import 'wdl_bar.dart';
 
 class GamesHistoryList extends ConsumerWidget {
   final String userId;
@@ -77,13 +76,13 @@ class _GameHistoryTile extends StatelessWidget {
   (Color, String) _getResultStyle() {
     switch (entry.result) {
       case 'Win':
-        return (WdlBar.winColor, 'S');
+        return (winColor, 'S');
       case 'Draw':
-        return (WdlBar.drawColor, 'U');
+        return (drawColor, 'U');
       case 'Loss':
-        return (WdlBar.lossColor, 'N');
+        return (lossColor, 'N');
       default:
-        return (WdlBar.drawColor, 'N');
+        return (drawColor, 'N');
     }
   }
 
