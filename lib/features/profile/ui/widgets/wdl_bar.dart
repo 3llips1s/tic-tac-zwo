@@ -30,7 +30,7 @@ class WdlBar extends StatelessWidget {
       );
     }
 
-    Widget _buildBarSegment(int flex, Color color, String label) {
+    Widget buildBarSegment(int flex, Color color, String label) {
       if (flex == 0) return const SizedBox.shrink();
       return Expanded(
         flex: flex,
@@ -55,11 +55,11 @@ class WdlBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(9.0),
       child: Row(
         children: [
-          _buildBarSegment(
+          buildBarSegment(
               userProfile.gamesWon, winColor, '${userProfile.gamesWon}S'),
-          _buildBarSegment(
+          buildBarSegment(
               userProfile.gamesDrawn, drawColor, '${userProfile.gamesDrawn}U'),
-          _buildBarSegment(
+          buildBarSegment(
               userProfile.gamesLost, lossColor, '${userProfile.gamesLost}N')
         ],
       ),

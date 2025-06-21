@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart';
@@ -50,7 +51,17 @@ class GamesHistoryList extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           separatorBuilder: (context, index) => const SizedBox(height: 8.0),
           itemBuilder: (context, index) {
-            return _GameHistoryTile(entry: history[index]);
+            return _GameHistoryTile(entry: history[index])
+                .animate(delay: (2700 + (index * 100)).ms)
+                .slideX(
+                  begin: -0.3,
+                  curve: Curves.easeInOut,
+                  duration: 600.ms,
+                )
+                .fadeIn(
+                  duration: 600.ms,
+                  curve: Curves.easeInOut,
+                );
           },
         );
       },

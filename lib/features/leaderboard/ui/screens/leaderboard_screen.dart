@@ -72,7 +72,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
             // home button
             Positioned(
-              bottom: 24,
+              bottom: 16,
               right: 16,
               child: FloatingActionButton(
                 onPressed: () {
@@ -89,7 +89,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                 child: const Icon(
                   Icons.home_rounded,
                   color: colorWhite,
-                  size: 24,
+                  size: 30,
                 ),
               ),
             ),

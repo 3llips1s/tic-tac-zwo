@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
+// import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/profile/data/models/user_profile.dart';
+import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 import 'package:tic_tac_zwo/features/profile/ui/widgets/avatar_flag.dart';
 
 class ProfileHeader extends ConsumerWidget {
@@ -18,7 +19,10 @@ class ProfileHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.watch(currentUserIdProvider);
+    // final currentUserId = ref.watch(currentUserIdProvider);
+
+    // todo: remove mock user data
+    final currentUserId = ref.watch(mockCurrentUserIdProvider);
 
     return Column(
       children: [
@@ -44,7 +48,7 @@ class ProfileHeader extends ConsumerWidget {
               // Edit button positioned to the right
               if (currentUserId == userProfile.id)
                 Positioned(
-                  right: 48,
+                  right: 60,
                   bottom: -10,
                   child: IconButton(
                     icon: Center(

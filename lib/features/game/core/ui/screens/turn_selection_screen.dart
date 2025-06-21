@@ -43,8 +43,8 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       ];
     } else if (widget.gameMode == GameMode.pass) {
       players = [
-        Player(username: 'Spieler 1', symbol: playerSymbols[0]),
-        Player(username: 'Spieler 2', symbol: playerSymbols[1]),
+        Player(username: 'Tic', symbol: playerSymbols[0]),
+        Player(username: 'Tac', symbol: playerSymbols[1]),
       ];
     } else {
       players = [

@@ -133,7 +133,9 @@ List<Map<String, dynamic>> _generateMockLeaderboardData({
     'Yoyo',
     'Boi',
     'Neo',
-    'Bo'
+    'Bo',
+    'Mungai',
+    'Mimmo'
   ];
 
   final List<String> mockCountries = [

@@ -57,8 +57,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       'assets/images/open_menu.svg',
                       colorFilter: const ColorFilter.mode(
                           Colors.black54, BlendMode.srcIn),
-                      height: 35,
-                      width: 35,
+                      height: 40,
+                      width: 40,
                     ),
             ),
           ),

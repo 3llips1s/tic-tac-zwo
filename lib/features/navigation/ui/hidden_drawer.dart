@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
-import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/navigation/logic/navigation_service.dart';
 
 import '../../../config/game_config/constants.dart';
@@ -234,22 +233,17 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                             shape: BoxShape.circle, color: colorYellowAccent),
                         child: Icon(
                           Icons.face_5_rounded,
-                          size: 25,
+                          color: colorBlack,
+                          size: 20,
                         )),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 16),
                     Text(
                       displayName,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: colorYellowAccent,
-                            fontSize: 20.0,
+                            fontSize: 24.0,
                           ),
                     ),
-                    const SizedBox(width: 10),
-                    Flag(
-                      countryCode: countryCode,
-                      height: 16,
-                      width: 24,
-                    )
                   ],
                 ),
               ),

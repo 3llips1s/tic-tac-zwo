@@ -1,6 +1,8 @@
 import 'models/game_history_entry.dart';
 import 'models/user_profile.dart';
 
+// todod: remove this mock data
+
 // --- Mock User Profiles ---
 
 // We'll use a map to easily look up mock users by their ID.
@@ -15,7 +17,7 @@ final Map<String, UserProfile> mockUserProfiles = {
     lastOnline: DateTime.now().subtract(const Duration(minutes: 5)),
     isOnline: true,
     avatarUrl: 'https://picsum.photos/id/237/200', // A random dog picture
-    countryCode: 'DE', // Germany
+    countryCode: 'KE', // Germany
     totalArticleAttempts: 250,
     totalCorrectArticles: 220,
   ),

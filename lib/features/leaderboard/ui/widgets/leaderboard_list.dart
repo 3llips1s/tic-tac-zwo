@@ -229,14 +229,14 @@ class _LeaderboardListState extends State<LeaderboardList> {
                         ),
                         _statCapsule(
                           value: '${player.accuracy.toStringAsFixed(0)}%',
-                          label: 'Akk',
+                          label: 'Acc',
                           valueColor: getAccuracyColor(player.accuracy),
                         )
                       ],
                     ),
                   ],
                 ),
-              ).animate().slideY(begin: -0.2).fadeIn(),
+              ).animate().slideY(begin: -0.3).fadeIn(),
           ],
         ),
       ),

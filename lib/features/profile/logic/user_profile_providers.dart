@@ -21,7 +21,7 @@ final userProfileProvider =
     FutureProvider.family<UserProfile, String>((ref, userId) async {
   if (useMockData) {
     final mockUser = mockUserProfiles[userId] ?? mockUserProfiles.values.first;
-    Future.value(mockUser);
+    return Future.value(mockUser);
   }
 
   final repo = ref.watch(userProfileRepoProvider);
@@ -47,15 +47,19 @@ final gamesHistoryProvider =
   },
 );
 
-final mockUserIdProvider = Provider<String?>(
-  (ref) {
+final mockCurrentUserIdProvider = Provider<String?>((ref) {
+  if (useMockData) {
     return 'my_mock_id';
-  },
-);
+  }
+
+  final authService = ref.watch(authServiceProvider);
+  final currentUserId = authService.currentUserId;
+  return currentUserId;
+});
 
 final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
   if (useMockData) {
-    final userId = ref.watch(mockUserIdProvider);
+    final userId = ref.watch(mockCurrentUserIdProvider);
     return ref.watch(userProfileProvider(userId!).future);
   }
 

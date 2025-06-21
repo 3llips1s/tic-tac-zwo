@@ -188,36 +188,33 @@ class _WortschatzScreenState extends ConsumerState<WortschatzScreen> {
                                     begin: -0.3,
                                     curve: Curves.easeInOut,
                                     duration: 600.ms)
-                                .fadeIn(duration: 600.ms);
+                                .fadeIn(
+                                  duration: 600.ms,
+                                  curve: Curves.easeInOut,
+                                );
                           },
                         ),
             ),
             Align(
               alignment: Alignment.bottomRight,
               child: Padding(
-                padding: const EdgeInsets.only(right: 20, bottom: 16),
-                child: Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.black87.withOpacity(0.8),
+                padding: const EdgeInsets.only(right: 16, bottom: 16),
+                child: FloatingActionButton(
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      RouteNames.home,
+                      (route) => false,
+                    );
+                  },
+                  backgroundColor: colorBlack.withOpacity(0.75),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Center(
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          RouteNames.home,
-                          (route) => false,
-                        );
-                      },
-                      icon: Icon(
-                        Icons.home_rounded,
-                        color: colorWhite,
-                        size: 24,
-                      ),
-                    ),
+                  child: const Icon(
+                    Icons.home_rounded,
+                    color: colorWhite,
+                    size: 30,
                   ),
                 ),
               ),
