@@ -8,50 +8,60 @@ import 'package:tic_tac_zwo/features/profile/ui/widgets/avatar_flag.dart';
 
 class ProfileHeader extends ConsumerWidget {
   final UserProfile userProfile;
+  final VoidCallback onEditPressed;
 
-  const ProfileHeader({super.key, required this.userProfile});
+  const ProfileHeader({
+    super.key,
+    required this.userProfile,
+    required this.onEditPressed,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(currentUserIdProvider);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
         AvatarFlag(
           radius: 48,
           avatarUrl: userProfile.avatarUrl,
           countryCode: userProfile.countryCode,
         ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Text(
-                  userProfile.username,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: colorBlack,
-                      ),
-                ),
-                if (currentUserId == userProfile.id) const SizedBox(width: 8),
-                IconButton(
-                  icon: Center(
-                    child: SvgPicture.asset(
-                      'assets/images/edit.svg',
-                      height: 20,
-                      width: 20,
+        const SizedBox(height: 44),
+        SizedBox(
+          width: double.infinity,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Text(
+                userProfile.username,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: colorBlack,
                     ),
+              ),
+              // Edit button positioned to the right
+              if (currentUserId == userProfile.id)
+                Positioned(
+                  right: 48,
+                  bottom: -10,
+                  child: IconButton(
+                    icon: Center(
+                      child: SvgPicture.asset(
+                        'assets/images/edit.svg',
+                        height: 25,
+                        width: 25,
+                        colorFilter:
+                            ColorFilter.mode(Colors.black87, BlendMode.srcIn),
+                      ),
+                    ),
+                    onPressed: onEditPressed,
                   ),
-                  onPressed: _showEditUsernameDialog(context, ref, userProfile),
-                )
-              ],
-            )
-          ],
-        )
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }

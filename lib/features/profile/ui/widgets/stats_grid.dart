@@ -13,32 +13,38 @@ class StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.5,
-      children: [
-        _StatCard(
-          label: 'Spiele',
-          value: userProfile.gamesPlayed.toString(),
+    return Center(
+      child: SizedBox(
+        height: 300,
+        width: 300,
+        child: GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1,
+          children: [
+            _StatCard(
+              label: 'Spiele',
+              value: userProfile.gamesPlayed.toString(),
+            ),
+            _StatCard(
+              label: 'Punkte',
+              value: userProfile.points.toString(),
+            ),
+            _StatCard(
+              label: 'Genauigkeit',
+              value: _formatPercentage(userProfile.articleAccuracy),
+            ),
+            _StatCard(
+              label: 'Siegquote',
+              value: _formatPercentage(userProfile.winRate),
+            ),
+          ],
         ),
-        _StatCard(
-          label: 'Punkte',
-          value: userProfile.points.toString(),
-        ),
-        _StatCard(
-          label: 'Artikelgenauigkeit',
-          value: _formatPercentage(userProfile.articleAccuracy),
-        ),
-        _StatCard(
-          label: 'Siegquote',
-          value: _formatPercentage(userProfile.winRate),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -78,13 +84,17 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: colorBlack),
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: colorBlack,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 12,
+                  fontWeight: FontWeight.bold,
                   color: colorGrey600,
                 ),
           )

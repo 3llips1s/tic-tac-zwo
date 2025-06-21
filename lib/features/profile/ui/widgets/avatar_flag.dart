@@ -8,6 +8,7 @@ class AvatarFlag extends StatelessWidget {
   final double radius;
 
   const AvatarFlag({
+    super.key,
     this.avatarUrl,
     this.countryCode,
     required this.radius,
@@ -16,6 +17,7 @@ class AvatarFlag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         CircleAvatar(
           radius: radius,
@@ -27,17 +29,16 @@ class AvatarFlag extends StatelessWidget {
         ),
         if (countryCode != null)
           Positioned(
-            right: 0,
-            bottom: 0,
+            right: -3,
+            bottom: -3,
             child: ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(6.0)),
               child: Flag(
                 countryCode: countryCode!,
                 height: radius * 0.45,
                 width: radius * 0.6,
               ),
             ),
-          )
+          ),
       ],
     );
   }

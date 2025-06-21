@@ -46,7 +46,7 @@ class _PlayerNameDialogState extends State<PlayerNameDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Name editieren:',
+          'Name ändern:',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -195,7 +195,7 @@ Widget _buildPlayerInput({
           buildCounter: (context,
                   {required currentLength, required isFocused, maxLength}) =>
               Text(
-            '0${9 - currentLength}',
+            '0${maxLength! - currentLength}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.black38,
                 ),

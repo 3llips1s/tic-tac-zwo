@@ -81,7 +81,7 @@ class _GameHistoryTile extends StatelessWidget {
     final (resultColor, resultText) = _getResultStyle();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       decoration: BoxDecoration(
         color: colorWhite,
         borderRadius: BorderRadius.circular(6),
@@ -95,35 +95,34 @@ class _GameHistoryTile extends StatelessWidget {
           Text(
             'Du',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorGrey400,
-                ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            ' — ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: colorGrey500,
+                ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            ' vs. ',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
                   color: colorGrey400,
                 ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 16),
 
           // opponent avatar
           AvatarFlag(
-              radius: 24,
+              radius: 14,
               avatarUrl: entry.opponentAvatarUrl,
-              countryCode: entry.opponentCountyCode),
-          const SizedBox(width: 12),
+              countryCode: entry.opponentCountryCode),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               entry.opponentUsername,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: colorGrey400,
+                    color: Colors.black87,
                   ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -133,16 +132,7 @@ class _GameHistoryTile extends StatelessWidget {
             height: 20,
             decoration: BoxDecoration(
               color: resultColor,
-              borderRadius: BorderRadius.circular(6.0),
-            ),
-            child: Center(
-              child: Text(
-                resultText,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 14,
-                      color: colorBlack,
-                    ),
-              ),
+              borderRadius: BorderRadius.circular(3.0),
             ),
           ),
         ],

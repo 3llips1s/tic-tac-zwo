@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
+import 'package:tic_tac_zwo/features/profile/ui/widgets/wdl_test.dart';
 
 import '../../../navigation/routes/route_names.dart';
+import '../widgets/edit_username_dialog.dart';
 import '../widgets/games_history_list.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/stats_grid.dart';
@@ -39,21 +41,19 @@ class ProfileScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ProfileHeader(userProfile: userProfile),
-                    const SizedBox(height: 24),
-                    WdlBar(userProfile: userProfile),
-                    const SizedBox(height: 24),
+                    ProfileHeader(
+                        userProfile: userProfile,
+                        onEditPressed: () {
+                          showEditUsernameDialog(context, ref, userProfile);
+                        }),
+                    const SizedBox(height: 48),
+                    // todo: remove test bar
+                    WdlBarTest(),
+                    // WdlBar(userProfile: userProfile),
+                    const SizedBox(height: 64),
                     StatsGrid(userProfile: userProfile),
-                    const SizedBox(height: 32),
-                    Text(
-                      'Letzte Spiele',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: colorGrey600,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+
                     GamesHistoryList(userId: userId),
                   ],
                 ),
@@ -63,7 +63,10 @@ class ProfileScreen extends ConsumerWidget {
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: const EdgeInsets.only(right: 20, bottom: 16),
+              padding: const EdgeInsets.only(
+                right: 32,
+                bottom: 24,
+              ),
               child: Container(
                 height: 40,
                 width: 40,

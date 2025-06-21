@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/profile/data/models/user_profile.dart';
 
-class WdlBar extends StatelessWidget {
-  final UserProfile userProfile;
+class WdlBarTest extends StatelessWidget {
+  final int gamesWon;
+  final int gamesDrawn;
+  final int gamesLost;
 
-  const WdlBar({super.key, required this.userProfile});
+  const WdlBarTest({
+    super.key,
+    this.gamesWon = 12,
+    this.gamesDrawn = 5,
+    this.gamesLost = 8,
+  });
 
   static const Color winColor = colorYellow;
   static const Color drawColor = colorGrey400;
@@ -13,7 +19,8 @@ class WdlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalGames = userProfile.gamesPlayed;
+    final totalGames = gamesWon + gamesDrawn + gamesLost;
+
     if (totalGames == 0) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
@@ -35,7 +42,7 @@ class WdlBar extends StatelessWidget {
       return Expanded(
         flex: flex,
         child: Container(
-          height: 32,
+          height: 40,
           color: color,
           child: Center(
             child: Text(
@@ -51,17 +58,17 @@ class WdlBar extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(9.0),
-      child: Row(
-        children: [
-          _buildBarSegment(
-              userProfile.gamesWon, winColor, '${userProfile.gamesWon}S'),
-          _buildBarSegment(
-              userProfile.gamesDrawn, drawColor, '${userProfile.gamesDrawn}U'),
-          _buildBarSegment(
-              userProfile.gamesLost, lossColor, '${userProfile.gamesLost}N')
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(27.0),
+        child: Row(
+          children: [
+            _buildBarSegment(gamesWon, winColor, '$gamesWon'),
+            _buildBarSegment(gamesDrawn, drawColor, '$gamesDrawn'),
+            _buildBarSegment(gamesLost, lossColor, '$gamesLost')
+          ],
+        ),
       ),
     );
   }
