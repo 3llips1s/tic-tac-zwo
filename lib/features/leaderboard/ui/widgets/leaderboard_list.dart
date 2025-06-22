@@ -4,6 +4,8 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/leaderboard/data/leaderboard_entry.dart';
 
+import '../../../navigation/routes/route_names.dart';
+
 class LeaderboardList extends StatefulWidget {
   final List<LeaderboardEntry> players;
 
@@ -52,9 +54,14 @@ class _LeaderboardListState extends State<LeaderboardList> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildExpandableRow(
+            context,
             player,
             isExpanded,
-            onTap: () => _handleExpansion(playerIndex),
+            onExpandTap: () => _handleExpansion(playerIndex),
+            onProfileTap: () {
+              Navigator.of(context).pushNamed(RouteNames.profile,
+                  arguments: {'userId': player.id});
+            },
           ),
         )
             .animate(delay: (2000 + (playerIndex * 50)).ms)
@@ -128,8 +135,9 @@ class _LeaderboardListState extends State<LeaderboardList> {
     );
   }
 
-  Widget _buildExpandableRow(LeaderboardEntry player, bool isExpanded,
-      {required VoidCallback onTap}) {
+  Widget _buildExpandableRow(
+      BuildContext context, LeaderboardEntry player, bool isExpanded,
+      {required VoidCallback onExpandTap, required VoidCallback onProfileTap}) {
     final losses = player.gamesPlayed - player.gamesWon - player.gamesDrawn;
     final isCurrentUser = player.isCurrentUser;
 
@@ -140,7 +148,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
     }
 
     return InkWell(
-      onTap: onTap,
+      onTap: onProfileTap,
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -196,11 +204,14 @@ class _LeaderboardListState extends State<LeaderboardList> {
                   ),
                 ),
                 SizedBox(width: 8),
-                Icon(
-                  isExpanded
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                  icon: Icon(isExpanded
                       ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded,
+                      : Icons.expand_more_rounded),
                   color: colorGrey400,
+                  onPressed: onExpandTap,
                 )
               ],
             ),

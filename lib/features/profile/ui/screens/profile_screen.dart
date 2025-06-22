@@ -49,8 +49,14 @@ class ProfileScreen extends ConsumerWidget {
                         }),
                     const SizedBox(height: 48),
                     // todo: remove test bar
-                    WdlBarTest().animate(delay: 600.ms).slideX(
+                    WdlBarTest()
+                        .animate(delay: 600.ms)
+                        .slideX(
                           begin: 0.3,
+                          duration: 900.ms,
+                          curve: Curves.easeInOut,
+                        )
+                        .fadeIn(
                           duration: 900.ms,
                           curve: Curves.easeInOut,
                         ),

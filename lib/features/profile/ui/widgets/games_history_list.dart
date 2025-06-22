@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
+import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart';
 import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 import 'package:tic_tac_zwo/features/profile/ui/widgets/avatar_flag.dart';
@@ -90,62 +91,69 @@ class _GameHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final (resultColor, resultText) = _getResultStyle();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      decoration: BoxDecoration(
-        color: colorWhite,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: colorGrey300,
-          width: 1,
+    return InkWell(
+      borderRadius: BorderRadius.circular(6),
+      onTap: () {
+        Navigator.of(context).pushNamed(RouteNames.profile,
+            arguments: {'userId': entry.opponentId});
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        decoration: BoxDecoration(
+          color: colorWhite,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: colorGrey300,
+            width: 1,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            'Du',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colorGrey500,
-                ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            ' vs. ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  color: colorGrey400,
-                ),
-          ),
-          const SizedBox(width: 16),
-
-          // opponent avatar
-          AvatarFlag(
-              radius: 14,
-              avatarUrl: entry.opponentAvatarUrl,
-              countryCode: entry.opponentCountryCode),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              entry.opponentUsername,
+        child: Row(
+          children: [
+            Text(
+              'Du',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colorGrey500,
                   ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: resultColor,
-              borderRadius: BorderRadius.circular(3.0),
+            const SizedBox(width: 16),
+            Text(
+              ' vs. ',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    color: colorGrey400,
+                  ),
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+
+            // opponent avatar
+            AvatarFlag(
+                radius: 14,
+                avatarUrl: entry.opponentAvatarUrl,
+                countryCode: entry.opponentCountryCode),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                entry.opponentUsername,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: resultColor,
+                borderRadius: BorderRadius.circular(3.0),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

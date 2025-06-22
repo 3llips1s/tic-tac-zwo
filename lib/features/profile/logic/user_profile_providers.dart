@@ -20,7 +20,8 @@ final userProfileRepoProvider = Provider<UserProfileRepo>((ref) {
 final userProfileProvider =
     FutureProvider.family<UserProfile, String>((ref, userId) async {
   if (useMockData) {
-    final mockUser = mockUserProfiles[userId] ?? mockUserProfiles.values.first;
+    final mockUser = MockDataService.mockUsers.firstWhere((u) => u.id == userId,
+        orElse: () => MockDataService.currentUser);
     return Future.value(mockUser);
   }
 
@@ -38,7 +39,7 @@ final gamesHistoryProvider =
     FutureProvider.family<List<GameHistoryEntry>, String>(
   (ref, userId) {
     if (useMockData) {
-      return Future.value(mockGameHistory);
+      return Future.value(MockDataService.mockGameHistory);
     }
 
     final repo = ref.watch(userProfileRepoProvider);
