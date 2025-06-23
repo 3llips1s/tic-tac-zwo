@@ -38,7 +38,7 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
             gamesDrawn: user.gamesDrawn,
             accuracy: accuracy,
             points: user.points,
-            isCurrentUser: user.id == userId,
+            isCurrentUser: user.id == MockDataService.currentUser.id,
           );
         }).toList();
       } else {

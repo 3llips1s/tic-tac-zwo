@@ -215,6 +215,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
                 )
               ],
             ),
+
             // Expanded view with AnimatedOpacity and AnimatedSize
             AnimatedOpacity(
               opacity: isExpanded ? 1.0 : 0.0,
@@ -226,7 +227,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
                 child: Visibility(
                   visible: isExpanded,
                   maintainState: true,
-                  maintainSize: true,
+                  maintainSize: false,
                   maintainAnimation: true,
                   child: Column(
                     children: [
