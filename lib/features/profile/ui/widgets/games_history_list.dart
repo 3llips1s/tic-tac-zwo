@@ -12,7 +12,7 @@ import '../../../../config/game_config/constants.dart';
 class GamesHistoryList extends ConsumerWidget {
   final String userId;
 
-  const GamesHistoryList({required this.userId});
+  const GamesHistoryList({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -112,7 +112,6 @@ class _GameHistoryTile extends StatelessWidget {
             Text(
               'Du',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colorGrey500,
                   ),
@@ -121,7 +120,6 @@ class _GameHistoryTile extends StatelessWidget {
             Text(
               ' vs. ',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 16,
                     color: colorGrey400,
                   ),
             ),
@@ -137,7 +135,6 @@ class _GameHistoryTile extends StatelessWidget {
               child: Text(
                 entry.opponentUsername,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
