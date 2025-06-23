@@ -50,7 +50,7 @@ final gamesHistoryProvider =
 
 final mockCurrentUserIdProvider = Provider<String?>((ref) {
   if (useMockData) {
-    return 'mock_id_7';
+    return MockDataService.currentUser.id;
   }
 
   final authService = ref.watch(authServiceProvider);

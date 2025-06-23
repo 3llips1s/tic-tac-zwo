@@ -215,40 +215,53 @@ class _LeaderboardListState extends State<LeaderboardList> {
                 )
               ],
             ),
-
-            // expanded view
-            if (isExpanded)
-              Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: const Divider(
-                      color: colorGrey200,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+            // Expanded view with AnimatedOpacity and AnimatedSize
+            AnimatedOpacity(
+              opacity: isExpanded ? 1.0 : 0.0,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: AnimatedSize(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: Visibility(
+                  visible: isExpanded,
+                  maintainState: true,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  child: Column(
                     children: [
-                      _statCapsule(
-                        value: '${player.gamesPlayed}',
-                        label: 'Spiele',
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: const Divider(
+                          color: colorGrey200,
+                        ),
                       ),
-                      _statCapsule(
-                        value:
-                            '${player.gamesWon}-${player.gamesDrawn}-$losses',
-                        label: 'S-U-N',
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _statCapsule(
+                            value: '${player.gamesPlayed}',
+                            label: 'Spiele',
+                          ),
+                          _statCapsule(
+                            value:
+                                '${player.gamesWon}-${player.gamesDrawn}-$losses',
+                            label: 'S-U-N',
+                          ),
+                          _statCapsule(
+                            value: '${player.accuracy.toStringAsFixed(0)}%',
+                            label: 'Acc',
+                            valueColor: getAccuracyColor(player.accuracy),
+                          )
+                        ],
                       ),
-                      _statCapsule(
-                        value: '${player.accuracy.toStringAsFixed(0)}%',
-                        label: 'Acc',
-                        valueColor: getAccuracyColor(player.accuracy),
-                      )
+                      const SizedBox(height: 8),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                ],
-              ).animate().slideY(begin: -0.3).fadeIn(),
+                ),
+              ),
+            ),
           ],
         ),
       ),
