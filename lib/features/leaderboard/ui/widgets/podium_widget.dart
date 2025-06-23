@@ -127,22 +127,7 @@ class PodiumWidget extends StatelessWidget {
             color: color,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Text(
-                  '🏆 ${player.gamesWon}    🎯 ${player.accuracy.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                  ),
-                ),
-              )
-            ],
-          ),
-        )
+        ),
       ],
     );
   }
