@@ -97,7 +97,7 @@ class MockDataService {
   static List<UserProfile> _generateMockUsers({int count = 50}) {
     final Random random = Random();
     final List<String> mockUsernames = [
-      '3ll1psis',
+      'G3ll1psis',
       'Mungai',
       'Chwaki',
       'Bo',
@@ -120,12 +120,14 @@ class MockDataService {
       'CH',
       'XK'
     ];
-
     List<UserProfile> users = [];
 
     for (int i = 0; i < count; i++) {
       String baseName = mockUsernames[random.nextInt(mockUsernames.length)];
-      String username = '$baseName${random.nextInt(99)}'.substring(0, 9);
+      String username = '$baseName${random.nextInt(99)}';
+      if (username.length > 9) {
+        username = username.substring(0, 9);
+      }
 
       int points = (1000 - i * 15) + random.nextInt(10);
       int gamesPlayed = 20 + random.nextInt(50);
@@ -152,7 +154,10 @@ class MockDataService {
       ));
     }
 
-    users[6] = users[6].copyWith(username: 'Du', countryCode: 'KE');
+    users[6] = users[6].copyWith(
+      username: 'Du',
+      countryCode: 'KE',
+    );
     return users;
   }
 }

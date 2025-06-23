@@ -99,7 +99,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
           flex: 2,
           child: Text(
             'Punkte',
-            textAlign: TextAlign.right,
+            textAlign: TextAlign.center,
             style: headerTheme,
           ),
         ),
@@ -152,7 +152,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isCurrentUser ? Colors.blue.withOpacity(0.1) : colorWhite,
           borderRadius: BorderRadius.circular(6),
@@ -167,7 +167,7 @@ class _LeaderboardListState extends State<LeaderboardList> {
             Row(
               children: [
                 SizedBox(
-                  width: 34,
+                  width: 36,
                   child: Text(
                     player.rank.toString(),
                     textAlign: TextAlign.center,
@@ -218,35 +218,36 @@ class _LeaderboardListState extends State<LeaderboardList> {
 
             // expanded view
             if (isExpanded)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Column(
-                  children: [
-                    const Divider(
-                      color: colorGrey100,
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: const Divider(
+                      color: colorGrey200,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _statCapsule(
-                          value: '${player.gamesPlayed}',
-                          label: 'Spiele',
-                        ),
-                        _statCapsule(
-                          value:
-                              '${player.gamesWon}-${player.gamesDrawn}-$losses',
-                          label: 'S-U-N',
-                        ),
-                        _statCapsule(
-                          value: '${player.accuracy.toStringAsFixed(0)}%',
-                          label: 'Acc',
-                          valueColor: getAccuracyColor(player.accuracy),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _statCapsule(
+                        value: '${player.gamesPlayed}',
+                        label: 'Spiele',
+                      ),
+                      _statCapsule(
+                        value:
+                            '${player.gamesWon}-${player.gamesDrawn}-$losses',
+                        label: 'S-U-N',
+                      ),
+                      _statCapsule(
+                        value: '${player.accuracy.toStringAsFixed(0)}%',
+                        label: 'Acc',
+                        valueColor: getAccuracyColor(player.accuracy),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ).animate().slideY(begin: -0.3).fadeIn(),
           ],
         ),

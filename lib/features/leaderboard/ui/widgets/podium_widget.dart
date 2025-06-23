@@ -6,6 +6,8 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/leaderboard/data/leaderboard_entry.dart';
 
+import '../../../navigation/routes/route_names.dart';
+
 class PodiumWidget extends StatelessWidget {
   final List<LeaderboardEntry> top3Players;
 
@@ -37,6 +39,10 @@ class PodiumWidget extends StatelessWidget {
             rank: 2,
             height: 120,
             color: const Color(0xFFC0C0C0),
+            onProfileTap: () {
+              Navigator.of(context).pushNamed(RouteNames.profile,
+                  arguments: {'userId': podiumPlayers[1]?.id});
+            },
           )
               .animate()
               .slideY(
@@ -56,6 +62,10 @@ class PodiumWidget extends StatelessWidget {
             rank: 1,
             height: 150,
             color: const Color(0xFFD4AF37),
+            onProfileTap: () {
+              Navigator.of(context).pushNamed(RouteNames.profile,
+                  arguments: {'userId': podiumPlayers[0]?.id});
+            },
           )
               .animate()
               .slideY(
@@ -75,6 +85,10 @@ class PodiumWidget extends StatelessWidget {
             rank: 3,
             height: 90,
             color: const Color(0xFFCD7F32),
+            onProfileTap: () {
+              Navigator.of(context).pushNamed(RouteNames.profile,
+                  arguments: {'userId': podiumPlayers[2]?.id});
+            },
           )
               .animate()
               .slideY(
@@ -97,6 +111,7 @@ class PodiumWidget extends StatelessWidget {
     required int rank,
     required double height,
     required Color color,
+    required VoidCallback onProfileTap,
   }) {
     if (player == null) {
       return SizedBox(width: 90);
@@ -105,7 +120,7 @@ class PodiumWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _PlayerInfoCard(player: player),
+        _PlayerInfoCard(player: player, onProfileTap: onProfileTap),
         const SizedBox(height: 20),
         Container(
           width: 100,
@@ -137,74 +152,80 @@ class PodiumWidget extends StatelessWidget {
 
 class _PlayerInfoCard extends StatelessWidget {
   final LeaderboardEntry player;
+  final VoidCallback onProfileTap;
 
-  const _PlayerInfoCard({required this.player});
+  const _PlayerInfoCard({required this.player, required this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
     final isCurrentUser = player.isCurrentUser;
 
-    return ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Stack(
-          children: [
-            Container(
-              width: 100,
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: isCurrentUser ? Colors.blue : colorWhite,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isCurrentUser
-                      ? Colors.blue.withOpacity(0.4)
-                      : colorWhite.withOpacity(0.1),
-                  width: isCurrentUser ? 2 : 1,
+    return InkWell(
+      onTap: onProfileTap,
+      child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Stack(
+            children: [
+              Container(
+                width: 100,
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: isCurrentUser ? Colors.blue : colorWhite,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isCurrentUser
+                        ? Colors.blue.withOpacity(0.4)
+                        : colorWhite.withOpacity(0.1),
+                    width: isCurrentUser ? 2 : 1,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withAlpha((255 * 0.7).toInt()),
+                      Colors.white.withAlpha((255 * 0.1).toInt()),
+                    ],
+                  ),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withAlpha((255 * 0.7).toInt()),
-                    Colors.white.withAlpha((255 * 0.1).toInt()),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Flag(
+                            countryCode: player.countryCode,
+                            height: 10,
+                            width: 15),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            player.username,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                            textAlign: TextAlign.start,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${player.points} Pkt',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Flag(
-                          countryCode: player.countryCode,
-                          height: 10,
-                          width: 15),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          player.username,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                          textAlign: TextAlign.start,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${player.points} Pkt',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ));
+            ],
+          )),
+    );
   }
 }

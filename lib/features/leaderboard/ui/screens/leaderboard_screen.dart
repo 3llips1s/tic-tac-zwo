@@ -164,10 +164,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           LeaderboardList(
             players: state.remaining,
           ),
-
-        SliverToBoxAdapter(
-          child: SizedBox(height: kToolbarHeight),
-        )
       ],
     );
   }

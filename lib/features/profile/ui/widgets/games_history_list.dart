@@ -98,7 +98,7 @@ class _GameHistoryTile extends StatelessWidget {
             arguments: {'userId': entry.opponentId});
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
         decoration: BoxDecoration(
           color: colorWhite,
           borderRadius: BorderRadius.circular(6),
@@ -112,7 +112,7 @@ class _GameHistoryTile extends StatelessWidget {
             Text(
               'Du',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colorGrey500,
                   ),
@@ -137,7 +137,7 @@ class _GameHistoryTile extends StatelessWidget {
               child: Text(
                 entry.opponentUsername,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
