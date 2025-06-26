@@ -14,4 +14,9 @@ class RouteNames {
   static const String login = '/login';
   static const String profile = '/profile';
   static const String info = '/info';
+  static const String terms = '/terms';
+  static const String privacy = '/privacy';
+  static const String credits = '/credits';
+  static const String contact = '/contact';
+  static const String about = '/about';
 }

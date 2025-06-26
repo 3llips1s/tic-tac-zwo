@@ -12,6 +12,12 @@ import '../../../config/game_config/config.dart';
 import '../../game/core/ui/screens/game_screen.dart';
 import '../../game/core/ui/screens/home_screen.dart';
 import '../../game/core/ui/screens/turn_selection_screen.dart';
+import '../../info/ui/about_app_screen.dart';
+import '../../info/ui/contact_feedback_screen.dart';
+import '../../info/ui/credits_screen.dart';
+import '../../info/ui/info_screen.dart';
+import '../../info/ui/privacy_policy_screen.dart';
+import '../../info/ui/terms_and_conditions_screen.dart';
 import 'route_names.dart';
 
 class AppRouter {
@@ -189,23 +195,6 @@ class AppRouter {
           },
         );
 
-      // wortschatz
-      case RouteNames.wortschatz:
-        return PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              WortschatzScreen(),
-          transitionDuration: Duration(milliseconds: 900),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeInOut,
-              ),
-              child: child,
-            );
-          },
-        );
-
       // profile
       case RouteNames.profile:
         final arguments = settings.arguments as Map<String, dynamic>?;
@@ -246,6 +235,79 @@ class AppRouter {
               child: child,
             );
           },
+        );
+
+      // wortschatz
+      case RouteNames.wortschatz:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              WortschatzScreen(),
+          transitionDuration: Duration(milliseconds: 900),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      // info
+      case RouteNames.info:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => InfoScreen(),
+          transitionDuration: Duration(milliseconds: 900),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              ),
+              child: child,
+            );
+          },
+        );
+
+      case RouteNames.about:
+        return PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const AboutAppScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+
+      case RouteNames.contact:
+        return PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const ContactFeedbackScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+
+      case RouteNames.credits:
+        return PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const CreditsScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+
+      case RouteNames.privacy:
+        return PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const PrivacyPolicyScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        );
+
+      case RouteNames.terms:
+        return PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const TermsAndConditionsScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
         );
 
       default:
