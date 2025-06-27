@@ -270,17 +270,17 @@ class AppRouter {
           },
         );
 
-      case RouteNames.about:
+      case RouteNames.contact:
         return PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const AboutAppScreen(),
+          pageBuilder: (_, __, ___) => const ContactFeedbackScreen(),
           transitionDuration: const Duration(milliseconds: 600),
           transitionsBuilder: (_, animation, __, child) =>
               FadeTransition(opacity: animation, child: child),
         );
 
-      case RouteNames.contact:
+      case RouteNames.about:
         return PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const ContactFeedbackScreen(),
+          pageBuilder: (_, __, ___) => const AboutAppScreen(),
           transitionDuration: const Duration(milliseconds: 600),
           transitionsBuilder: (_, animation, __, child) =>
               FadeTransition(opacity: animation, child: child),
