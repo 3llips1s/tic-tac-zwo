@@ -68,15 +68,6 @@ class UserProfileRepo {
     return avatarUrl;
   }
 
-  Future<void> updateUserLocation(String userId, double lat, double lng) async {
-    await _supabase.from('users').update({
-      'lat': lat,
-      'lng': lng,
-      'last_online': DateTime.now().toIso8601String(),
-      'is_online': true
-    }).eq('id', userId);
-  }
-
   Future<void> setUserOffline(String userId) async {
     await _supabase.from('users').update({
       'is_online': false,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -696,12 +697,38 @@ class _LoginScreenState extends State<LoginScreen>
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinien.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _agreeToTerms ? colorGrey200 : colorGrey400,
-                          fontSize: 12,
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: _agreeToTerms ? colorGrey200 : colorGrey400,
+                            fontSize: 12,
+                          ),
+                      children: <TextSpan>[
+                        const TextSpan(text: 'Ich akzeptiere die '),
+                        TextSpan(
+                          text: 'Nutzungsbedingungen',
+                          style: const TextStyle(
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.pushNamed(context, RouteNames.terms);
+                            },
                         ),
+                        const TextSpan(text: ' und '),
+                        TextSpan(
+                          text: 'Datenschutzrichtlinien',
+                          style: const TextStyle(
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.pushNamed(context, RouteNames.privacy);
+                            },
+                        ),
+                        const TextSpan(text: '.'),
+                      ],
+                    ),
                   ),
                 ),
                 Checkbox(
@@ -713,7 +740,7 @@ class _LoginScreenState extends State<LoginScreen>
                   },
                   activeColor: colorGrey200,
                   checkColor: colorBlack,
-                  side: BorderSide(color: colorGrey400),
+                  side: const BorderSide(color: colorGrey400),
                 ),
               ],
             ),

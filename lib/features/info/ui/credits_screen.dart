@@ -147,9 +147,11 @@ class CreditsScreen extends StatelessWidget {
 
                   // images
                   _buildHeading(context, 'Bild'),
+                  const SizedBox(height: 8),
+
                   _buildCreditLink(
                     context,
-                    'Tic Tac Toe Game von ',
+                    'Tic Tac Toe von ',
                     'Marcela Artola auf Pexels',
                     'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
                   ),
