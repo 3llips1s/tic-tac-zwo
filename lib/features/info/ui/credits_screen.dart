@@ -1,9 +1,59 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/game_config/constants.dart';
 
 class CreditsScreen extends StatelessWidget {
   const CreditsScreen({super.key});
+
+  Future<void> _launchURL(BuildContext context, String url) async {
+    final Uri uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (!context.mounted) return;
+        _showErrorSnackBar(context, 'Link konnte nicht geöffnet werden.');
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      _showErrorSnackBar(context, 'Linkfehler.');
+    }
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        margin: EdgeInsets.only(
+          bottom: kToolbarHeight,
+          left: 40,
+          right: 40,
+        ),
+        content: Container(
+            padding: EdgeInsets.all(12),
+            height: kToolbarHeight,
+            decoration: BoxDecoration(
+              color: colorBlack,
+              borderRadius: BorderRadius.all(Radius.circular(9)),
+            ),
+            child: Center(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: colorWhite,
+                    ),
+              ),
+            )),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,24 +64,112 @@ class CreditsScreen extends StatelessWidget {
         child: Stack(
           children: [
             // title
-            SizedBox(
-              height: kToolbarHeight * 2.5,
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Danksagungen & Quellenangaben',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: colorBlack,
+            SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 32.0).copyWith(top: 24),
+              child: Column(
+                children: [
+                  // title
+                  SizedBox(
+                    height: kToolbarHeight * 2,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Danksagungen & Quelle',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: colorBlack,
+                            ),
                       ),
-                ),
-              ),
-            ),
+                    ),
+                  ),
+                  Text(
+                    'Tic Tac Zwö wurde durch die Arbeit und die Beiträge von großartigen Entwicklern und Kreativen ermöglicht.\n'
+                    '\nEin großes Dankeschön an alle! 🖤♥️💛',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade700,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                  ),
+                  const SizedBox(height: 48),
 
-            // content
-            Center(
-              child: Text('Content coming soon...'),
+                  // words
+                  _buildHeading(context, 'Wortschatz'),
+                  const SizedBox(height: 8),
+
+                  _buildCreditLink(
+                    context,
+                    'Die Lister der deutschen Nomen basiert auf den ',
+                    'FrequenceLists von The CJKI',
+                    'https://frequencylists.blogspot.com/2016/01/the-2980-most-frequently-used-german.html',
+                  ),
+                  const SizedBox(height: 40),
+
+                  // icons
+                  _buildHeading(context, 'Icons'),
+                  const SizedBox(height: 8),
+
+                  _buildCreditLink(
+                      context,
+                      'Meeting von ',
+                      'Nubaia Karim Barsha (Noun Project)',
+                      'https://thenounproject.com/icon/meeting-2465898/'),
+                  _buildCreditLink(
+                      context,
+                      'Profile von ',
+                      'Sentya Irma (Noun Project)',
+                      'https://thenounproject.com/icon/profile-6282718/'),
+                  _buildCreditLink(context, 'Grid von ', 'Ariso (Noun Project)',
+                      'https://thenounproject.com/icon/grid-7573885/'),
+                  _buildCreditLink(
+                      context,
+                      'WiFi von ',
+                      'Manglayang studio (Noun Project)',
+                      'https://thenounproject.com/icon/wifi-4262430/'),
+                  _buildCreditLink(
+                      context,
+                      'Boxing von ',
+                      'Basith Ibrahim (Noun Project)',
+                      'https://thenounproject.com/icon/boxing-3681295/'),
+                  _buildCreditLink(
+                      context,
+                      'Edit von ',
+                      'Kosong Tujuh (Noun Project)',
+                      'https://thenounproject.com/icon/edit-7511823/'),
+                  _buildCreditLink(
+                      context,
+                      'Favorites von ',
+                      'Dmitry Podluzny (Noun Project)',
+                      'https://thenounproject.com/icon/favorites-7219360/'),
+                  const SizedBox(height: 40),
+
+                  // images
+                  _buildHeading(context, 'Bild'),
+                  _buildCreditLink(
+                    context,
+                    'Tic Tac Toe Game von ',
+                    'Marcela Artola auf Pexels',
+                    'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
+                  ),
+                  const SizedBox(height: 40),
+
+                  // technologies
+                  _buildHeading(context, 'Technologie'),
+                  const SizedBox(height: 8),
+
+                  _buildCreditText(context,
+                      'Entwickelt mit Flutter, dem UI-Toolkit von Google.'),
+                  _buildCreditText(context,
+                      'Backend-Dienste bereitgestellt durch Supabase.'),
+                  _buildCreditText(
+                      context, 'State-Management mit dem Riverpod-Framework.'),
+                  _buildCreditText(
+                      context, 'Lokale Speicherung mit Hive-Community Edition'),
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
 
             // navigate back to drawer
@@ -55,5 +193,90 @@ class CreditsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildHeading(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Colors.black87,
+            ),
+      ),
+    );
+  }
+
+  Widget _buildCreditLink(
+      BuildContext context, String prefix, String linkText, String url) {
+    final textStyle =
+        Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorGrey600);
+    final linkStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.blue,
+          decoration: TextDecoration.underline,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '•   ',
+            style: TextStyle(
+              color: colorGrey600,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Expanded(
+            child: RichText(
+              textAlign: TextAlign.start,
+              text: TextSpan(
+                children: [
+                  TextSpan(text: prefix, style: textStyle),
+                  TextSpan(
+                      text: linkText,
+                      style: linkStyle,
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => _launchURL(context, url)),
+                ],
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreditText(BuildContext context, String text) {
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '•   ',
+              style: TextStyle(
+                color: colorGrey600,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                text,
+                textAlign: TextAlign.start,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: colorGrey600,
+                    ),
+              ),
+            )
+          ],
+        ));
   }
 }

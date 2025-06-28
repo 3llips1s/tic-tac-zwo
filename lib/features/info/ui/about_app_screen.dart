@@ -75,7 +75,6 @@ class AboutAppScreen extends StatelessWidget {
               bottom: 16,
               left: 16,
               child: FloatingActionButton(
-                heroTag: 'about_back_button',
                 onPressed: () => Navigator.pop(context),
                 backgroundColor: colorBlack.withOpacity(0.75),
                 shape: RoundedRectangleBorder(

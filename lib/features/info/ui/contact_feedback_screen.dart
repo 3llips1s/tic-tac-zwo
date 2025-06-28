@@ -17,12 +17,15 @@ class ContactFeedbackScreen extends StatelessWidget {
 
     try {
       final bool canLaunch = await canLaunchUrl(emailLaunchUri);
+
+      if (!context.mounted) return;
       if (canLaunch) {
         await launchUrl(emailLaunchUri);
       } else {
         _showErrorSnackBar(context, 'Keine E-Mail-App gefunden.');
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showErrorSnackBar(context, 'E-Mail konnte nicht geöffnet werden.');
     }
   }
