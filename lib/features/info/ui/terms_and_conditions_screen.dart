@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../config/game_config/constants.dart';
 
 class TermsAndConditionsScreen extends StatelessWidget {
@@ -26,6 +27,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
                         color: colorBlack,
                       ),
                 ),
+
                 const SizedBox(height: 32),
                 _buildParagraph(context, 'Stand: 28. Juni 2025'),
                 const SizedBox(height: 12),
@@ -66,7 +68,17 @@ class TermsAndConditionsScreen extends StatelessWidget {
 
                 const SizedBox(height: 80), // Space for FAB
               ],
-            ),
+            )
+                .animate(delay: 500.ms)
+                .slideY(
+                  begin: 0.3,
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                ),
 
             // Navigate back button
             Positioned(

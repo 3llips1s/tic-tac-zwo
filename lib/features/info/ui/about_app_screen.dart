@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 
@@ -28,7 +29,7 @@ class AboutAppScreen extends StatelessWidget {
                     children: [
                       // title
                       SizedBox(
-                        height: kToolbarHeight * 2.5,
+                        height: kToolbarHeight * 2,
                         child: Align(
                           alignment: Alignment.center,
                           child: Text(
@@ -60,15 +61,27 @@ class AboutAppScreen extends StatelessWidget {
                               height: 1.5,
                             ),
                       ),
-                      const SizedBox(height: 64),
+                      const SizedBox(height: 48),
 
                       // version and copyright info
                       _buildVersionInfo(context, currentYear),
+
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),
               ),
-            ),
+            )
+                .animate(delay: 500.ms)
+                .slideY(
+                  begin: -0.3,
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                ),
 
             // navigate back to drawer
             Positioned(
@@ -126,16 +139,14 @@ class AboutAppScreen extends StatelessWidget {
             Text(
               'Version $version ($buildNumber)',
               style: const TextStyle(
-                color: Colors.black45,
-                fontSize: 12,
+                color: colorBlack,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               '© $year $companyName',
               style: const TextStyle(
-                color: Colors.black45,
-                fontSize: 12,
+                color: colorBlack,
               ),
             )
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/game_config/constants.dart';
@@ -99,7 +100,7 @@ class ContactFeedbackScreen extends StatelessWidget {
 
                       Text(
                         'Hast du eine Frage, einen Fehler gefunden oder einfach nur einen Vorschlag?\n'
-                        '\nWir freuen uns, von dir zu hören!\n'
+                        '\nWir freuen uns, von Dir zu hören!\n'
                         '\nSende uns eine E-Mail an:',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -150,7 +151,17 @@ class ContactFeedbackScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
+            )
+                .animate(delay: 500.ms)
+                .slideY(
+                  begin: -0.3,
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                ),
 
             // navigate back to drawer
             Positioned(

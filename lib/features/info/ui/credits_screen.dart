@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/game_config/constants.dart';
@@ -85,15 +86,32 @@ class CreditsScreen extends StatelessWidget {
                   ),
                   Text(
                     'Tic Tac Zwö wurde durch die Arbeit und die Beiträge von großartigen Entwicklern und Kreativen ermöglicht.\n'
-                    '\nEin großes Dankeschön an alle! 🖤♥️💛',
+                    '\nEin großes Dankeschön an alle!   🖤♥️💛',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade700,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.bold,
                           fontSize: 16,
                           height: 1.5,
                         ),
                   ),
                   const SizedBox(height: 48),
+
+                  // technologies
+                  _buildHeading(context, 'Technologie'),
+                  const SizedBox(height: 8),
+
+                  _buildCreditText(context,
+                      'Entwickelt mit Flutter, dem UI-Toolkit von Google.'),
+                  _buildCreditText(context,
+                      'Backend-Dienste bereitgestellt durch Supabase.'),
+                  _buildCreditText(
+                      context, 'State-Management mit dem Riverpod-Framework.'),
+                  _buildCreditText(
+                      context, 'Lokale Speicherung mit Hive-Community Edition'),
+                  _buildCreditText(context,
+                      'In-App Feedback und Bug-Reporting durch Wiredash.'),
+                  const SizedBox(height: 40),
 
                   // words
                   _buildHeading(context, 'Wortschatz'),
@@ -155,24 +173,20 @@ class CreditsScreen extends StatelessWidget {
                     'Marcela Artola auf Pexels',
                     'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
                   ),
-                  const SizedBox(height: 40),
-
-                  // technologies
-                  _buildHeading(context, 'Technologie'),
-                  const SizedBox(height: 8),
-
-                  _buildCreditText(context,
-                      'Entwickelt mit Flutter, dem UI-Toolkit von Google.'),
-                  _buildCreditText(context,
-                      'Backend-Dienste bereitgestellt durch Supabase.'),
-                  _buildCreditText(
-                      context, 'State-Management mit dem Riverpod-Framework.'),
-                  _buildCreditText(
-                      context, 'Lokale Speicherung mit Hive-Community Edition'),
                   const SizedBox(height: 80),
                 ],
               ),
-            ),
+            )
+                .animate(delay: 500.ms)
+                .slideY(
+                  begin: 0.3,
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                ),
 
             // navigate back to drawer
             Positioned(
@@ -272,7 +286,6 @@ class CreditsScreen extends StatelessWidget {
                 text,
                 textAlign: TextAlign.start,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
                       fontSize: 17,
                       color: colorGrey600,
                     ),

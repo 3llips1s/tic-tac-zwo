@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../config/game_config/constants.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -63,9 +64,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 _buildParagraph(context,
                     'Die Funktion "Wortschatz", mit der du Wörter speichern kannst, speichert diese Daten ausschließlich lokal auf deinem Gerät. Diese Daten werden nicht an uns oder Dritte übertragen.'),
 
-                _buildHeading(context, '4. Analyse und Absturzberichte'),
+                _buildHeading(
+                    context, '4. Feedback, Analyse und Absturzberichte'),
                 _buildParagraph(context,
-                    'Um die Stabilität und Zuverlässigkeit unserer App zu verbessern und Fehler schnell zu beheben, verwenden wir Dienste zur Erfassung von Absturzberichten. Um die App-Nutzung besser zu verstehen und das Nutzererlebnis zu optimieren, nutzen wir zudem Analysedienste. Diese Dienste verarbeiten anonymisierte Nutzungsdaten ohne direkten Personenbezug.'),
+                    'Um die App kontinuierlich zu verbessern, Fehler zu beheben und direktes Nutzerfeedback zu sammeln, verwenden wir das Open-Source-Tool Wiredash. Wiredash hilft uns, Abstürze zu analysieren und zu verstehen, wie die App genutzt wird.\n\nWenn du über Wiredash Feedback sendest oder ein Absturz auftritt, können technische Daten wie Gerätetyp, Betriebssystemversion und anonymisierte Nutzungslogs an Wiredash übermittelt werden. Dies geschieht ausschließlich zur Fehlerbehebung und zur Verbesserung des Nutzererlebnisses. Für weitere Informationen zum Datenschutz von Wiredash, besuche bitte deren offizielle Webseite.'),
 
                 _buildHeading(context, '5. Deine Rechte als Nutzer'),
                 _buildParagraph(context,
@@ -76,7 +78,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     'Diese App ist für Nutzer aller Altersgruppen gedacht. Wenn du unter 16 Jahre alt bist, darfst du unsere Online-Funktionen nur nutzen, wenn deine Eltern oder Erziehungsberechtigten dem zugestimmt haben. Wir erheben nicht wissentlich Daten von Kindern ohne diese Zustimmung. Erziehungsberechtigte können uns jederzeit kontaktieren, um die Daten ihres Kindes einsehen oder löschen zu lassen.'),
                 const SizedBox(height: 80),
               ],
-            ),
+            )
+                .animate(delay: 500.ms)
+                .slideY(
+                  begin: 0.3,
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                )
+                .fadeIn(
+                  duration: 1500.ms,
+                  curve: Curves.easeOut,
+                ),
 
             // Navigate back button
             Positioned(

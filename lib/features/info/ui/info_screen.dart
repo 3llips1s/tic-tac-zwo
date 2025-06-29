@@ -60,7 +60,7 @@ class InfoScreen extends StatelessWidget {
                 _buildInfoTile(
                   context,
                   icon: Icons.copyright_rounded,
-                  title: 'Über dieses Spiel',
+                  title: 'Über Tic Tac Zwö',
                   routeName: RouteNames.about,
                 ),
                 tileSpacer,
