@@ -22,7 +22,7 @@ class WordleKeyboard extends StatelessWidget {
           const SizedBox(height: 8),
           _buildKeyRow(['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ö', 'Ä']),
           const SizedBox(height: 8),
-          _buildKeyRow(['✓', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'ß', '←']),
+          _buildKeyRow(['←', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'ß', '✓']),
         ],
       ),
     );
