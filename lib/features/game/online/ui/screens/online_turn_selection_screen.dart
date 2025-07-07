@@ -219,121 +219,129 @@ class _OnlineTurnSelectionScreenState
 
           return Container(
             padding: EdgeInsets.only(top: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Stack(
               children: [
-                // title
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: SizedBox(
-                    height: kToolbarHeight * 2,
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        widget.matchMode,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Player 1
-                _buildPlayerRow(
-                  _player1!.symbol == PlayerSymbol.X ? _player1! : _player2!,
-                )
-                    .animate(delay: 450.ms)
-                    .fadeIn(curve: Curves.linear, duration: 900.ms)
-                    .slideX(
-                      begin: -0.5,
-                      end: 0.0,
-                      curve: Curves.ease,
-                      duration: 1200.ms,
-                    ),
-
-                SizedBox(height: kToolbarHeight * 1.2),
-
-                // vs
-                Center(
-                  child: SvgPicture.asset(
-                    'assets/images/versus.svg',
-                    height: 60,
-                    width: 60,
-                    colorFilter:
-                        ColorFilter.mode(Colors.black45, BlendMode.srcIn),
-                  ),
-                ),
-
-                SizedBox(height: kToolbarHeight * 1.2),
-
-                // Player 2
-                _buildPlayerRow(
-                  _player1!.symbol == PlayerSymbol.O ? _player1! : _player2!,
-                  alignRight: true,
-                )
-                    .animate(delay: 450.ms)
-                    .fadeIn(curve: Curves.linear, duration: 900.ms)
-                    .slideX(
-                        begin: 0.5,
-                        end: 0.0,
-                        curve: Curves.ease,
-                        duration: 1200.ms),
-
-                SizedBox(height: kToolbarHeight / 1.5),
-
-                // Ready button
-                GestureDetector(
-                  onTap: _toggleReady,
-                  child: _buildReadyButton(),
-                ),
-
-                // Opponent status
-                AnimatedBuilder(
-                  animation: _hoverAnimation,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(0, _hoverAnimation.value),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 20.0),
-                        child: _showReadyStatus(isOpponentActuallyReady),
-                      ),
-                    );
-                  },
-                ),
-
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 20, bottom: 20, top: 10),
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.black87,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          onPressed: () {
-                            ref
-                                .read(matchmakingServiceProvider)
-                                .cancelMatchmaking();
-
-                            Navigator.pushReplacementNamed(
-                              context,
-                              RouteNames.home,
-                            );
-                          },
-                          icon: Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: colorWhite,
-                            size: 24,
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // title
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: SizedBox(
+                        height: kToolbarHeight * 2,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            widget.matchMode,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
+                      ),
+                    ),
+
+                    // Player 1
+                    _buildPlayerRow(
+                      _player1!.symbol == PlayerSymbol.X
+                          ? _player1!
+                          : _player2!,
+                    )
+                        .animate(delay: 450.ms)
+                        .fadeIn(curve: Curves.linear, duration: 900.ms)
+                        .slideX(
+                          begin: -0.5,
+                          end: 0.0,
+                          curve: Curves.ease,
+                          duration: 1200.ms,
+                        ),
+
+                    SizedBox(height: kToolbarHeight * 1.2),
+
+                    // vs
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/images/versus.svg',
+                        height: 60,
+                        width: 60,
+                        colorFilter:
+                            ColorFilter.mode(Colors.black45, BlendMode.srcIn),
+                      ),
+                    ),
+
+                    SizedBox(height: kToolbarHeight * 1.2),
+
+                    // Player 2
+                    _buildPlayerRow(
+                      _player1!.symbol == PlayerSymbol.O
+                          ? _player1!
+                          : _player2!,
+                      alignRight: true,
+                    )
+                        .animate(delay: 450.ms)
+                        .fadeIn(curve: Curves.linear, duration: 900.ms)
+                        .slideX(
+                            begin: 0.5,
+                            end: 0.0,
+                            curve: Curves.ease,
+                            duration: 1200.ms),
+
+                    SizedBox(height: kToolbarHeight * 0.6),
+
+                    // Ready button
+                    GestureDetector(
+                      onTap: _toggleReady,
+                      child: _buildReadyButton(),
+                    ),
+
+                    // Opponent status
+                    AnimatedBuilder(
+                      animation: _hoverAnimation,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(0, _hoverAnimation.value),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 20.0),
+                            child: _showReadyStatus(isOpponentActuallyReady),
+                          ),
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: kToolbarHeight),
+                  ],
+                ),
+
+                // back button
+                Positioned(
+                  bottom: 32,
+                  left: 32,
+                  child: SizedBox(
+                    height: 52,
+                    width: 52,
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        ref
+                            .read(matchmakingServiceProvider)
+                            .cancelMatchmaking();
+
+                        Navigator.pushReplacementNamed(
+                          context,
+                          RouteNames.home,
+                        );
+                      },
+                      backgroundColor: colorBlack.withOpacity(0.75),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: colorWhite,
+                        size: 26,
                       ),
                     ),
                   ),

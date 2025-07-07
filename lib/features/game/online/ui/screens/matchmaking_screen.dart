@@ -253,12 +253,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                 children: [
                   // back button
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, top: 20),
+                    padding: const EdgeInsets.only(left: 24, top: 24),
                     child: Container(
-                      height: 40,
-                      width: 40,
+                      height: 52,
+                      width: 52,
                       decoration: BoxDecoration(
-                        color: Colors.black87,
+                        color: colorBlack.withOpacity(0.75),
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child: IconButton(
@@ -266,7 +266,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                         icon: Icon(
                           Icons.arrow_back_ios_new_rounded,
                           color: colorWhite,
-                          size: 24,
+                          size: 26,
                         ),
                       ),
                     ),
@@ -380,7 +380,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
               ).animate(delay: Duration(milliseconds: 450)).scale(
                   duration: const Duration(milliseconds: 2000),
                   curve: Curves.easeInOut),
-              SizedBox(height: kToolbarHeight),
+              SizedBox(height: kToolbarHeight * 1.5),
               Text(
                 'Suche nach Spielern weltweit...',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -431,7 +431,7 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
               ).animate().scale(
                   duration: const Duration(milliseconds: 2000),
                   curve: Curves.easeInOut),
-              SizedBox(height: kToolbarHeight * 2),
+              SizedBox(height: kToolbarHeight * 1.5),
               Text(
                 'Suche nach Spielern in der Nähe...',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(

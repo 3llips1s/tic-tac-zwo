@@ -99,131 +99,131 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
 
     return Container(
       color: colorGrey300,
-      padding: EdgeInsets.only(top: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: EdgeInsets.only(top: 32),
+      child: Stack(
         children: [
-          // game mode title
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: SizedBox(
-              // todo: change all ktoolbarheights to h = 56 pixels?
-              height: kToolbarHeight * 2,
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  widget.gameMode.string,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            ),
-          ),
-
-          SizedBox(height: kToolbarHeight / 1.5),
-
-          // Player 1
-          _buildPlayerRow(xPlayer)
-              .animate(delay: 450.ms)
-              .fadeIn(curve: Curves.linear, duration: 900.ms)
-              .slideX(
-                begin: -0.5,
-                end: 0.0,
-                curve: Curves.ease,
-                duration: 1200.ms,
-              ),
-
-          SizedBox(height: kToolbarHeight * 1.2),
-
-          // vs
-          Center(
-            child: SvgPicture.asset(
-              'assets/images/versus.svg',
-              height: 60,
-              width: 60,
-              colorFilter: ColorFilter.mode(Colors.black45, BlendMode.srcIn),
-            ),
-          ),
-
-          SizedBox(height: kToolbarHeight * 1.2),
-
-          // Player 2
-          _buildPlayerRow(oPlayer, alignRight: true)
-              .animate(delay: 450.ms)
-              .fadeIn(curve: Curves.linear, duration: 900.ms)
-              .slideX(
-                begin: 0.5,
-                end: 0.0,
-                curve: Curves.ease,
-                duration: 1200.ms,
-              ),
-
-          SizedBox(
-            height: widget.gameMode == GameMode.pass
-                ? kToolbarHeight * 1.2
-                : kToolbarHeight * 1.5,
-          ),
-
-          if (widget.gameMode == GameMode.pass) ...[
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 50),
-                child: GestureDetector(
-                  onTap: _handleNameEdit,
-                  child: Container(
-                    height: 30,
-                    width: 30,
-                    color: Colors.transparent,
-                    child: Center(
-                      child: SvgPicture.asset('assets/images/edit.svg'),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // game mode title
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: SizedBox(
+                  // todo: change all ktoolbarheights to h = 56 pixels?
+                  height: kToolbarHeight * 2,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      widget.gameMode.string,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
 
-          // start game
-          RippleIcon(
-            includeShadows: false,
-            icon: Icon(
-              Icons.play_arrow_rounded,
-              size: 120,
-            ),
-            onTap: _startGame,
-          ).animate(delay: 900.ms).scale(
-                begin: Offset(0, -1),
-                duration: const Duration(milliseconds: 1500),
-                curve: Curves.easeInOut,
+              SizedBox(height: kToolbarHeight * 0.6),
+
+              // Player 1
+              _buildPlayerRow(xPlayer)
+                  .animate(delay: 450.ms)
+                  .fadeIn(curve: Curves.linear, duration: 900.ms)
+                  .slideX(
+                    begin: -0.5,
+                    end: 0.0,
+                    curve: Curves.ease,
+                    duration: 1200.ms,
+                  ),
+
+              SizedBox(height: kToolbarHeight * 1.2),
+
+              // vs
+              Center(
+                child: SvgPicture.asset(
+                  'assets/images/versus.svg',
+                  height: 60,
+                  width: 60,
+                  colorFilter:
+                      ColorFilter.mode(Colors.black45, BlendMode.srcIn),
+                ),
               ),
 
-          // back home
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 20, bottom: 20, top: 10),
-              child: Container(
-                height: 40,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: Colors.black87,
+              SizedBox(height: kToolbarHeight * 1.2),
+
+              // Player 2
+              _buildPlayerRow(oPlayer, alignRight: true)
+                  .animate(delay: 450.ms)
+                  .fadeIn(curve: Curves.linear, duration: 900.ms)
+                  .slideX(
+                    begin: 0.5,
+                    end: 0.0,
+                    curve: Curves.ease,
+                    duration: 1200.ms,
+                  ),
+
+              SizedBox(
+                height: widget.gameMode == GameMode.pass
+                    ? kToolbarHeight
+                    : kToolbarHeight * 1.3,
+              ),
+
+              if (widget.gameMode == GameMode.pass) ...[
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 50),
+                    child: GestureDetector(
+                      onTap: _handleNameEdit,
+                      child: Container(
+                        height: 30,
+                        width: 30,
+                        color: Colors.transparent,
+                        child: Center(
+                          child: SvgPicture.asset('assets/images/edit.svg'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              // start game
+              RippleIcon(
+                includeShadows: false,
+                icon: Icon(
+                  Icons.play_arrow_rounded,
+                  size: 120,
+                ),
+                onTap: _startGame,
+              ).animate(delay: 900.ms).scale(
+                    begin: Offset(0, -1),
+                    duration: const Duration(milliseconds: 1500),
+                    curve: Curves.easeInOut,
+                  ),
+
+              SizedBox(height: kToolbarHeight * 2),
+            ],
+          ),
+
+          // back button
+          Positioned(
+            bottom: 32,
+            left: 32,
+            child: SizedBox(
+              height: 52,
+              width: 52,
+              child: FloatingActionButton(
+                onPressed: () => Navigator.pop(context),
+                backgroundColor: colorBlack.withOpacity(0.75),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: Center(
-                  child: IconButton(
-                    onPressed: () => Navigator.pushReplacementNamed(
-                      context,
-                      RouteNames.home,
-                    ),
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: colorWhite,
-                      size: 24,
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: colorWhite,
+                  size: 26,
                 ),
               ),
             ),

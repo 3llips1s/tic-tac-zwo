@@ -16,10 +16,7 @@ class NavigationService {
   void navigateFromDrawer({
     required BuildContext context,
     required String routeName,
-    required VoidCallback closeDrawer,
   }) {
-    closeDrawer();
-
     if (_routesWithAuth.contains(routeName)) {
       _navigateAuthenticatedRoute(context, routeName);
     } else {
@@ -56,7 +53,7 @@ class NavigationService {
     Map<String, dynamic>? arguments,
   }) {
     try {
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamed(
         context,
         routeName,
         arguments: arguments,

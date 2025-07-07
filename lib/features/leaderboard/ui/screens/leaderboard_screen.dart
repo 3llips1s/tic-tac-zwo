@@ -4,7 +4,6 @@ import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/leaderboard/logic/leaderboard_notifier.dart';
 
-import '../../../navigation/routes/route_names.dart';
 import '../widgets/leaderboard_list.dart';
 import '../widgets/podium_widget.dart';
 
@@ -73,23 +72,21 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             // home button
             Positioned(
               bottom: 16,
-              right: 16,
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    RouteNames.home,
-                    (route) => false,
-                  );
-                },
-                backgroundColor: colorBlack.withOpacity(0.75),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.home_rounded,
-                  color: colorWhite,
-                  size: 30,
+              left: 16,
+              child: SizedBox(
+                height: 52,
+                width: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: colorBlack.withOpacity(0.75),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: colorWhite,
+                    size: 26,
+                  ),
                 ),
               ),
             ),

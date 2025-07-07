@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 import 'package:tic_tac_zwo/features/wortschatz/data/models/saved_noun_hive.dart';
 import 'package:tic_tac_zwo/features/wortschatz/logic/saved_nouns_notifier.dart';
 
@@ -195,26 +194,26 @@ class _WortschatzScreenState extends ConsumerState<WortschatzScreen> {
                           },
                         ),
             ),
+
+            // back button
             Align(
-              alignment: Alignment.bottomRight,
+              alignment: Alignment.bottomLeft,
               child: Padding(
-                padding: const EdgeInsets.only(right: 16, bottom: 16),
-                child: FloatingActionButton(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      RouteNames.home,
-                      (route) => false,
-                    );
-                  },
-                  backgroundColor: colorBlack.withOpacity(0.75),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Icon(
-                    Icons.home_rounded,
-                    color: colorWhite,
-                    size: 30,
+                padding: const EdgeInsets.only(left: 16, bottom: 16),
+                child: SizedBox(
+                  height: 52,
+                  width: 52,
+                  child: FloatingActionButton(
+                    onPressed: () => Navigator.pop(context),
+                    backgroundColor: colorBlack.withOpacity(0.75),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: colorWhite,
+                      size: 26,
+                    ),
                   ),
                 ),
               ),

@@ -80,20 +80,24 @@ class TermsAndConditionsScreen extends StatelessWidget {
                   curve: Curves.easeOut,
                 ),
 
-            // Navigate back button
+            // back button
             Positioned(
               bottom: 16,
-              left: 16,
-              child: FloatingActionButton(
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: colorBlack.withOpacity(0.75),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: colorWhite,
-                  size: 30,
+              right: 16,
+              child: SizedBox(
+                height: 52,
+                width: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: colorBlack.withOpacity(0.75),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: colorWhite,
+                    size: 26,
+                  ),
                 ),
               ),
             ),

@@ -77,7 +77,6 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
       _navigationService.navigateFromDrawer(
         context: context,
         routeName: RouteNames.profile,
-        closeDrawer: widget.onCloseDrawer,
       );
     }
   }
@@ -189,7 +188,6 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
                         _navigationService.navigateFromDrawer(
                           context: context,
                           routeName: routeName,
-                          closeDrawer: widget.onCloseDrawer,
                         );
                       },
                       child: Padding(

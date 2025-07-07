@@ -6,7 +6,6 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicato
 import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 import 'package:tic_tac_zwo/features/profile/ui/widgets/wdl_test.dart';
 
-import '../../../navigation/routes/route_names.dart';
 import '../widgets/edit_username_dialog.dart';
 import '../widgets/games_history_list.dart';
 import '../widgets/profile_header.dart';
@@ -81,26 +80,26 @@ class ProfileScreen extends ConsumerWidget {
               );
             },
           ),
+
+          // back button
           Align(
-            alignment: Alignment.bottomRight,
+            alignment: Alignment.bottomLeft,
             child: Padding(
-              padding: const EdgeInsets.only(right: 32, bottom: 24),
-              child: FloatingActionButton(
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    RouteNames.home,
-                    (route) => false,
-                  );
-                },
-                backgroundColor: colorBlack.withOpacity(0.75),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.home_rounded,
-                  color: colorWhite,
-                  size: 30,
+              padding: const EdgeInsets.only(left: 32, bottom: 24),
+              child: SizedBox(
+                height: 52,
+                width: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: colorBlack.withOpacity(0.75),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: colorWhite,
+                    size: 26,
+                  ),
                 ),
               ),
             ),

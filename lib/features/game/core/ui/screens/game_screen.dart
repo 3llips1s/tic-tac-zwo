@@ -395,12 +395,12 @@ class _GameScreenState extends ConsumerState<GameScreen>
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 20, bottom: 10),
+                  padding: const EdgeInsets.only(left: 24, bottom: 12),
                   child: Container(
-                    height: 40,
-                    width: 40,
+                    height: 52,
+                    width: 52,
                     decoration: BoxDecoration(
-                      color: Colors.black87,
+                      color: colorBlack.withOpacity(0.75),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Center(
@@ -423,7 +423,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                         icon: Icon(
                           Icons.home_rounded,
                           color: colorWhite,
-                          size: 24,
+                          size: 26,
                         ),
                       ),
                     ),
