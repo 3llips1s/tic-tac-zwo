@@ -54,14 +54,12 @@ class _PlayerNameDialogState extends State<PlayerNameDialog> {
               ),
         ),
         const SizedBox(height: kToolbarHeight / 3),
-        if (!widget.singlePlayerEdit ||
-            widget.players[0].username == widget.players[0].username)
+        if (!widget.singlePlayerEdit)
           _buildPlayerInput(
             context: context,
             symbol: widget.players[0].symbol,
             controller: player1Controller,
-            enabled: !widget.singlePlayerEdit ||
-                widget.players[0].username == widget.players[0].username,
+            enabled: !widget.singlePlayerEdit,
           ),
         if (!widget.singlePlayerEdit)
           const SizedBox(height: kToolbarHeight / 3),
@@ -74,7 +72,6 @@ class _PlayerNameDialogState extends State<PlayerNameDialog> {
               enabled: !widget.singlePlayerEdit),
 
         // consider using a snackbar for errors instead.
-
         const SizedBox(height: kToolbarHeight / 2),
       ],
     );

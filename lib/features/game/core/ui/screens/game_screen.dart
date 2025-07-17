@@ -11,6 +11,7 @@ import 'package:tic_tac_zwo/features/game/core/ui/widgets/article_buttons.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_over_dialog.dart';
+import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_info.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/timer_display.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/turn_noun_display.dart';
@@ -92,6 +93,61 @@ class _GameScreenState extends ConsumerState<GameScreen>
         _isCurrentNounSaved = isSaved;
       });
     }
+  }
+
+  void _showHomeNavigationDialog() {
+    showCustomDialog(
+      context: context,
+      height: 300,
+      width: 300,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 32),
+          Text(
+            'Spiel verlassen?',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                  color: colorBlack,
+                ),
+          ),
+          const SizedBox(height: 40),
+          Text(
+            'Dein Spielfortschritt ist dann futsch.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.black54,
+                  fontSize: 14,
+                ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+      actions: [
+        GlassMorphicButton(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Icon(
+            Icons.close_rounded,
+            color: colorRed,
+            size: 40,
+          ),
+        ),
+        GlassMorphicButton(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          onPressed: () {
+            Navigator.of(context).pop();
+            ref.read(navigationTargetProvider.notifier).state =
+                NavigationTarget.home;
+          },
+          child: const Icon(
+            Icons.check_rounded,
+            color: colorYellowAccent,
+            size: 40,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -197,9 +253,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      // when the goes to the background (e.g., pause game)
+      // when app goes to the background (e.g., pause game)
     } else if (state == AppLifecycleState.resumed) {
-      // when the comes to the foreground (e.g., resume game)
+      // when app comes to the foreground (e.g., resume game)
     }
   }
 
@@ -219,14 +275,13 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     final bool activateSaveButton =
         gameState.selectedCellIndex != null && gameState.isTimerActive;
-    final bool activateHomeButton = gameState.isGameOver;
 
     final space = SizedBox(height: kToolbarHeight);
     final halfSpace = SizedBox(height: kToolbarHeight / 2);
     final quarterSpace = SizedBox(height: kToolbarHeight / 4);
 
     return PopScope(
-      canPop: isOnlineMode ? false : true,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) {
           return;
@@ -235,197 +290,195 @@ class _GameScreenState extends ConsumerState<GameScreen>
         // TODO: implement onlinegamenotifier.exitgame logic
         /*  final navigator = Navigator.of(context);
         onlineNotifier?.exitGame(navigator); */
+        _showHomeNavigationDialog();
       },
       child: Scaffold(
         backgroundColor: colorGrey300,
         body: Container(
           color: colorGrey300,
           padding: EdgeInsets.only(bottom: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Stack(
             children: [
-              space,
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  space,
 
-              // timer
-              Align(
-                alignment: Alignment.center,
-                child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 600),
-                  switchInCurve: Curves.easeInOut,
-                  switchOutCurve: Curves.easeInOut,
-                  child: _buildTimerWidget(context, ref, widget.gameConfig,
-                      gameState, isOnlineMode, onlineNotifier),
-                ),
-              ).animate().fadeIn(
-                    delay: 3300.ms,
-                    duration: 600.ms,
-                    curve: Curves.easeInOut,
-                  ),
+                  // timer
+                  Align(
+                    alignment: Alignment.center,
+                    child: AnimatedSwitcher(
+                      duration: Duration(milliseconds: 600),
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      child: _buildTimerWidget(context, ref, widget.gameConfig,
+                          gameState, isOnlineMode, onlineNotifier),
+                    ),
+                  ).animate().fadeIn(
+                        delay: 3300.ms,
+                        duration: 600.ms,
+                        curve: Curves.easeInOut,
+                      ),
 
-              halfSpace,
+                  halfSpace,
 
-              // players
-              PlayerInfo(gameConfig: widget.gameConfig)
-                  .animate(delay: 1800.ms)
-                  .slideY(
-                    begin: -0.5,
-                    end: 0.0,
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
+                  // players
+                  PlayerInfo(gameConfig: widget.gameConfig)
+                      .animate(delay: 1800.ms)
+                      .slideY(
+                        begin: -0.5,
+                        end: 0.0,
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut,
+                      )
+                      .fadeIn(
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut,
+                      ),
+
+                  quarterSpace,
+
+                  // word display
+                  TurnNounDisplay(gameConfig: widget.gameConfig)
+                      .animate()
+                      .fadeIn(
+                        delay: 3300.ms,
+                        duration: 600.ms,
+                        curve: Curves.easeInOut,
+                      ),
+
+                  quarterSpace,
+
+                  // game board
+                  Center(
+                    child: GameBoard(
+                      gameConfig: widget.gameConfig,
+                    ),
                   )
-                  .fadeIn(
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
+                      .animate(
+                        delay: 300.ms,
+                      )
+                      .scale(
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut,
+                      )
+                      .fadeIn(
+                        begin: 0.0,
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut,
+                      ),
+
+                  space,
+
+                  // article buttons
+                  ArticleButtons(
+                    gameConfig: widget.gameConfig,
+                    overlayColor: gameState
+                        .getArticleOverlayColor(gameState.currentPlayer),
                   ),
 
-              quarterSpace,
+                  halfSpace,
 
-              // word display
-              TurnNounDisplay(gameConfig: widget.gameConfig).animate().fadeIn(
-                    delay: 3300.ms,
-                    duration: 600.ms,
-                    curve: Curves.easeInOut,
-                  ),
-
-              quarterSpace,
-
-              // game board
-              Center(
-                child: GameBoard(
-                  gameConfig: widget.gameConfig,
-                ),
-              )
-                  .animate(
-                    delay: 300.ms,
-                  )
-                  .scale(
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
-                  )
-                  .fadeIn(
-                    begin: 0.0,
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
-                  ),
-
-              space,
-
-              // article buttons
-              ArticleButtons(
-                gameConfig: widget.gameConfig,
-                overlayColor:
-                    gameState.getArticleOverlayColor(gameState.currentPlayer),
-              ),
-
-              halfSpace,
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 35),
-                  child: GestureDetector(
-                    onTap: activateSaveButton
-                        ? () async {
-                            // save word
-                            if (_isCurrentNounSaved) {
-                              if (context.mounted) {
-                                _showSnackBar(
-                                  context,
-                                  '${currentNoun!.noun} ist schon gespeichert!',
-                                  backgroundColor: colorWhite,
-                                  textColor: Colors.black54,
-                                );
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, right: 64),
+                      child: GestureDetector(
+                        onTap: activateSaveButton
+                            ? () async {
+                                // save word
+                                if (_isCurrentNounSaved) {
+                                  if (context.mounted) {
+                                    _showSnackBar(
+                                      context,
+                                      '${currentNoun!.noun} ist schon gespeichert!',
+                                      backgroundColor: colorWhite,
+                                      textColor: Colors.black54,
+                                    );
+                                  }
+                                } else {
+                                  final bool saved = await savedNounsNotifier
+                                      .addNoun(currentNoun!);
+                                  if (saved) {
+                                    if (context.mounted) {
+                                      _showSnackBar(
+                                        context,
+                                        '${currentNoun.noun} gespeichert!',
+                                        backgroundColor: colorWhite,
+                                        textColor: colorBlack,
+                                      );
+                                    }
+                                    if (mounted) {
+                                      setState(() {
+                                        _isCurrentNounSaved = true;
+                                      });
+                                    }
+                                  } else {
+                                    if (context.mounted) {
+                                      _showSnackBar(
+                                        context,
+                                        '${currentNoun.noun} nicht gespeichert!',
+                                        backgroundColor: colorRed,
+                                        textColor: colorWhite,
+                                      );
+                                    }
+                                  }
+                                }
                               }
-                            } else {
-                              final bool saved = await savedNounsNotifier
-                                  .addNoun(currentNoun!);
-                              if (saved) {
-                                if (context.mounted) {
-                                  _showSnackBar(
-                                    context,
-                                    '${currentNoun.noun} gespeichert!',
-                                    backgroundColor: colorWhite,
-                                    textColor: colorBlack,
-                                  );
-                                }
-                                if (mounted) {
-                                  setState(() {
-                                    _isCurrentNounSaved = true;
-                                  });
-                                }
-                              } else {
-                                if (context.mounted) {
-                                  _showSnackBar(
-                                    context,
-                                    '${currentNoun.noun} nicht gespeichert!',
-                                    backgroundColor: colorRed,
-                                    textColor: colorWhite,
-                                  );
-                                }
-                              }
-                            }
-                          }
-                        : null,
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      color: Colors.transparent,
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/images/bookmark.svg',
-                          colorFilter: activateSaveButton
-                              ? ColorFilter.mode(
-                                  _isCurrentNounSaved
-                                      ? Colors.green.shade600
-                                      : colorBlack,
-                                  BlendMode.srcIn,
-                                )
-                              : ColorFilter.mode(
-                                  Colors.black26,
-                                  BlendMode.srcIn,
-                                ),
+                            : null,
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          color: Colors.transparent,
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/images/bookmark.svg',
+                              colorFilter: activateSaveButton
+                                  ? ColorFilter.mode(
+                                      _isCurrentNounSaved
+                                          ? Colors.green.shade600
+                                          : colorBlack,
+                                      BlendMode.srcIn,
+                                    )
+                                  : ColorFilter.mode(
+                                      Colors.black26,
+                                      BlendMode.srcIn,
+                                    ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+
+                  SizedBox(height: kToolbarHeight),
+                ],
               ),
 
-              // back home
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 24, bottom: 12),
-                  child: Container(
-                    height: 52,
-                    width: 52,
-                    decoration: BoxDecoration(
-                      color: colorBlack.withOpacity(0.75),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Center(
-                      child: IconButton(
-                        onPressed: activateHomeButton
-                            ? () => Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  RouteNames.home,
-                                  (route) => false,
-                                )
-
-                            // todo: implement onlinegamenotifer.exitgame
-                            /*  
+              // back button
+              Positioned(
+                bottom: 16,
+                left: 24,
+                child: SizedBox(
+                  height: 52,
+                  width: 52,
+                  child: FloatingActionButton(
+                    onPressed: _showHomeNavigationDialog,
+                    // todo: implement onlinegamenotifer.exitgame
+                    /*  
                                 () {
                                 final navigator = Navigator.of(context);
                                 onlineGameNotifier.exitGame(navigator);
                                 }
                                 */
-                            : null,
-                        icon: Icon(
-                          Icons.home_rounded,
-                          color: colorWhite,
-                          size: 26,
-                        ),
-                      ),
+                    backgroundColor: colorBlack.withOpacity(0.75),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(
+                      Icons.home_rounded,
+                      color: colorWhite,
+                      size: 26,
                     ),
                   ),
                 ),

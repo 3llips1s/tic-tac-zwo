@@ -68,12 +68,16 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       context,
       players,
       (String player1Name, String player2Name) {
-        setState(() {
-          players = [
-            Player(username: player1Name, symbol: players[0].symbol),
-            Player(username: player2Name, symbol: players[1].symbol),
-          ];
-        });
+        setState(
+          () {
+            players = [
+              Player(username: player1Name, symbol: players[0].symbol),
+              Player(username: player2Name, symbol: players[1].symbol),
+            ];
+            startingPlayer =
+                players.firstWhere((player) => player.symbol == PlayerSymbol.X);
+          },
+        );
       },
     );
   }
