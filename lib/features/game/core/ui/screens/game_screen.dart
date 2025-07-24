@@ -108,7 +108,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
             'Spiel verlassen?',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 24,
                   color: colorBlack,
                 ),
           ),
@@ -117,7 +117,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
             'Dein Spielfortschritt ist dann futsch.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.black54,
-                  fontSize: 14,
                 ),
           ),
           const SizedBox(height: 32),
@@ -130,7 +129,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           child: const Icon(
             Icons.close_rounded,
             color: colorRed,
-            size: 40,
+            size: 36,
           ),
         ),
         GlassMorphicButton(
@@ -143,7 +142,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
           child: const Icon(
             Icons.check_rounded,
             color: colorYellowAccent,
-            size: 40,
+            size: 36,
           ),
         ),
       ],
