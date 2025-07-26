@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
-import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 
 import '../../navigation/routes/route_names.dart';
 
@@ -19,16 +18,18 @@ class InfoScreen extends StatelessWidget {
           children: [
             ListView(
               children: [
+                const SizedBox(height: 24),
                 Center(
-                  child: SizedBox(
-                    height: 200,
-                    width: 200,
-                    child: DualProgressIndicator(
-                      size: 150,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.asset(
+                      'assets/images/icon_in_app.png',
+                      width: 120,
+                      height: 120,
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 64),
                 _buildInfoTile(
                   context,
                   icon: Icons.description_rounded,

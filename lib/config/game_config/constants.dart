@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 const Color colorBlack = Colors.black;
 const Color colorWhite = Colors.white;
 const Color colorYellow = Colors.yellow;
-const Color colorYellowAccent = Colors.yellowAccent;
+const Color colorYellowAccent = Color.fromRGBO(255, 255, 0, 1);
 const Color colorRed = Color.fromRGBO(221, 0, 0, 1);
 const Color colorGrey100 = Color.fromRGBO(245, 245, 245, 1);
 const Color colorGrey200 = Color.fromRGBO(238, 238, 238, 1);
