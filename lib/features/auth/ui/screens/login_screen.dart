@@ -543,10 +543,10 @@ class _LoginScreenState extends State<LoginScreen>
                   height: _showUsernameOverlay ? 300 : 450,
                   width: 300,
                   decoration: BoxDecoration(
-                    color: colorWhite.withAlpha((255 * 0.1).toInt()),
+                    color: colorWhite.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: colorWhite.withAlpha((255 * 0.1).toInt()),
+                      color: colorWhite.withOpacity(0.1),
                       width: 1,
                     ),
                   ),

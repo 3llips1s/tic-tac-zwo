@@ -68,10 +68,11 @@ class NeuButton extends StatelessWidget {
 
                   // top left shadow
                   BoxShadow(
-                      color: colorGrey200,
-                      offset: -shadowOffset,
-                      blurRadius: shadowBlurRadius,
-                      spreadRadius: shadowSpreadRadius),
+                    color: colorGrey200,
+                    offset: -shadowOffset,
+                    blurRadius: shadowBlurRadius,
+                    spreadRadius: shadowSpreadRadius,
+                  ),
                 ],
         ),
 

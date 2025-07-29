@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
@@ -18,18 +20,47 @@ class InfoScreen extends StatelessWidget {
           children: [
             ListView(
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(9),
-                    child: Image.asset(
-                      'assets/images/icon_in_app.png',
-                      width: 120,
-                      height: 120,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9),
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+                          child: Opacity(
+                            opacity: 0.9,
+                            child: Image.asset(
+                              'assets/images/icon_in_app.png',
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 64),
+                const SizedBox(height: 60),
                 _buildInfoTile(
                   context,
                   icon: Icons.description_rounded,

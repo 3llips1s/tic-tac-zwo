@@ -26,6 +26,12 @@ enum TimerDisplayState {
   countdown,
 }
 
+enum OpponentConnectionStatus {
+  connected,
+  reconnecting,
+  forfeited,
+}
+
 extension GameModeExtension on GameMode {
   String get string {
     switch (this) {

@@ -39,6 +39,7 @@ class GameState {
   final OnlineRematchStatus onlineRematchStatus;
   final bool localPlayerWantsRematch;
   final bool remotePlayerWantsRematch;
+  final OpponentConnectionStatus opponentConnectionStatus;
 
   static const int turnDurationSeconds = 9;
 
@@ -74,6 +75,7 @@ class GameState {
     this.onlineRematchStatus = OnlineRematchStatus.none,
     this.localPlayerWantsRematch = false,
     this.remotePlayerWantsRematch = false,
+    this.opponentConnectionStatus = OpponentConnectionStatus.connected,
   }) : _cellPressed = cellPressed;
 
   GameState copyWith({
@@ -113,6 +115,7 @@ class GameState {
     OnlineRematchStatus? onlineRematchStatus,
     bool? localPlayerWantsRematch,
     bool? remotePlayerWantsRematch,
+    OpponentConnectionStatus? opponentConnectionStatus,
 
     // catch null values
     bool allowNullRevealedArticle = false,
@@ -169,6 +172,8 @@ class GameState {
           localPlayerWantsRematch ?? this.localPlayerWantsRematch,
       remotePlayerWantsRematch:
           remotePlayerWantsRematch ?? this.remotePlayerWantsRematch,
+      opponentConnectionStatus:
+          opponentConnectionStatus ?? this.opponentConnectionStatus,
     );
   }
 

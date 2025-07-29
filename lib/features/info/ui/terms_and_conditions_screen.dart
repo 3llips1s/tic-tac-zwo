@@ -61,10 +61,9 @@ class TermsAndConditionsScreen extends StatelessWidget {
                 _buildParagraph(context,
                     'Wir können diese Nutzungsbedingungen von Zeit zu Zeit aktualisieren. Wesentliche Änderungen werden wir dir innerhalb der App mitteilen. Die fortgesetzte Nutzung der App nach einer Änderung gilt als Zustimmung zu den neuen Bedingungen.'),
 
-                // IMPORTANT-TODO: Consult a legal professional for the applicable law.
                 _buildHeading(context, '8. Anwendbares Recht'),
                 _buildParagraph(context,
-                    'Auf diese Nutzungsbedingungen findet das Recht von [Dein Land] Anwendung.'),
+                    'Auf diese Nutzungsbedingungen findet das Recht von Kenia Anwendung.'),
 
                 const SizedBox(height: 80), // Space for FAB
               ],

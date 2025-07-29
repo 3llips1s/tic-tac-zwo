@@ -173,6 +173,29 @@ class CreditsScreen extends StatelessWidget {
                     'Marcela Artola auf Pexels',
                     'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
                   ),
+                  const SizedBox(height: 40),
+
+                  // special thanks
+                  _buildHeading(context, 'Morio Anzenza'),
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'All the love and gratitude, and then some, for the unshaken faith, nonstop hype and always holding it down heavy. 🫶🏾\n\nThis one\'s for you:',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildCreditText(context, 'Munesh'),
+                  _buildCreditText(context, 'Bo'),
+                  _buildCreditText(context, 'Mwangizzle'),
+                  _buildCreditText(context, 'Moonguy'),
+                  _buildCreditText(context, 'Mwaki'),
+                  _buildCreditText(context, 'Irene'),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -273,29 +296,30 @@ class CreditsScreen extends StatelessWidget {
 
   Widget _buildCreditText(BuildContext context, String text) {
     return Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '•   ',
-              style: TextStyle(
-                color: colorGrey600,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '•   ',
+            style: TextStyle(
+              color: colorGrey600,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            Expanded(
-              child: Text(
-                text,
-                textAlign: TextAlign.start,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 17,
-                      color: colorGrey600,
-                    ),
-              ),
-            )
-          ],
-        ));
+          ),
+          Expanded(
+            child: Text(
+              text,
+              textAlign: TextAlign.start,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 17,
+                    color: colorGrey600,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

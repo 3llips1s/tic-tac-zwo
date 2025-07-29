@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-// todo: remove unnecessary fonts from assets
-
 final ThemeData appTheme = ThemeData(
   textTheme: const TextTheme(
     bodyLarge: TextStyle(

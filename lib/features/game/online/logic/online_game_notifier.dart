@@ -34,6 +34,9 @@ class OnlineGameNotifier extends GameNotifier {
   bool _isInitialGameLoad = true;
   bool _gameOverHandled = false;
 
+  RealtimeChannel? _gameChannel;
+  Timer? _gracePeriodTimer;
+
   OnlineGameService get _gameService => ref.read(onlineGameServiceProvider);
 
   OnlineGameNotifier(Ref ref, GameConfig gameConfig, this.supabase)
@@ -62,6 +65,7 @@ class OnlineGameNotifier extends GameNotifier {
 
     if (gameSessionId.isNotEmpty && currentUserId != null) {
       _listenToGameSessionUpdates();
+      _initializePresence();
       _gameService.updateGameSessionState(
         gameSessionId,
         lastStarterId: state.startingPlayer.userId,
@@ -146,6 +150,55 @@ class OnlineGameNotifier extends GameNotifier {
     _inactivityTimer?.cancel();
     _isInactivityTimerActive = false;
     _inactivityRemainingSeconds = GameState.turnDurationSeconds;
+  }
+
+  void _initializePresence() {
+    if (gameSessionId.isEmpty) return;
+
+    _gameChannel = supabase.channel('game:$gameSessionId');
+
+    _gameChannel!.onPresenceJoin((payload) {
+      final isOpponent = payload.newPresences
+          .any((p) => p.payload['user_id'] != currentUserId);
+
+      if (isOpponent) {
+        _gracePeriodTimer?.cancel();
+        if (mounted) {
+          state = state.copyWith(
+              opponentConnectionStatus: OpponentConnectionStatus.connected);
+        }
+        supabase.functions.invoke('set-disconnection-time',
+            body: {'gameSessionId': gameSessionId, 'isConnecting': true});
+      }
+    }).onPresenceLeave((payload) {
+      final isOpponent = payload.leftPresences
+          .any((p) => p.payload['user_id'] != currentUserId);
+
+      if (isOpponent && !state.isGameOver && mounted) {
+        state = state.copyWith(
+            opponentConnectionStatus: OpponentConnectionStatus.reconnecting);
+
+        supabase.functions.invoke('set-disconnection-time',
+            body: {'gameSessionId': gameSessionId, 'isConnecting': false});
+
+        _gracePeriodTimer?.cancel();
+        _gracePeriodTimer = Timer(const Duration(seconds: 30), () {
+          if (mounted &&
+              state.opponentConnectionStatus ==
+                  OpponentConnectionStatus.reconnecting) {
+            state = state.copyWith(
+                opponentConnectionStatus: OpponentConnectionStatus.forfeited);
+          }
+        });
+      }
+    }).subscribe(
+      (status, [error]) async {
+        if (status == 'SUBSCRIBED') {
+          // track current user joining the channel + share their id
+          await _gameChannel!.track({'user_id': currentUserId});
+        }
+      },
+    );
   }
 
   Future<void> selectCellOnline(int index) async {
@@ -686,6 +739,10 @@ class OnlineGameNotifier extends GameNotifier {
     _rematchOfferTimer?.cancel();
     _gameStateSubscription?.cancel();
     _gameStateSubscription = null;
+    if (_gameChannel != null) {
+      supabase.removeChannel(_gameChannel!);
+      _gameChannel = null;
+    }
     final gameService = ref.read(onlineGameServiceProvider);
     if (gameSessionId.isNotEmpty) {
       gameService.clientDisposeGameSessionResources(gameSessionId);
