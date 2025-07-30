@@ -193,7 +193,7 @@ class OnlineGameNotifier extends GameNotifier {
       }
     }).subscribe(
       (status, [error]) async {
-        if (status == 'SUBSCRIBED') {
+        if (status == RealtimeSubscribeStatus.subscribed) {
           // track current user joining the channel + share their id
           await _gameChannel!.track({'user_id': currentUserId});
         }
@@ -690,6 +690,21 @@ class OnlineGameNotifier extends GameNotifier {
       await _gameService.resetSessionForRematch(gameSessionId, newStarterId);
     } catch (e) {
       print("[OnlineGameNotifier] Error initiating new game after rematch: $e");
+    }
+  }
+
+  Future<void> requestForfeit() async {
+    if (state.isGameOver) return;
+    try {
+      await supabase.functions.invoke(
+        'request-forfeit',
+        body: {'gameSessionId': gameSessionId},
+      );
+
+      // navigate home after successful forfeit
+      ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
+    } catch (e) {
+      print('Error forfeiting game:$e');
     }
   }
 

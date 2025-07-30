@@ -65,7 +65,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
                 _buildParagraph(context,
                     'Auf diese Nutzungsbedingungen findet das Recht von Kenia Anwendung.'),
 
-                const SizedBox(height: 80), // Space for FAB
+                const SizedBox(height: 80),
               ],
             )
                 .animate(delay: 500.ms)
