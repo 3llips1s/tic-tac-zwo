@@ -53,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       actions: [
-        // Cancel Button
+        // cancel Button
         GlassMorphicButton(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
           onPressed: () => Navigator.of(context).pop(),

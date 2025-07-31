@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
 import '../../navigation/routes/route_names.dart';
@@ -20,19 +21,18 @@ class InfoScreen extends StatelessWidget {
           children: [
             ListView(
               children: [
-                const SizedBox(height: 16),
                 Center(
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(9),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 18,
                           offset: Offset(0, 8),
                         ),
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withOpacity(0.15),
                           blurRadius: 6,
                           offset: Offset(0, 2),
                         ),
@@ -41,26 +41,39 @@ class InfoScreen extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(9),
                       child: Container(
-                        width: 120,
-                        height: 120,
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(9),
                         ),
                         child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-                          child: Opacity(
-                            opacity: 0.9,
-                            child: Image.asset(
-                              'assets/images/icon_in_app.png',
-                            ),
+                          imageFilter: ImageFilter.blur(
+                            sigmaX: 1,
+                            sigmaY: 1,
+                          ),
+                          child: Image.asset(
+                            'assets/images/icon_in_app.png',
+                            width: 150,
+                            height: 150,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 60),
+                )
+                    .animate(
+                      delay: 300.ms,
+                    )
+                    .scale(
+                      duration: 1200.ms,
+                      curve: Curves.easeInOut,
+                    )
+                    .fadeIn(
+                      begin: 0.0,
+                      duration: 1200.ms,
+                      curve: Curves.easeInOut,
+                    ),
+                const SizedBox(height: 56),
                 _buildInfoTile(
                   context,
                   icon: Icons.description_rounded,
