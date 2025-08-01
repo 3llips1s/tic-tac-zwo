@@ -21,7 +21,6 @@ import 'features/navigation/routes/route_names.dart';
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-
     await Supabase.initialize(
       url: AuthConfig.url,
       anonKey: AuthConfig.anonKey,

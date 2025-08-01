@@ -180,7 +180,7 @@ class CreditsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   Text(
-                    'All the love and gratitude, and then some, for the unshaken faith, nonstop hype and always holding it down heavy. 🫶🏾\n\nThis one\'s for you:',
+                    'All my love and gratitude, and then some, for the unshaken faith, nonstop hype and always holding it down heavy. 🫶🏾\n\nThis one\'s for you:',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.bold,
@@ -190,7 +190,7 @@ class CreditsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  _buildCreditText(context, 'Munesh'),
+                  _buildCreditText(context, 'Munesh :)'),
                   _buildCreditText(context, 'Bo'),
                   _buildCreditText(context, 'Mwangizzle'),
                   _buildCreditText(context, 'Moonguy'),

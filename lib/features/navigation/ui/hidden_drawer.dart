@@ -1,58 +1,33 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/navigation/logic/navigation_service.dart';
+import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 
 import '../../../config/game_config/constants.dart';
+import '../../profile/ui/widgets/avatar_flag.dart';
 import '../routes/route_names.dart';
 
-class HiddenDrawer extends StatefulWidget {
+class HiddenDrawer extends ConsumerStatefulWidget {
   final VoidCallback onCloseDrawer;
 
   const HiddenDrawer({super.key, required this.onCloseDrawer});
 
   @override
-  State<HiddenDrawer> createState() => _HiddenDrawerState();
+  ConsumerState<HiddenDrawer> createState() => _HiddenDrawerState();
 }
 
-class _HiddenDrawerState extends State<HiddenDrawer> {
+class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
   final authService = AuthService();
   late final NavigationService _navigationService;
-
-  final String _defaultDisplayName = 'User${Random().nextInt(100000)}';
-  final String _defaultCountryCode = '';
-
-  late String displayName;
-  late String countryCode;
-  late StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
 
     _navigationService = NavigationService(authService);
-
-    displayName = _defaultDisplayName;
-    countryCode = _defaultCountryCode;
-
-    _loadUserProfile();
-
-    // listen to auth changes
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
-      (data) {
-        if (data.event == AuthChangeEvent.signedIn) {
-          _loadUserProfile();
-        } else if (data.event == AuthChangeEvent.signedOut) {
-          setState(() {
-            displayName = _defaultDisplayName;
-            countryCode = _defaultCountryCode;
-          });
-        }
-      },
-    );
   }
 
   void _logout() async {
@@ -114,31 +89,10 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
     );
   }
 
-  Future<void> _loadUserProfile() async {
-    final Map<String, dynamic>? userProfile =
-        await AuthService().getUserProfile();
-
-    if (userProfile != null && userProfile.containsKey('username')) {
-      setState(() {
-        displayName = userProfile['username'] as String;
-        countryCode = userProfile['country_code'] as String;
-      });
-    } else {
-      setState(() {
-        displayName = _defaultDisplayName;
-        countryCode = _defaultCountryCode;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _authSubscription.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final userProfileAsync = ref.watch(cachedCurrentUserProfileProvider);
+
     return Container(
       color: Colors.black,
       child: Padding(
@@ -222,27 +176,61 @@ class _HiddenDrawerState extends State<HiddenDrawer> {
               onTap: _navigateToProfile,
               child: Padding(
                 padding: EdgeInsets.only(bottom: kToolbarHeight * 0.5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                        padding: EdgeInsets.all(9),
-                        decoration: BoxDecoration(
-                            shape: BoxShape.circle, color: colorYellowAccent),
-                        child: Icon(
-                          Icons.face_5_rounded,
-                          color: colorBlack,
-                          size: 20,
-                        )),
-                    const SizedBox(width: 16),
-                    Text(
-                      displayName,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: colorYellowAccent,
-                            fontSize: 24.0,
-                          ),
-                    ),
-                  ],
+                child: userProfileAsync.when(
+                  data: (userProfile) => Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AvatarFlag(
+                        radius: 14,
+                        avatarUrl: userProfile.avatarUrl,
+                        countryCode: userProfile.countryCode,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        userProfile.username,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: colorYellowAccent,
+                              fontSize: 24.0,
+                            ),
+                      ),
+                    ],
+                  ),
+                  loading: () => Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AvatarFlag(
+                        radius: 14,
+                        avatarUrl: null,
+                        countryCode: null,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Laden...',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: colorYellowAccent,
+                              fontSize: 24.0,
+                            ),
+                      ),
+                    ],
+                  ),
+                  error: (error, stackTrace) => Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AvatarFlag(
+                        radius: 14,
+                        avatarUrl: null,
+                        countryCode: null,
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'User${Random().nextInt(100000)}',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: colorYellowAccent,
+                              fontSize: 24.0,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

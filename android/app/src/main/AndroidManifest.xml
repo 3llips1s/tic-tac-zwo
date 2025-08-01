@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
-        android:label="tic_tac_zwo"
+        android:label="Tic Tac Zwö"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

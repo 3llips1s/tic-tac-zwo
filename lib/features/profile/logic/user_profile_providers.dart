@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_service.dart';
 import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart';
@@ -8,6 +9,7 @@ import 'package:tic_tac_zwo/features/profile/data/models/user_profile.dart';
 import 'package:tic_tac_zwo/features/profile/data/repositories/user_profile_repo.dart';
 
 import '../data/mock_data.dart';
+import '../data/models/user_profile_hive.dart';
 
 // todo: remove mock data
 const bool useMockData = true;
@@ -83,3 +85,56 @@ final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
     },
   );
 });
+
+final cachedCurrentUserProfileProvider =
+    FutureProvider<UserProfile>((ref) async {
+  try {
+    final freshProfile = await ref.watch(currentUserProfileProvider.future);
+
+    await _cacheUserProfile(freshProfile);
+
+    return freshProfile;
+  } catch (error) {
+    final cachedProfile = await _getCachedUserProfile();
+
+    if (cachedProfile != null) {
+      return cachedProfile;
+    }
+    throw error;
+  }
+});
+
+Future<void> _cacheUserProfile(UserProfile userProfile) async {
+  try {
+    final box = Hive.box('user_preferences');
+    final hiveProfile = UserProfileHive.fromUserProfile(userProfile);
+    await box.put('cached_user_profile', hiveProfile);
+  } catch (e) {
+    print('failed to cache user profile: $e');
+  }
+}
+
+Future<UserProfile?> _getCachedUserProfile() async {
+  try {
+    final box = Hive.box('user_preferences');
+    final UserProfileHive? cachedHiveProfile = box.get('cached_user_profile');
+
+    if (cachedHiveProfile != null) {
+      return cachedHiveProfile.toUserProfile();
+    }
+
+    return null;
+  } catch (e) {
+    print('failed to get cached user profile: $e');
+    return null;
+  }
+}
+
+Future<void> clearCachedUserProfile() async {
+  try {
+    final box = Hive.box('user_preferences');
+    await box.delete('cached_user_profile');
+  } catch (e) {
+    print('failed to clear cached user profile: $e');
+  }
+}

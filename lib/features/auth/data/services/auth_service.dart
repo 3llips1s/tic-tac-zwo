@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../profile/data/models/user_profile.dart';
+import '../../../profile/logic/user_profile_providers.dart';
+
 class AuthException implements Exception {
   final String message;
   final dynamic originalError;
@@ -71,6 +74,8 @@ class AuthService {
 
   Future<void> signOut() async {
     await _supabase.auth.signOut();
+
+    await clearCachedUserProfile();
   }
 
   Future<void> signInWithGoogle() async {
@@ -106,16 +111,17 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    final userId = currentUserId;
-    if (userId == null) return null;
-
+  Future<UserProfile?> getUserProfile() async {
     try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return null;
+
       final response =
-          await _supabase.from('users').select().eq('id', userId).maybeSingle();
-      return response;
-    } catch (error) {
-      print('error fetching user profile: $error');
+          await _supabase.from('users').select().eq('id', user.id).single();
+
+      return UserProfile.fromJson(response);
+    } catch (e) {
+      print('failed to get user profile: $e');
       return null;
     }
   }

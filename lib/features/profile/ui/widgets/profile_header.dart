@@ -45,6 +45,7 @@ class ProfileHeader extends ConsumerWidget {
                       color: colorBlack,
                     ),
               ),
+
               // Edit button positioned to the right
               if (currentUserId == userProfile.id)
                 Positioned(
