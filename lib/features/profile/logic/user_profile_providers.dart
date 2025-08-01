@@ -87,8 +87,14 @@ final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
 });
 
 final cachedCurrentUserProfileProvider =
-    FutureProvider<UserProfile>((ref) async {
+    FutureProvider<UserProfile?>((ref) async {
   try {
+    final authService = ref.watch(authServiceProvider);
+
+    if (!authService.isAuthenticated) {
+      return null;
+    }
+
     final freshProfile = await ref.watch(currentUserProfileProvider.future);
 
     await _cacheUserProfile(freshProfile);
@@ -100,7 +106,8 @@ final cachedCurrentUserProfileProvider =
     if (cachedProfile != null) {
       return cachedProfile;
     }
-    throw error;
+
+    return null;
   }
 });
 

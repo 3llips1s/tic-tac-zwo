@@ -177,29 +177,54 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
               child: Padding(
                 padding: EdgeInsets.only(bottom: kToolbarHeight * 0.5),
                 child: userProfileAsync.when(
-                  data: (userProfile) => Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      AvatarFlag(
-                        radius: 14,
-                        avatarUrl: userProfile.avatarUrl,
-                        countryCode: userProfile.countryCode,
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        userProfile.username,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: colorYellowAccent,
-                              fontSize: 24.0,
-                            ),
-                      ),
-                    ],
-                  ),
+                  data: (userProfile) {
+                    if (userProfile == null) {
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          AvatarFlag(
+                            radius: 16,
+                            avatarUrl: null,
+                            countryCode: null,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            'User${Random().nextInt(100000)}',
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: colorYellowAccent,
+                                      fontSize: 22.0,
+                                    ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        AvatarFlag(
+                          radius: 16,
+                          avatarUrl: userProfile!.avatarUrl,
+                          countryCode: userProfile.countryCode,
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          userProfile.username,
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: colorYellowAccent,
+                                    fontSize: 22.0,
+                                  ),
+                        ),
+                      ],
+                    );
+                  },
                   loading: () => Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       AvatarFlag(
-                        radius: 14,
+                        radius: 16,
                         avatarUrl: null,
                         countryCode: null,
                       ),
@@ -208,7 +233,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
                         'Laden...',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: colorYellowAccent,
-                              fontSize: 24.0,
+                              fontSize: 22.0,
                             ),
                       ),
                     ],
