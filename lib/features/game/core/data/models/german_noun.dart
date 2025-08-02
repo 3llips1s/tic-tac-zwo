@@ -68,6 +68,7 @@ final nounRepositoryProvider = Provider((ref) {
   final nounRepo = ref.watch(germanNounRepoProvider);
   return NounRepository(nounRepo);
 });
+
 final nounsProvider = FutureProvider<List<GermanNoun>>((ref) {
   return ref.read(nounRepositoryProvider).getGameBatch();
 });

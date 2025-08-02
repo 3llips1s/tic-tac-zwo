@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
-import 'package:tic_tac_zwo/features/game/wordle/data/repositories/worlde_word_repo.dart';
+import 'package:tic_tac_zwo/features/game/wordle/data/repositories/wordle_word_repo.dart';
 
 class WordleLogic {
-  final WorldeWordRepo repository;
+  final WordleWordRepo repository;
 
   WordleLogic({required this.repository});
 
@@ -133,6 +133,6 @@ class WordleLogic {
 
 // provider
 final wordleLogicProvider = Provider<WordleLogic>((ref) {
-  final repository = ref.watch(worldeWordRepoProvider);
+  final repository = ref.watch(wordleWordRepoProvider);
   return WordleLogic(repository: repository);
 });

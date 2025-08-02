@@ -37,7 +37,7 @@ class DataInitializationWrapper extends ConsumerWidget {
               const SizedBox(height: kToolbarHeight),
               OutlinedButton(
                 onPressed: () {
-                  ref.refresh(dataInitializationServiceProvider).initialize();
+                  ref.invalidate(dataInitializationServiceProvider);
                 },
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.all(10),

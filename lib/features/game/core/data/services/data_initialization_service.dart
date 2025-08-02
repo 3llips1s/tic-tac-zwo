@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
@@ -49,7 +50,12 @@ class DataInitializationService {
 
       if (_nounsBox.isEmpty) {
         try {
-          await syncWithRemote();
+          unawaited(syncWithRemote());
+
+          await Future.any([
+            Future.delayed(Duration(seconds: 3)),
+            _waitForMinimalData(),
+          ]);
 
           if (_nounsBox.length < 100) {
             await _loadFromAssets();
@@ -79,31 +85,58 @@ class DataInitializationService {
     return ready;
   }
 
+  Future<void> _waitForMinimalData() async {
+    int attempts = 0;
+    while (_nounsBox.length < 100 && _isSyncing && attempts < 30) {
+      await Future.delayed(Duration(milliseconds: 100));
+      attempts++;
+    }
+  }
+
   Future<void> _loadFromAssets() async {
     try {
       final String jsonString = await rootBundle.loadString(_assetPath);
-      final List<dynamic> jsonList = json.decode(jsonString);
-      final List<GermanNoun> nouns =
-          jsonList.map((json) => GermanNoun.fromJson(json)).toList();
 
-      await _nounsBox.clear();
-      for (var i = 0; i < nouns.length; i++) {
-        final noun = nouns[i];
-        final hiveNoun = GermanNounHive(
-          id: 'fb_${noun.article}_${noun.noun}',
-          noun: noun.noun,
-          article: noun.article,
-          plural: noun.plural,
-          english: noun.english,
-          difficulty: 1,
-          updatedAt: DateTime.now(),
-          version: 0,
-        );
-        await _nounsBox.put(noun.id, hiveNoun);
-      }
+      _syncController.add(SyncStatus(status: 'parsing noun data...'));
+      final List<GermanNoun> nouns = await _parseNounsInBackground(jsonString);
 
       _syncController
-          .add(SyncStatus(status: 'loaded from assets', count: nouns.length));
+          .add(SyncStatus(status: 'loading ${nouns.length} nouns...'));
+
+      await _nounsBox.clear();
+
+      const batchSize = 100;
+
+      for (int i = 0; i < nouns.length; i += batchSize) {
+        final batch = nouns.skip(i).take(batchSize);
+
+        for (var noun in batch) {
+          final hiveNoun = GermanNounHive(
+            id: 'fb_${noun.article}_${noun.noun}',
+            noun: noun.noun,
+            article: noun.article,
+            plural: noun.plural,
+            english: noun.english,
+            difficulty: 1,
+            updatedAt: DateTime.now(),
+            version: 0,
+          );
+          await _nounsBox.put(noun.id, hiveNoun);
+        }
+
+        await Future.delayed(Duration.zero);
+
+        _syncController.add(SyncStatus(
+          status: 'loaded ${i + batch.length}/${nouns.length} nouns',
+          count: i + batch.length,
+        ));
+      }
+
+      _syncController.add(SyncStatus(
+        status: 'loaded from assets',
+        count: nouns.length,
+        isSuccess: true,
+      ));
     } catch (e) {
       print('Error loading nouns from assets: $e');
       _syncController.add(SyncStatus(
@@ -112,6 +145,13 @@ class DataInitializationService {
       ));
       rethrow;
     }
+  }
+
+  Future<List<GermanNoun>> _parseNounsInBackground(String jsonString) async {
+    return await Isolate.run(() {
+      final List<dynamic> jsonList = json.decode(jsonString);
+      return jsonList.map((json) => GermanNoun.fromJson(json)).toList();
+    });
   }
 
   Future<void> syncWithRemote() async {
@@ -149,21 +189,39 @@ class DataInitializationService {
 
       // update local db with new nouns
       int updateCount = 0;
-      for (final nounData in nounsData) {
-        final hiveNoun = GermanNounHive(
-          id: nounData['id'],
-          noun: nounData['noun'],
-          article: nounData['article'],
-          plural: nounData['plural'] ?? '',
-          english: nounData['english'] ?? '',
-          difficulty: nounData['difficulty'] ?? 1,
-          updatedAt: DateTime.parse(nounData['updated_at']),
-          version: nounData['version'],
-        );
+      const batchSize = 100;
 
-        await _nounsBox.put(hiveNoun.id, hiveNoun);
-        updateCount++;
+      _syncController
+          .add(SyncStatus(status: 'processing ${nounsData.length} nouns...'));
+
+      for (int i = 0; i < nounsData.length; i += batchSize) {
+        final batch = nounsData.skip(i).take(batchSize);
+
+        for (final nounData in batch) {
+          final hiveNoun = GermanNounHive(
+            id: nounData['id'],
+            noun: nounData['noun'],
+            article: nounData['article'],
+            plural: nounData['plural'] ?? '',
+            english: nounData['english'] ?? '',
+            difficulty: nounData['difficulty'] ?? 1,
+            updatedAt: DateTime.parse(nounData['updated_at']),
+            version: nounData['version'],
+          );
+
+          await _nounsBox.put(hiveNoun.id, hiveNoun);
+          updateCount++;
+        }
+
+        await Future.delayed(Duration.zero);
+
+        _syncController.add(SyncStatus(
+          status: 'processed $updateCount/${nounsData.length} nouns',
+          count: updateCount,
+        ));
       }
+
+      print('total fetched: $updateCount nouns');
 
       // update sync info
       await _syncInfoBox.put('lastSyncTime', DateTime.now());
@@ -176,7 +234,7 @@ class DataInitializationService {
       ));
 
       if (updateCount > 0 && _syncInfoBox.get('hasFallbackData') == true) {
-        await _cleanUpFallbackData();
+        await _cleanUpFallbackDataInBatches();
         await _syncInfoBox.delete('hasFallbackData');
         await _syncInfoBox.delete('fallbackLoadTime');
       }
@@ -210,18 +268,30 @@ class DataInitializationService {
     await _syncInfoBox.put('fallbackLoadTime', DateTime.now());
   }
 
-  Future<void> _cleanUpFallbackData() async {
+  Future<void> _cleanUpFallbackDataInBatches() async {
     final fallbackKeys = <dynamic>[];
+
+    const batchSize = 100;
+    int processed = 0;
 
     for (final key in _nounsBox.keys) {
       final noun = _nounsBox.get(key);
       if (noun?.version == 0) {
         fallbackKeys.add(key);
       }
+
+      processed++;
+      if (processed % batchSize == 0) {
+        await Future.delayed(Duration.zero);
+      }
     }
 
-    for (final key in fallbackKeys) {
-      await _nounsBox.delete(key);
+    for (int i = 0; i < fallbackKeys.length; i += batchSize) {
+      final batch = fallbackKeys.skip(i).take(batchSize);
+      for (final key in batch) {
+        await _nounsBox.delete(key);
+      }
+      await Future.delayed(Duration.zero);
     }
   }
 
@@ -255,33 +325,55 @@ final syncInfoProvider = Provider<Box>((ref) {
   return Hive.box('sync_info');
 });
 
-final dataInitializationServiceProvider =
-    Provider<DataInitializationService>((ref) {
-  final nounsBox = ref.watch(nounsBoxProvider);
-  final syncInfoBox = ref.watch(syncInfoProvider);
-  final syncService = ref.watch(nounSyncServiceProvider);
+class DataInitializationNotifier
+    extends AsyncNotifier<DataInitializationService> {
+  @override
+  Future<DataInitializationService> build() async {
+    final nounsBox = ref.watch(nounsBoxProvider);
+    final syncInfoBox = ref.watch(syncInfoProvider);
+    final syncService = ref.watch(nounSyncServiceProvider);
 
-  final service = DataInitializationService(
-    nounsBox: nounsBox,
-    syncInfoBox: syncInfoBox,
-    syncService: syncService,
-  );
+    final service = DataInitializationService(
+      nounsBox: nounsBox,
+      syncInfoBox: syncInfoBox,
+      syncService: syncService,
+    );
 
-  service.initialize();
+    await service.initialize();
 
-  ref.onDispose(() {
-    service.dispose();
-  });
+    ref.onDispose(
+      () {
+        service.dispose();
+      },
+    );
 
-  return service;
+    return service;
+  }
+}
+
+final dataInitializationServiceProvider = AsyncNotifierProvider<
+    DataInitializationNotifier, DataInitializationService>(() {
+  return DataInitializationNotifier();
 });
 
 final dataReadyProvider = FutureProvider<bool>((ref) async {
-  final service = ref.watch(dataInitializationServiceProvider);
-  await service.ready;
+  await ref.watch(dataInitializationServiceProvider.future);
   return true;
 });
 
 final syncStatusProvider = StreamProvider<SyncStatus>((ref) {
-  return ref.watch(dataInitializationServiceProvider).syncStatus;
+  return ref.watch(dataInitializationServiceProvider).when(
+        data: (service) => service.syncStatus,
+        loading: () => Stream.value(SyncStatus(status: 'initializing...')),
+        error: (error, _) => Stream.value(SyncStatus(
+          status: 'initialization failed',
+          error: error.toString(),
+        )),
+      );
 });
+
+void unawaited(Future<void> future) {
+  future.catchError((error) {
+    print('background operation failed:$error');
+  });
+}

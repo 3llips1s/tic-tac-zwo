@@ -243,7 +243,7 @@ class CreditsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
               color: Colors.black87,

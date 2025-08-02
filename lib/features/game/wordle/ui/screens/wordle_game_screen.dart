@@ -10,7 +10,7 @@ import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dar
 import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
-import '../../data/repositories/worlde_word_repo.dart';
+import '../../data/repositories/wordle_word_repo.dart';
 import '../widgets/wordle_instructions_dialog.dart';
 import '../widgets/wordle_keyboard.dart';
 
@@ -85,7 +85,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     if (gameState == null) return;
 
     // check if word is valid
-    final repository = ref.read(worldeWordRepoProvider);
+    final repository = ref.read(wordleWordRepoProvider);
     final isValid = await repository.isValidWord(guess);
 
     if (!isValid) {

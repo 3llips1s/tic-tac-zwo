@@ -217,7 +217,8 @@ class SyncStatus {
 final germanNounRepoProvider = Provider<GermanNounRepo>(
   (ref) {
     final nounsBox = ref.watch(nounsBoxProvider);
-    final dataService = ref.watch(dataInitializationServiceProvider);
+    final dataServiceAsync = ref.watch(dataInitializationServiceProvider);
+    final dataService = dataServiceAsync.requireValue;
 
     final repo = GermanNounRepo(
       nounsBox: nounsBox,

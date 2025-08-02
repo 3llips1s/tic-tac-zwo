@@ -5,7 +5,7 @@ import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../../core/ui/widgets/glassmorphic_dialog.dart';
 import '../../data/models/wordle_game_state.dart';
-import '../../data/repositories/worlde_word_repo.dart';
+import '../../data/repositories/wordle_word_repo.dart';
 
 class GameResultDialog extends ConsumerStatefulWidget {
   final WordleGameState gameState;
@@ -45,10 +45,10 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
     final isCorrectFuture =
         ref.read(wordleGameStateProvider.notifier).checkArticle(article);
     final correctArticleFuture = ref
-        .read(worldeWordRepoProvider)
+        .read(wordleWordRepoProvider)
         .getWordArticle(widget.gameState.targetWord);
     final englishTranslationFuture = ref
-        .read(worldeWordRepoProvider)
+        .read(wordleWordRepoProvider)
         .getEnglishTranslation(widget.gameState.targetWord);
 
     final results = await Future.wait([

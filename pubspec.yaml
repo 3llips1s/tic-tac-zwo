@@ -46,14 +46,11 @@ flutter:
     - family: Onest
       fonts:
         - asset: assets/fonts/onest.extralight.ttf
-        - asset: assets/fonts/onest.light.ttf
-        - asset: assets/fonts/onest.thin.ttf
         - asset: assets/fonts/onest.regular.ttf
 
     - family: Sniglet
       fonts: 
         - asset: assets/fonts/sniglet.regular.ttf
-        - asset: assets/fonts/sniglet.extrabold.ttf
 
 flutter_launcher_icons:
   android: true

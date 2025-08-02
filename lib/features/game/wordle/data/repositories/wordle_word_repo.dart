@@ -7,7 +7,7 @@ import 'package:tic_tac_zwo/features/game/core/data/services/data_initialization
 
 import '../../../online/data/models/german_noun_hive.dart';
 
-class WorldeWordRepo {
+class WordleWordRepo {
   final Box<GermanNounHive> _nounsBox;
   final DataInitializationService _dataService;
   List<Map<String, String>> _cachedWords = [];
@@ -16,7 +16,7 @@ class WorldeWordRepo {
   final _wordleWordsReadyCompleter = Completer<void>();
   Future<void> get ready => _wordleWordsReadyCompleter.future;
 
-  WorldeWordRepo({
+  WordleWordRepo({
     required Box<GermanNounHive> nounsBox,
     required DataInitializationService dataService,
   })  : _nounsBox = nounsBox,
@@ -170,11 +170,12 @@ class WorldeWordRepo {
   }
 }
 
-final worldeWordRepoProvider = Provider<WorldeWordRepo>((ref) {
+final wordleWordRepoProvider = Provider<WordleWordRepo>((ref) {
   final nounsBox = ref.watch(nounsBoxProvider);
-  final dataService = ref.watch(dataInitializationServiceProvider);
+  final dataServiceAsync = ref.watch(dataInitializationServiceProvider);
+  final dataService = dataServiceAsync.requireValue;
 
-  final repo = WorldeWordRepo(
+  final repo = WordleWordRepo(
     nounsBox: nounsBox,
     dataService: dataService,
   );
@@ -185,7 +186,7 @@ final worldeWordRepoProvider = Provider<WorldeWordRepo>((ref) {
 });
 
 final wordleRepoReadyProvider = FutureProvider<bool>((ref) async {
-  final repo = ref.watch(worldeWordRepoProvider);
+  final repo = ref.watch(wordleWordRepoProvider);
   await repo.ready;
   return true;
 });
