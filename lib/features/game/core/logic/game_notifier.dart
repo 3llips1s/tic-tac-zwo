@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:async';
 import 'dart:math';
 
@@ -115,7 +117,7 @@ class GameNotifier extends StateNotifier<GameState> {
         );
       }
     } catch (e) {
-      print('error loading turn noun: $e');
+      developer.log('error loading turn noun: $e', name: 'game_notifier');
     }
   }
 

@@ -118,7 +118,8 @@ class _OnlineTurnSelectionScreenState
         }
       },
     ).catchError((error) {
-      print('error loading game session: $error');
+      developer.log('error loading game session: $error',
+          name: 'online_turn_selection');
     });
   }
 
@@ -140,7 +141,7 @@ class _OnlineTurnSelectionScreenState
 
   void _startGame() async {
     if (_player1 == null || _player2 == null) {
-      developer.log('players not initialized');
+      developer.log('players not initialized', name: 'online_turn_selection');
       return;
     }
 
@@ -187,22 +188,26 @@ class _OnlineTurnSelectionScreenState
             } else if (_localUserId == streamPlayer2Id) {
               isOpponentActuallyReady = p1Ready;
             } else {
-              print(
-                  'Debug: _localUserId ($_localUserId) does not match streamPlayer1Id ($streamPlayer1Id) or streamPlayer2Id ($streamPlayer2Id). Opponent readiness may be inaccurate temporarily.');
+              developer.log(
+                  'Debug: _localUserId ($_localUserId) does not match streamPlayer1Id ($streamPlayer1Id) or streamPlayer2Id ($streamPlayer2Id). Opponent readiness may be inaccurate temporarily.',
+                  name: 'online_turn_selection');
             }
           } else {
-            print(
-                'Debug: _localUserId is null. Cannot determine opponent readiness.');
+            developer.log(
+                'Debug: _localUserId is null. Cannot determine opponent readiness.',
+                name: 'online_turn_selection');
           }
 
-          print(
-              'DB states from stream - P1 ready: $p1Ready, P2 ready: $p2Ready. My ready: $_isReady. Opponent ready: $isOpponentActuallyReady');
+          developer.log(
+              'DB states from stream - P1 ready: $p1Ready, P2 ready: $p2Ready. My ready: $_isReady. Opponent ready: $isOpponentActuallyReady',
+              name: 'online_turn_selection');
 
           if (isOpponentActuallyReady && _isReady) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted && ModalRoute.of(context)?.isCurrent == true) {
-                print(
-                    'Both players ready (derived from gameSessionStream). Starting game...');
+                developer.log(
+                    'Both players ready (derived from gameSessionStream). Starting game...',
+                    name: 'online_turn_selection');
                 _startGame();
               }
             });

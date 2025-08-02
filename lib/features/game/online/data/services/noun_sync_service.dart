@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -36,7 +38,8 @@ class NounSyncService {
       offset += batchSize;
     }
 
-    print('Total fetched: ${allData.length} nouns');
+    developer.log('Total fetched: ${allData.length} nouns',
+        name: 'noun_sync_service');
     return allData;
   }
 

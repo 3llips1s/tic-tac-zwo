@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../profile/data/models/user_profile.dart';
@@ -23,7 +25,8 @@ class AuthService {
           .rpc('check_user_exists', params: {'email_to_check': email});
       return response as bool;
     } catch (error) {
-      print('error checking user existence: $error');
+      developer.log('error checking user existence: $error',
+          name: 'auth_service');
       return false;
     }
   }
@@ -37,7 +40,7 @@ class AuthService {
       );
       return true;
     } catch (error) {
-      print('OTP sign-in error: $error');
+      developer.log('OTP sign-in error: $error', name: 'auth_service');
       return false;
     }
   }
@@ -50,10 +53,11 @@ class AuthService {
         token: token,
         type: OtpType.email,
       );
-      print('User authenticated: ${response.user?.id}');
+      developer.log('User authenticated: ${response.user?.id}',
+          name: 'auth_service');
       return response;
     } catch (error) {
-      print('OTP verification error: $error');
+      developer.log('OTP verification error: $error', name: 'auth_service');
       return null;
     }
   }
@@ -67,7 +71,7 @@ class AuthService {
       );
       return true;
     } catch (error) {
-      print('OTP sign-up error: $error');
+      developer.log('OTP sign-up error: $error', name: 'auth_service');
       return false;
     }
   }
@@ -106,7 +110,7 @@ class AuthService {
       // Simply return whether response is not null
       return response != null;
     } catch (error) {
-      print('Profile check error: $error');
+      developer.log('Profile check error: $error', name: 'auth_service');
       return false;
     }
   }
@@ -121,7 +125,7 @@ class AuthService {
 
       return UserProfile.fromJson(response);
     } catch (e) {
-      print('failed to get user profile: $e');
+      developer.log('failed to get user profile: $e', name: 'auth_service');
       return null;
     }
   }

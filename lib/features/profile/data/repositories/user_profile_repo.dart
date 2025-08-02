@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -105,7 +107,8 @@ class UserProfileRepo {
 
       return history;
     } catch (e) {
-      print('Error fetching game history: $e');
+      developer.log('Error fetching game history: $e',
+          name: 'user_profile_repo');
       return [];
     }
   }

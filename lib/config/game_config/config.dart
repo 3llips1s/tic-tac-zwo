@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 enum GameMode { pass, offline, wordle, online }
 
 enum PlayerSymbol { X, O }
@@ -83,8 +85,9 @@ extension OnlineGamePhaseExtension on OnlineGamePhase {
       case 'turn_complete':
         return OnlineGamePhase.turnComplete;
       default:
-        print(
-            '[OnlineGameNotifier] Unknown or null online_game_phase string: "$phaseString", defaulting to waiting.');
+        developer.log(
+            '[OnlineGameNotifier] Unknown or null online_game_phase string: "$phaseString", defaulting to waiting.',
+            name: 'config');
         return OnlineGamePhase.waiting;
     }
   }

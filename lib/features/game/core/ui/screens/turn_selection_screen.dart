@@ -53,12 +53,6 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       ];
     }
 
-    print('Players initialized:');
-    players.forEach((player) {
-      print(
-          'Name: ${player.username}, Symbol: ${player.symbol}, Is AI: ${player.isAI}');
-    });
-
     startingPlayer =
         players.firstWhere((player) => player.symbol == PlayerSymbol.X);
   }

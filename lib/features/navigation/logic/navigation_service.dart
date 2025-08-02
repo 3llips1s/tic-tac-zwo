@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 
@@ -59,7 +61,8 @@ class NavigationService {
         arguments: arguments,
       );
     } catch (e) {
-      debugPrint('Navigation failed for route: $routeName, Error: $e');
+      developer.log('Navigation failed for route: $routeName, Error: $e',
+          name: 'navigation_service');
       Navigator.pushReplacementNamed(context, RouteNames.home);
     }
   }

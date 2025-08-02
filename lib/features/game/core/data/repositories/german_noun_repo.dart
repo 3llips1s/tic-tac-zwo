@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:async';
 import 'dart:math';
 
@@ -42,7 +44,8 @@ class GermanNounRepo {
         _nounsReadyCompleter.complete();
       }
     } catch (e) {
-      print('error initializing german noun repo:$e');
+      developer.log('error initializing german noun repo:$e',
+          name: 'german_noun_repo');
       if (!_nounsReadyCompleter.isCompleted) {
         _nounsReadyCompleter.completeError(e);
       }
@@ -55,8 +58,9 @@ class GermanNounRepo {
         .map((hiveNoun) => _hiveNounToGermanNoun(hiveNoun))
         .toList();
     _availableNouns = List<GermanNoun>.from(allNouns)..shuffle();
-    print(
-        'German noun repo: refreshed ${_availableNouns.length} available nouns');
+    developer.log(
+        'German noun repo: refreshed ${_availableNouns.length} available nouns',
+        name: 'german_noun_repo');
   }
 
   // convert hive noun to german noun
@@ -178,7 +182,7 @@ class GermanNounRepo {
 
       return fetchedNoun.toGermanNoun();
     } catch (e) {
-      print('error fetching noun by id: $e');
+      developer.log('error fetching noun by id: $e', name: 'german_noun_repo');
       return null;
     }
   }

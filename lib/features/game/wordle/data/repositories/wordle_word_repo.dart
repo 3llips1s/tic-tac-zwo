@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:async';
 import 'dart:math';
 
@@ -35,7 +37,7 @@ class WordleWordRepo {
         _wordleWordsReadyCompleter.complete();
       }
     } catch (e) {
-      print('error loading words: $e');
+      developer.log('error loading words: $e', name: 'wordle_word_repo');
       _cachedWords = _getFallbackWords();
       _isInitialized = true;
 
@@ -68,9 +70,11 @@ class WordleWordRepo {
       },
     );
 
-    print('Total nouns in box: $totalNouns');
-    print('Five letter nouns detected: $fiveLetterNouns');
-    print('cached words: ${_cachedWords.length} nouns');
+    developer.log('Total nouns in box: $totalNouns', name: 'wordle_word_repo');
+    developer.log('Five letter nouns detected: $fiveLetterNouns',
+        name: 'wordle_word_repo');
+    developer.log('cached words: ${_cachedWords.length} nouns',
+        name: 'wordle_word_repo');
 
     if (_cachedWords.isEmpty) {
       throw Exception('No words found in local DB');

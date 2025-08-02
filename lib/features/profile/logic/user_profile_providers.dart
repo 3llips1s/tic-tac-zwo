@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,7 +119,8 @@ Future<void> _cacheUserProfile(UserProfile userProfile) async {
     final hiveProfile = UserProfileHive.fromUserProfile(userProfile);
     await box.put('cached_user_profile', hiveProfile);
   } catch (e) {
-    print('failed to cache user profile: $e');
+    developer.log('failed to cache user profile: $e',
+        name: 'user_profile_providers');
   }
 }
 
@@ -132,7 +135,8 @@ Future<UserProfile?> _getCachedUserProfile() async {
 
     return null;
   } catch (e) {
-    print('failed to get cached user profile: $e');
+    developer.log('failed to get cached user profile: $e',
+        name: 'user_profile_providers');
     return null;
   }
 }
@@ -142,6 +146,7 @@ Future<void> clearCachedUserProfile() async {
     final box = Hive.box('user_preferences');
     await box.delete('cached_user_profile');
   } catch (e) {
-    print('failed to clear cached user profile: $e');
+    developer.log('failed to clear cached user profile: $e',
+        name: 'user_profile_providers');
   }
 }

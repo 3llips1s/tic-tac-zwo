@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -402,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen>
           });
         }
       } catch (e) {
-        print('Error submitting email: $e');
+        developer.log('Error submitting email: $e', name: 'login_screen');
 
         String errorMessage =
             'Ein Fehler ist aufgetreten. Bitte erneut versuchen.';

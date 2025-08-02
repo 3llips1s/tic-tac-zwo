@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -47,8 +48,8 @@ void main() async {
 
     runApp(const ProviderScope(child: MainApp()));
   } catch (e) {
-    print('FATAL: App failed to initialize.');
-    print('Error: $e');
+    developer.log('FATAL: App failed to initialize.', name: 'main');
+    developer.log('Error: $e', name: 'main');
     runApp(InitializationErrorApp(error: e));
   }
 }

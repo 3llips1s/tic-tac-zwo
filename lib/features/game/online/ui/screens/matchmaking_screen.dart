@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -80,7 +82,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
         ref.read(matchmakingServiceProvider).startGlobalMatchmaking();
       }
     } catch (e) {
-      print('matchmaking initialization error: $e');
+      developer.log('matchmaking initialization error: $e',
+          name: 'matchmaking_screen');
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, RouteNames.home);
@@ -615,7 +618,8 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
                             .read(matchmakingServiceProvider)
                             .initiateDirectMatch(userId);
                       } else {
-                        print('error: nearby player user_id is null');
+                        developer.log('error: nearby player user_id is null',
+                            name: 'matchmaking_screen');
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
