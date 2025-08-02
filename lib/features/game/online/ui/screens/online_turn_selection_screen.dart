@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -137,9 +139,8 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _startGame() async {
-    // todo: remove after testing
     if (_player1 == null || _player2 == null) {
-      print('players not initialized');
+      developer.log('players not initialized');
       return;
     }
 
@@ -370,9 +371,8 @@ class _OnlineTurnSelectionScreenState
                     ),
               ),
               SizedBox(height: 16),
-              // home button
-              // todo: add leave match button + functionality on other clients side
 
+              // home button
               Padding(
                 padding: const EdgeInsets.only(left: 20, top: 20),
                 child: Container(

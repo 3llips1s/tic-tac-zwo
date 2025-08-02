@@ -302,10 +302,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
         if (didPop) {
           return;
         }
-
-        // TODO: implement onlinegamenotifier.exitgame logic
-        /*  final navigator = Navigator.of(context);
-        onlineNotifier?.exitGame(navigator); */
         _showHomeNavigationDialog();
       },
       child: Scaffold(
@@ -488,13 +484,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
                       width: 52,
                       child: FloatingActionButton(
                         onPressed: _showHomeNavigationDialog,
-                        // todo: implement onlinegamenotifer.exitgame
-                        /*  
-                                  () {
-                                  final navigator = Navigator.of(context);
-                                  onlineGameNotifier.exitGame(navigator);
-                                  }
-                                  */
                         backgroundColor: colorBlack.withOpacity(0.75),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9),
