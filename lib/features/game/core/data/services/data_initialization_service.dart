@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
@@ -46,8 +47,6 @@ class DataInitializationService {
     _isInitializing = true;
 
     try {
-      print('starting shared data initialization');
-
       if (_nounsBox.isEmpty) {
         try {
           unawaited(syncWithRemote());
@@ -69,13 +68,14 @@ class DataInitializationService {
         _scheduleRemoteSync();
       }
 
-      print('data init complete. ${_nounsBox.length} nouns available');
+      developer.log('data init complete. ${_nounsBox.length} nouns available',
+          name: 'data_init_service');
 
       if (!_dataReadyCompleter.isCompleted) {
         _dataReadyCompleter.complete();
       }
     } catch (e) {
-      print('error initializing data: $e');
+      developer.log('error initializing data: $e', name: 'data_init_service');
       if (!_dataReadyCompleter.isCompleted) {
         _dataReadyCompleter.completeError(e);
       }
@@ -138,7 +138,8 @@ class DataInitializationService {
         isSuccess: true,
       ));
     } catch (e) {
-      print('Error loading nouns from assets: $e');
+      developer.log('Error loading nouns from assets: $e',
+          name: 'data_init_service');
       _syncController.add(SyncStatus(
         status: 'Error loading from assets',
         error: e.toString(),
@@ -158,12 +159,14 @@ class DataInitializationService {
     if (_isSyncing) return;
     _isSyncing = true;
     try {
-      print('starting noun sync with remote');
+      developer.log('starting noun sync with remote',
+          name: 'data_init_service');
       _syncController.add(SyncStatus(status: 'syncing...'));
 
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print('sync aborted. no internet connection');
+        developer.log('sync aborted. no internet connection',
+            name: 'data_init_service');
         _syncController.add(SyncStatus(status: 'no internet connection'));
         return;
       }
@@ -175,10 +178,11 @@ class DataInitializationService {
       List<Map<String, dynamic>> nounsData;
 
       if (lastSync == null || _nounsBox.length < 100) {
-        print('performing full db sync');
+        developer.log('performing full db sync', name: 'data_init_service');
         nounsData = await _syncService.fetchNouns();
       } else {
-        print('performing incremental sync since $lastSync');
+        developer.log('performing incremental sync since $lastSync',
+            name: 'data_init_service');
         nounsData = await _syncService.fetchNouns(
           since: lastSync,
           lastVersions: lastVersion,
@@ -221,7 +225,8 @@ class DataInitializationService {
         ));
       }
 
-      print('total fetched: $updateCount nouns');
+      developer.log('total fetched: $updateCount nouns',
+          name: 'data_init_service');
 
       // update sync info
       await _syncInfoBox.put('lastSyncTime', DateTime.now());
@@ -239,7 +244,7 @@ class DataInitializationService {
         await _syncInfoBox.delete('fallbackLoadTime');
       }
     } catch (e) {
-      print('Error syncing with remote: $e');
+      developer.log('Error syncing with remote: $e', name: 'data_init_service');
       _syncController.add(SyncStatus(
         status: 'Sync failed',
         error: e.toString(),
@@ -374,6 +379,7 @@ final syncStatusProvider = StreamProvider<SyncStatus>((ref) {
 
 void unawaited(Future<void> future) {
   future.catchError((error) {
-    print('background operation failed:$error');
+    developer.log('background operation failed:$error',
+        name: 'data_init_service');
   });
 }

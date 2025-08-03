@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,18 +51,7 @@ class OnlineGameNotifier extends GameNotifier {
           currentPlayerId: gameConfig.startingPlayer.userId,
           initialLastStarterId: gameConfig.startingPlayer.userId,
         ) {
-    print('[DEBUG CONSTRUCTOR] gameSessionId: $gameSessionId');
-    print('[DEBUG CONSTRUCTOR] currentUserId: $currentUserId');
-    print(
-        '[DEBUG CONSTRUCTOR] startingPlayer.userId: ${gameConfig.startingPlayer.userId}');
-
     _isLocalPlayerTurn = gameConfig.startingPlayer.userId == currentUserId;
-    print(
-        '[DEBUG CONSTRUCTOR] _isLocalPlayerTurn initialized to: $_isLocalPlayerTurn');
-    print(
-        '[DEBUG CONSTRUCTOR] Starting player: ${gameConfig.startingPlayer.username}');
-    print(
-        '[DEBUG CONSTRUCTOR] Is local user the starting player? $_isLocalPlayerTurn');
 
     if (gameSessionId.isNotEmpty && currentUserId != null) {
       _listenToGameSessionUpdates();
@@ -74,11 +64,11 @@ class OnlineGameNotifier extends GameNotifier {
       _startInitialDelayTimer();
     } else {
       if (gameSessionId.isEmpty) {
-        print(
+        developer.log(
             '[OnlineGameNotifier] Game Session ID is empty. Cannot initialize online game.');
       }
       if (currentUserId == null) {
-        print(
+        developer.log(
             '[OnlineGameNotifier] Current User ID is null. Cannot initialize online game.');
       }
     }
@@ -202,23 +192,13 @@ class OnlineGameNotifier extends GameNotifier {
   }
 
   Future<void> selectCellOnline(int index) async {
-    print('[DEBUG selectCellOnline] _isInitialGameLoad: $_isInitialGameLoad');
-    print(
-        '[DEBUG selectCellOnline] canLocalPlayerMakeMove: $canLocalPlayerMakeMove');
-    print(
-        '[DEBUG selectCellOnline] _isInactivityTimerActive: $_isInactivityTimerActive');
-    print('[DEBUG selectCellOnline] state.isGameOver: ${state.isGameOver}');
-    print(
-        '[DEBUG selectCellOnline] _processingRemoteUpdate: $_processingRemoteUpdate');
-    print('[DEBUG selectCellOnline] _isLocalPlayerTurn: $_isLocalPlayerTurn');
-
     if (_isInitialGameLoad ||
         state.isGameOver ||
         _processingRemoteUpdate ||
         !_isLocalPlayerTurn ||
         state.board[index] != null ||
         state.selectedCellIndex != null) {
-      print(
+      developer.log(
           '[OnlineGameNotifier] Cannot select cell: Game over, processing remote update, not local player\'s turn, or cell already taken.');
       return;
     }
@@ -242,10 +222,9 @@ class OnlineGameNotifier extends GameNotifier {
         currentNounId: noun.id,
         onlineGamePhaseString: OnlineGamePhase.cellSelected.string,
       );
-      print(
-          '[OnlineGameNotifier] Cell $index selected and noun ${noun.noun} sent to server.');
     } catch (e) {
-      print('[OnlineGameNotifier] Error sending cell selection to server: $e');
+      developer.log(
+          '[OnlineGameNotifier] Error sending cell selection to server: $e');
 
       state = state.copyWith(
         selectedCellIndex: null,
@@ -269,7 +248,7 @@ class OnlineGameNotifier extends GameNotifier {
         !_isLocalPlayerTurn ||
         state.isGameOver ||
         _processingRemoteUpdate) {
-      print(
+      developer.log(
           '[OnlineGameNotifier] Cannot make move: Invalid state for making a move.');
       return;
     }
@@ -338,7 +317,8 @@ class OnlineGameNotifier extends GameNotifier {
               onlineGamePhaseString: OnlineGamePhase.waiting.string,
             );
           } catch (e) {
-            print('[OnlineGameNotifier] Error resetting phase to waiting: $e');
+            developer.log(
+                '[OnlineGameNotifier] Error resetting phase to waiting: $e');
           }
         }
       },
@@ -412,7 +392,7 @@ class OnlineGameNotifier extends GameNotifier {
     _cancelInactivityTimer();
 
     if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
-      print(
+      developer.log(
           '[OnlineGameNotifier] Cannot forfeit turn: Invalid state for forfeiture.');
       return;
     }
@@ -450,36 +430,26 @@ class OnlineGameNotifier extends GameNotifier {
           _lastUpdateTimestamp != null &&
           (newTimeStamp.isBefore(_lastUpdateTimestamp!) ||
               newTimeStamp == _lastUpdateTimestamp)) {
-        print('[OnlineGameNotifier] Skipping redundant update.');
         return;
       }
 
       _processingRemoteUpdate = true;
-      print('[OnlineGameNotifier] Received remote update: $gameData');
 
       _lastUpdateTimestamp = newTimeStamp;
-
-      print('[OnlineGameNotifier] Received remote update: $gameData');
 
       try {
         await _handleRemoteUpdate(gameData);
       } catch (e) {
-        print('Error handling remote update: $e');
+        developer.log('Error handling remote update: $e');
       }
       _processingRemoteUpdate = false;
     }, onError: (e) {
-      print('[OnlineGameNotifier] Error listening to game session: $e');
+      developer.log('[OnlineGameNotifier] Error listening to game session: $e');
       _processingRemoteUpdate = false;
     });
   }
 
   Future<void> _handleRemoteUpdate(Map<String, dynamic> gameData) async {
-    print('[DEBUG REMOTE UPDATE START]');
-    print('[DEBUG] currentUserId: $currentUserId');
-    print(
-        '[DEBUG] gameData current_player_id: ${gameData['current_player_id']}');
-    print('[DEBUG] _isLocalPlayerTurn BEFORE: $_isLocalPlayerTurn');
-
     if (!mounted) return;
 
     final GameState previousState = state;
@@ -488,31 +458,17 @@ class OnlineGameNotifier extends GameNotifier {
     final bool wasLocalPlayerTurn = _isLocalPlayerTurn;
     _isLocalPlayerTurn = serverCurrentPlayerId == currentUserId;
 
-    print(
-        '[DEBUG TURN CALCULATION] remoteCurrentPlayerId: "$serverCurrentPlayerId"');
-    print('[DEBUG TURN CALCULATION] currentUserId: "$currentUserId"');
-    print(
-        '[DEBUG TURN CALCULATION] Are they equal? ${serverCurrentPlayerId == currentUserId}');
-
     if (_isLocalPlayerTurn != wasLocalPlayerTurn) {
-      print(
-          '[DEBUG TURN CHANGE] wasLocalPlayerTurn: $wasLocalPlayerTurn, _isLocalPlayerTurn: $_isLocalPlayerTurn');
-      print('[DEBUG TURN CHANGE] _isInitialGameLoad: $_isInitialGameLoad');
-      print('[DEBUG TURN CHANGE] state.isGameOver: ${state.isGameOver}');
-      print(
-          '[DEBUG TURN CHANGE] state.onlineGamePhase: ${state.onlineGamePhase}');
       if (_isLocalPlayerTurn && !state.isGameOver) {
         // check incoming server phase
         OnlineGamePhase serverPhase =
             OnlineGamePhaseExtension.fromString(gameData['online_game_phase']);
-        print('[DEBUG TURN CHANGE] serverPhase: $serverPhase');
+        developer.log('[DEBUG TURN CHANGE] serverPhase: $serverPhase');
 
         if (!_isInitialGameLoad) {
-          print(
-              '[DEBUG TURN CHANGE] Starting inactivity timer for subsequent turn');
           _startInactivityTimer();
         } else {
-          print(
+          developer.log(
               '[DEBUG TURN CHANGE] Skipping inactivity timer - still initial load');
         }
       } else if (!_isLocalPlayerTurn) {
@@ -642,9 +598,6 @@ class OnlineGameNotifier extends GameNotifier {
       if (_isLocalPlayerTurn) {
         _startInactivityTimer();
       }
-
-      print(
-          '[OnlineGameNotifier] Final state after remote update: Phase: ${state.onlineGamePhase}, isLocalTurn: $_isLocalPlayerTurn, CurrentPlayerID: ${state.currentPlayerId}');
     }
   }
 
@@ -683,13 +636,11 @@ class OnlineGameNotifier extends GameNotifier {
         .firstWhere((p) => p.userId != state.lastStarterId)
         .userId!;
 
-    print(
-        "[OnlineGameNotifier] Both players accepted. Attempting to reset game. New starter: $newStarterId");
-
     try {
       await _gameService.resetSessionForRematch(gameSessionId, newStarterId);
     } catch (e) {
-      print("[OnlineGameNotifier] Error initiating new game after rematch: $e");
+      developer.log(
+          "[OnlineGameNotifier] Error initiating new game after rematch: $e");
     }
   }
 
@@ -704,7 +655,7 @@ class OnlineGameNotifier extends GameNotifier {
       // navigate home after successful forfeit
       ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
     } catch (e) {
-      print('Error forfeiting game:$e');
+      developer.log('Error forfeiting game:$e');
     }
   }
 

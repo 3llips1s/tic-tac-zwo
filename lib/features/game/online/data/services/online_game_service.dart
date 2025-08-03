@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,7 @@ class OnlineGameService {
 
   Future<void> setPlayerReady(String gameSessionId) async {
     if (_localUserId == null) {
-      print(
+      developer.log(
           '[OnlineGameService] setPlayerReady: Local user ID is null. Cannot set ready state.');
       return;
     }
@@ -40,7 +41,7 @@ class OnlineGameService {
       final isPlayerOne = gameSession['player1_id'] == _localUserId;
       final readyField = isPlayerOne ? 'player1_ready' : 'player2_ready';
 
-      print(
+      developer.log(
           '[OnlineGameService] Setting player ready: $_localUserId (${isPlayerOne ? 'player1' : 'player2'}) in session $gameSessionId.');
 
       // update ready field
@@ -48,14 +49,15 @@ class OnlineGameService {
         readyField: true,
       }).eq('id', gameSessionId);
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error setting player ready for session $gameSessionId: $e');
     }
   }
 
   Future<void> setPlayerNotReady(String gameSessionId) async {
     if (_localUserId == null) {
-      print('[OnlineGameService] setPlayerNotReady: Local user ID is null.');
+      developer
+          .log('[OnlineGameService] setPlayerNotReady: Local user ID is null.');
       return;
     }
 
@@ -74,10 +76,10 @@ class OnlineGameService {
       await _supabase.from('game_sessions').update({
         readyField: false,
       }).eq('id', gameSessionId);
-      print(
+      developer.log(
           '[OnlineGameService] Player $_localUserId set to not ready for session $gameSessionId.');
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error setting player not ready for session $gameSessionId: $e');
     }
   }
@@ -89,7 +91,7 @@ class OnlineGameService {
 
     _gameStreamSubscriptions[streamKey]?.cancel();
 
-    print(
+    developer.log(
         '[OnlineGameService] Setting up game state stream for session: $gameSessionId');
 
     _gameStreamSubscriptions[streamKey] = _supabase
@@ -100,14 +102,14 @@ class OnlineGameService {
           if (controller.isClosed) return;
 
           if (dataList.isEmpty) {
-            print(
+            developer.log(
                 '[OnlineGameService] Game state stream for $gameSessionId received empty data list.');
             // handle as error / session ended
             return;
           }
 
           final gameData = dataList.first;
-          print(
+          developer.log(
               '[OnlineGameService] RAW STREAM DATA RECEIVED for $gameSessionId: $gameData');
 
           // Prevent processing identical consecutive updates if Supabase sends them
@@ -124,7 +126,7 @@ class OnlineGameService {
               Map<String, dynamic>.from(gameData);
           controller.add(Map<String, dynamic>.from(gameData));
         }, onError: (error) {
-          print('Error in game state stream: $error');
+          developer.log('Error in game state stream: $error');
           controller.addError(error);
         });
 
@@ -149,7 +151,8 @@ class OnlineGameService {
 // fetch game session
   Future<Map<String, dynamic>> getGameSession(String gameSessionId) async {
     try {
-      print('[OnlineGameService] Fetching game session: $gameSessionId');
+      developer
+          .log('[OnlineGameService] Fetching game session: $gameSessionId');
 
       final response = await _supabase
           .from('game_sessions')
@@ -158,7 +161,7 @@ class OnlineGameService {
           .single();
       return response;
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error getting game session $gameSessionId: $e');
       return {};
     }
@@ -236,7 +239,7 @@ class OnlineGameService {
           },
         );
         if (meaningfulKeysCount == 0) {
-          print(
+          developer.log(
               '[OnlineGameService] updateGameState for $gameSessionId: No actual game data to update (besides meta activity/timestamp). Skipping DB call.');
           return;
         }
@@ -245,7 +248,7 @@ class OnlineGameService {
           return;
         }
 
-        print(
+        developer.log(
             '[OnlineGameService] Debounced update executing for $gameSessionId. Payload: $updatePayload');
 
         await _supabase
@@ -253,10 +256,10 @@ class OnlineGameService {
             .update(updatePayload)
             .eq('id', gameSessionId);
 
-        print(
+        developer.log(
             '[OnlineGameService] Game state update completed via debounce for $gameSessionId.');
       } catch (e) {
-        print(
+        developer.log(
             '[OnlineGameService] Error in debounced game state update for $gameSessionId: $e');
       }
     });
@@ -270,7 +273,7 @@ class OnlineGameService {
     required bool isCorrect,
   }) async {
     try {
-      print(
+      developer.log(
           '[OnlineGameService] Recording game round for session $gameSessionId, player $playerId.');
 
       await _supabase.from('game_rounds').insert({
@@ -281,7 +284,7 @@ class OnlineGameService {
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error recording game round for session $gameSessionId: $e');
     }
   }
@@ -309,7 +312,7 @@ class OnlineGameService {
 
       return count;
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error fetching correct moves for player $playerId: $e');
       return 0;
     }
@@ -333,13 +336,13 @@ class OnlineGameService {
     if (readyFieldKey == null) return;
 
     try {
-      print(
+      developer.log(
           '[OnlineGameService] Setting $readyFieldKey to $isReady for session $gameSessionId.');
       await _supabase.from('game_sessions').update({
         readyFieldKey: isReady,
       }).eq('id', gameSessionId);
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error setting player rematch status for session $gameSessionId: $e');
     }
   }
@@ -351,7 +354,7 @@ class OnlineGameService {
     }
     _updateDebounceTimers.remove(gameSessionId);
     try {
-      print(
+      developer.log(
           '[OnlineGameService] Resetting session $gameSessionId for rematch. New starter: $newStarterId.');
       await _supabase.from('game_sessions').update({
         'board': List.filled(9, null),
@@ -368,16 +371,17 @@ class OnlineGameService {
         'online_game_phase': OnlineGamePhase.waiting.string,
         'current_game_started_at': DateTime.now().toIso8601String(),
       }).eq('id', gameSessionId);
-      print('[OnlineGameService] Session $gameSessionId reset successfully.');
+      developer.log(
+          '[OnlineGameService] Session $gameSessionId reset successfully.');
     } catch (e) {
-      print(
+      developer.log(
           '[OnlineGameService] Error resetting session $gameSessionId for rematch: $e');
     }
   }
 
   // clean up subs
   void clientDisposeGameSessionResources(String gameSessionId) {
-    print(
+    developer.log(
         '[OnlineGameService] Disposing client-specific resources for game session $gameSessionId.');
 
     final gameStateStreamKey = 'gameState_$gameSessionId';
