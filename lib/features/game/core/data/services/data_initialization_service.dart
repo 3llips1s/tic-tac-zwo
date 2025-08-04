@@ -326,6 +326,10 @@ final nounsBoxProvider = Provider<Box<GermanNounHive>>((ref) {
   return Hive.box<GermanNounHive>('german_nouns');
 });
 
+final seenNounsBoxProvider = Provider<Box<String>>((ref) {
+  return Hive.box<String>('seen_nouns');
+});
+
 final syncInfoProvider = Provider<Box>((ref) {
   return Hive.box('sync_info');
 });

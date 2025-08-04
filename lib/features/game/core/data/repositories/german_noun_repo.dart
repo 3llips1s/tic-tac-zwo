@@ -13,6 +13,7 @@ import '../models/german_noun.dart';
 
 class GermanNounRepo {
   final Box<GermanNounHive> _nounsBox;
+  final Box<String> _seenNounsBox;
   final DataInitializationService _dataService;
 
   final _nounsReadyCompleter = Completer<void>();
@@ -24,19 +25,30 @@ class GermanNounRepo {
   // nouns used in current session
   final Set<String> _globallyUsedNouns = {};
 
+  // track seen noun IDs
+  Set<String> _seenNounIds = {};
+
   // nouns used in the current game
   final Set<String> _currentGameUsedNouns = {};
 
   GermanNounRepo({
     required Box<GermanNounHive> nounsBox,
+    required Box<String> seenNounsBox,
     required DataInitializationService dataService,
   })  : _nounsBox = nounsBox,
+        _seenNounsBox = seenNounsBox,
         _dataService = dataService;
 
   // initialize the repo - loads from local db or fallback nouns
   Future<void> initialize() async {
     try {
       await _dataService.ready;
+
+      await _loadSeenNounIds();
+
+      developer.log(
+          'German noun repo initialized: ${_availableNouns.length} total nouns, ${_seenNounIds.length} seen nouns',
+          name: 'german_noun_repo');
 
       _refreshAvailableNouns();
 
@@ -49,6 +61,19 @@ class GermanNounRepo {
       if (!_nounsReadyCompleter.isCompleted) {
         _nounsReadyCompleter.completeError(e);
       }
+    }
+  }
+
+  // load seen noun id into memory for fast lookup
+  Future<void> _loadSeenNounIds() async {
+    try {
+      _seenNounIds = _seenNounsBox.values.toSet();
+      developer.log('Loaded ${_seenNounIds.length} seen noun IDs from storage',
+          name: 'german_noun_repo');
+    } catch (e) {
+      developer.log('Error loading seen noun IDs: $e',
+          name: 'german_noun_repo');
+      _seenNounIds = <String>{};
     }
   }
 
@@ -74,28 +99,85 @@ class GermanNounRepo {
     );
   }
 
+  // mark noun as seen (permanently)
+  Future<void> markNounAsSeen(String nounId) async {
+    if (_seenNounIds.contains(nounId)) return;
+
+    _seenNounIds.add(nounId);
+
+    try {
+      await _seenNounsBox.add(nounId);
+      developer.log('marked noun as seen: $nounId', name: 'german_noun_repo');
+
+      await _checkAndResetIfAllNounsSeen();
+    } catch (e) {
+      developer.log('error marking noun as seen: $e', name: 'german_noun_repo');
+      _seenNounIds.remove(nounId);
+    }
+  }
+
+  // check if all nouns = seen + reset
+  Future<void> _checkAndResetIfAllNounsSeen() async {
+    final totalNouns = _availableNouns.length;
+    final seenNouns = _seenNounIds.length;
+
+    if (seenNouns >= totalNouns && totalNouns > 0) {
+      developer
+          .log('all $totalNouns nouns see. resetting seen nouns tracking.');
+
+      await _resetSeenNouns();
+    }
+  }
+
+  // reset all seen nouns tracking
+  Future<void> _resetSeenNouns() async {
+    try {
+      _seenNounIds.clear();
+      await _seenNounsBox.clear();
+      developer.log('successfully reset all seen nouns');
+    } catch (e) {
+      developer.log('error resetting seen nouns:$e');
+    }
+  }
+
+  // fetch unseen nouns only
+  List<GermanNoun> _getUnseenNouns() {
+    return _availableNouns
+        .where((noun) => !_seenNounIds.contains(noun.id))
+        .toList();
+  }
+
   // fetch a batch of nouns for a new game
   Future<List<GermanNoun>> getGameBatch({int batchSize = 18}) async {
     await ready;
 
     // refresh pool if running low on nouns
-    if (_availableNouns.isEmpty ||
-        _availableNouns.length < batchSize + _globallyUsedNouns.length) {
+    if (_availableNouns.isEmpty) {
       _refreshAvailableNouns();
-      _globallyUsedNouns.clear();
     }
 
-    // filter out globally used nouns
-    final unusedNouns = _availableNouns
+    final unseenNouns = _getUnseenNouns();
+
+    // filter out globally used nouns from unseen nouns
+    final availableUnseenNouns = unseenNouns
         .where((noun) => !_globallyUsedNouns.contains(noun.noun))
         .toList();
 
-    // if we still have enough unique nouns
-    if (unusedNouns.length >= batchSize) {
-      unusedNouns.shuffle();
-      return unusedNouns.take(batchSize).toList();
+    if (availableUnseenNouns.length >= batchSize) {
+      availableUnseenNouns.shuffle();
+      return availableUnseenNouns.take(batchSize).toList();
+    }
+
+    // fall back to seen nouns if not enough unseen
+    final allUnusedNouns = _availableNouns
+        .where((noun) => !_globallyUsedNouns.contains(noun.noun))
+        .toList();
+
+    if (allUnusedNouns.length >= batchSize) {
+      allUnusedNouns.shuffle();
+      return allUnusedNouns.take(batchSize).toList();
     } else {
-      // reset tracking and use any available if running low
+      // reset tracking and use any available
       _globallyUsedNouns.clear();
       _availableNouns.shuffle();
       return _availableNouns.take(batchSize).toList();
@@ -125,10 +207,20 @@ class GermanNounRepo {
 
     if (_availableNouns.isEmpty) {
       _refreshAvailableNouns();
-      _globallyUsedNouns.clear();
     }
 
-    // get an unused noun
+    // first attempt to fetch unseen noun
+    final unseenNouns = _getUnseenNouns();
+    final availableUnseenNouns = unseenNouns
+        .where((noun) => !_globallyUsedNouns.contains(noun.noun))
+        .toList();
+
+    if (availableUnseenNouns.isNotEmpty) {
+      return availableUnseenNouns[
+          Random().nextInt(availableUnseenNouns.length)];
+    }
+
+    // fall back to any unused noun
     final unusedNouns = _availableNouns
         .where((noun) => !_globallyUsedNouns.contains(noun.noun))
         .toList();
@@ -202,6 +294,13 @@ class GermanNounRepo {
   Future<void> triggerRefresh() async {
     return _dataService.syncWithRemote();
   }
+
+  Future<void> resetSeenNounsManually() async {
+    await _resetSeenNouns();
+  }
+
+  int get seenNounsCount => _seenNounIds.length;
+  int get totalNounsCount => _availableNouns.length;
 }
 
 class SyncStatus {
@@ -221,11 +320,13 @@ class SyncStatus {
 final germanNounRepoProvider = Provider<GermanNounRepo>(
   (ref) {
     final nounsBox = ref.watch(nounsBoxProvider);
+    final seenNounsBox = ref.watch(seenNounsBoxProvider);
     final dataServiceAsync = ref.watch(dataInitializationServiceProvider);
     final dataService = dataServiceAsync.requireValue;
 
     final repo = GermanNounRepo(
       nounsBox: nounsBox,
+      seenNounsBox: seenNounsBox,
       dataService: dataService,
     );
 

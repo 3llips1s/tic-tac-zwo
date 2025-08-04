@@ -207,6 +207,9 @@ class OnlineGameNotifier extends GameNotifier {
 
     final noun = await ref.read(germanNounRepoProvider).loadRandomNoun();
 
+    // mark noun as seen
+    await ref.read(germanNounRepoProvider).markNounAsSeen(noun.id);
+
     state = state.copyWith(
       selectedCellIndex: index,
       currentNoun: noun,
