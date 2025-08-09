@@ -29,7 +29,7 @@ class TermsAndConditionsScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 32),
-                _buildParagraph(context, 'Stand: 28. Juni 2025'),
+                _buildParagraph(context, 'Stand: 10. August 2025'),
                 const SizedBox(height: 12),
 
                 _buildHeading(context, '1. Geltungsbereich und Zustimmung'),

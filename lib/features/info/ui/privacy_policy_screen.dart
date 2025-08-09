@@ -28,7 +28,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                 ),
                 const SizedBox(height: 32),
-                _buildParagraph(context, 'Stand: 28. Juni 2025'),
+                _buildParagraph(context, 'Stand: 10. August 2025'),
                 const SizedBox(height: 12),
 
                 // Content Sections
@@ -37,7 +37,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 _buildParagraph(context,
                     'Der Verantwortliche im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:'),
                 _buildParagraph(
-                    context, 'Tic Tac Zwö\nE-Mail: feedback@tictaczwo.app'),
+                    context, 'Tic Tac Zwö\nE-Mail: tictaczwo@studio10200.dev'),
 
                 _buildHeading(context, '2. Allgemeines zur Datenverarbeitung'),
                 _buildParagraph(context,

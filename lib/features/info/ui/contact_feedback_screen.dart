@@ -7,7 +7,7 @@ import '../../../config/game_config/constants.dart';
 class ContactFeedbackScreen extends StatelessWidget {
   const ContactFeedbackScreen({super.key});
 
-  static const String _supportEmail = 'feedback@tictaczwo.app';
+  static const String _supportEmail = 'tictaczwo@studio10200.dev';
   static const String _emailSubject = 'Feedback für Tic Tac Zwö';
 
   Future<void> _launchEmail(BuildContext context) async {
