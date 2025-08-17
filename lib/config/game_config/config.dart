@@ -40,7 +40,7 @@ extension GameModeExtension on GameMode {
       case GameMode.pass:
         return 'pass + play';
       case GameMode.offline:
-        return 'offline';
+        return 'solo';
       case GameMode.wordle:
         return 'wördle';
       case GameMode.online:

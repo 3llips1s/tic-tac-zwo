@@ -97,33 +97,45 @@ class MockDataService {
   static List<UserProfile> _generateMockUsers({int count = 50}) {
     final Random random = Random();
     final List<String> mockUsernames = [
-      'G3ll1psis',
-      'Mungai',
-      'Chwaki',
-      'Bo',
-      'Nginyo',
-      'Mwaki',
-      'Boi',
-      'Mimmo',
-      'Emily'
+      'Salu',
+      'Angela',
+      'Abimbola',
+      'Rajesh',
+      'Takemura',
+      'Andrić',
+      'Wanjiku',
+      'Soriano',
+      'Santiago',
+      'Lefevre',
+      'Shrestha',
+      'Milla',
+      'Chenwei',
+      'Petros',
+      'Novák',
     ];
 
-    //
     final List<String> mockCountries = [
+      'MA',
       'DE',
-      'MR',
-      'UG',
-      'KE',
-      'CA',
-      'AU',
+      'NG',
+      'IN',
       'JP',
+      'RS',
+      'KE',
+      'PH',
+      'ES',
+      'FR',
+      'NP',
+      'CM',
       'CH',
-      'XK'
+      'GR',
+      'CZ'
     ];
     List<UserProfile> users = [];
 
     for (int i = 0; i < count; i++) {
-      String baseName = mockUsernames[random.nextInt(mockUsernames.length)];
+      int nameIndex = i % mockUsernames.length;
+      String baseName = mockUsernames[nameIndex];
       String username = '$baseName${random.nextInt(99)}';
       if (username.length > 9) {
         username = username.substring(0, 9);
@@ -148,7 +160,7 @@ class MockDataService {
             DateTime.now().subtract(Duration(minutes: random.nextInt(10000))),
         isOnline: random.nextBool(),
         avatarUrl: 'https://picsum.photos/id/${100 + i}/200',
-        countryCode: mockCountries[random.nextInt(mockCountries.length)],
+        countryCode: mockCountries[nameIndex],
         totalArticleAttempts: totalArticleAttempts,
         totalCorrectArticles: totalCorrectArticles,
       ));

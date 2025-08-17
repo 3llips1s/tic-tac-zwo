@@ -28,7 +28,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                 ),
                 const SizedBox(height: 32),
-                _buildParagraph(context, 'Stand: 10. August 2025'),
+                _buildParagraph(context, 'Stand: 9. August 2025'),
                 const SizedBox(height: 12),
 
                 // Content Sections
