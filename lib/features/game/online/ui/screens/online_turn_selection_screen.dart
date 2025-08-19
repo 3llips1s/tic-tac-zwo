@@ -311,7 +311,7 @@ class _OnlineTurnSelectionScreenState
                         return Transform.translate(
                           offset: Offset(0, _hoverAnimation.value),
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 20.0),
+                            padding: const EdgeInsets.only(top: 20.0, left: 32),
                             child: _showReadyStatus(isOpponentActuallyReady),
                           ),
                         );

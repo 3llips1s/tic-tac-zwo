@@ -179,7 +179,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
                 child: userProfileAsync.when(
                   data: (userProfile) {
                     if (userProfile == null) {
-                      Row(
+                      return Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           AvatarFlag(
@@ -205,7 +205,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
                       children: [
                         AvatarFlag(
                           radius: 16,
-                          avatarUrl: userProfile!.avatarUrl,
+                          avatarUrl: userProfile.avatarUrl,
                           countryCode: userProfile.countryCode,
                         ),
                         const SizedBox(width: 16),

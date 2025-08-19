@@ -194,7 +194,7 @@ class _InitialGameOverView extends ConsumerWidget {
             icon: Icon(
               Icons.home_rounded,
               color: colorRed.withOpacity(0.7),
-              size: 30,
+              size: 36,
             ),
             onPressed: () => notifier.goHomeAndCleanupSession(),
           ),
@@ -208,7 +208,7 @@ class _InitialGameOverView extends ConsumerWidget {
       '+ $points',
       style: TextStyle(
         fontSize: 22,
-        color: Colors.lightGreenAccent,
+        color: colorDarkGreen,
         shadows: [
           Shadow(
             color: Colors.lightGreenAccent,

@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
@@ -19,13 +20,19 @@ class OnlineGameNotifier extends GameNotifier {
   final SupabaseClient supabase;
   Timer? _turnTimer;
   Timer? _rematchOfferTimer;
-
   Timer? _inactivityTimer;
+  Timer? _gracePeriodTimer;
+  Timer? _localDisconnectionTimer;
+
   bool _isInactivityTimerActive = false;
   int _inactivityRemainingSeconds = GameState.turnDurationSeconds;
+  int _localDisconnectionRemainingSeconds = 15;
 
   final String gameSessionId;
   String? currentUserId;
+
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  bool _wasConnected = true;
 
   DateTime? _lastUpdateTimestamp;
 
@@ -36,7 +43,6 @@ class OnlineGameNotifier extends GameNotifier {
   bool _gameOverHandled = false;
 
   RealtimeChannel? _gameChannel;
-  Timer? _gracePeriodTimer;
 
   OnlineGameService get _gameService => ref.read(onlineGameServiceProvider);
 
@@ -56,6 +62,7 @@ class OnlineGameNotifier extends GameNotifier {
     if (gameSessionId.isNotEmpty && currentUserId != null) {
       _listenToGameSessionUpdates();
       _initializePresence();
+      _startConnectivityMonitoring();
       _gameService.updateGameSessionState(
         gameSessionId,
         lastStarterId: state.startingPlayer.userId,
@@ -70,6 +77,78 @@ class OnlineGameNotifier extends GameNotifier {
       if (currentUserId == null) {
         developer.log(
             '[OnlineGameNotifier] Current User ID is null. Cannot initialize online game.');
+      }
+    }
+  }
+
+  void _startConnectivityMonitoring() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      (List<ConnectivityResult> result) {
+        final isConnected = !result.contains(ConnectivityResult.none);
+
+        if (_wasConnected && !isConnected && !state.isGameOver) {
+          _startLocalDisconnectionTimer();
+        } else if (!_wasConnected && isConnected) {
+          _handleReconnection();
+        }
+
+        _wasConnected = isConnected;
+      },
+    );
+  }
+
+  Future<void> _handleReconnection() async {
+    _cancelLocalDisconnectionTimer();
+
+    try {
+      final latestGameData = await _gameService.getGameSession(gameSessionId);
+
+      if (latestGameData.isEmpty) {
+        if (mounted) {
+          ref.read(navigationTargetProvider.notifier).state =
+              NavigationTarget.home;
+        }
+        return;
+      }
+
+      final isGameOver = latestGameData['is_game_over'] ?? false;
+      final gameStatus = GameStatusExtension.fromString(
+          latestGameData['status'] ?? 'in_progress');
+
+      if (isGameOver && gameStatus == GameStatus.forfeited) {
+        // game ended while disconnected
+
+        if (mounted) {
+          state = state.copyWith(
+            localConnectionStatus: LocalConnectionStatus.connected,
+            isGameOver: true,
+            gameStatus: gameStatus,
+          );
+        }
+      } else if (isGameOver) {
+        // handle game completing normally while away
+        if (mounted) {
+          state = state.copyWith(
+            localConnectionStatus: LocalConnectionStatus.connected,
+            isGameOver: true,
+            gameStatus: gameStatus,
+          );
+        }
+      } else {
+        // resume normally if game still active
+        if (mounted) {
+          state = state.copyWith(
+            localConnectionStatus: LocalConnectionStatus.connected,
+          );
+        }
+      }
+    } catch (e) {
+      developer.log('[OnlineGameNotifier] Error handling reconnection: $e');
+      // on error, just mark as connected and let normal flow handle it
+      if (mounted) {
+        state = state.copyWith(
+          localConnectionStatus: LocalConnectionStatus.connected,
+        );
       }
     }
   }
@@ -142,6 +221,38 @@ class OnlineGameNotifier extends GameNotifier {
     _inactivityRemainingSeconds = GameState.turnDurationSeconds;
   }
 
+  void _startLocalDisconnectionTimer() {
+    _localDisconnectionTimer?.cancel();
+    _localDisconnectionRemainingSeconds = 15;
+
+    state = state.copyWith(
+      localConnectionStatus: LocalConnectionStatus.disconnected,
+    );
+
+    _localDisconnectionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (_localDisconnectionRemainingSeconds > 0) {
+          _localDisconnectionRemainingSeconds--;
+
+          if (mounted) {
+            state = state.copyWith();
+          }
+        } else {
+          _cancelLocalDisconnectionTimer();
+        }
+      },
+    );
+  }
+
+  void _cancelLocalDisconnectionTimer() {
+    _localDisconnectionTimer?.cancel();
+    _localDisconnectionRemainingSeconds = 15;
+  }
+
+  int get localDisconnectionRemainingSeconds =>
+      _localDisconnectionRemainingSeconds;
+
   void _initializePresence() {
     if (gameSessionId.isEmpty) return;
 
@@ -172,12 +283,11 @@ class OnlineGameNotifier extends GameNotifier {
             body: {'gameSessionId': gameSessionId, 'isConnecting': false});
 
         _gracePeriodTimer?.cancel();
-        _gracePeriodTimer = Timer(const Duration(seconds: 30), () {
+        _gracePeriodTimer = Timer(const Duration(seconds: 15), () {
           if (mounted &&
               state.opponentConnectionStatus ==
                   OpponentConnectionStatus.reconnecting) {
-            state = state.copyWith(
-                opponentConnectionStatus: OpponentConnectionStatus.forfeited);
+            _forfeitOpponentDueToTimeout();
           }
         });
       }
@@ -226,6 +336,13 @@ class OnlineGameNotifier extends GameNotifier {
         onlineGamePhaseString: OnlineGamePhase.cellSelected.string,
       );
     } catch (e) {
+      if (e is FunctionException && e.status == 400) {
+        developer.log(
+            '[OnlineGameNotifier] Game already over when selecting cell: ${e.details}');
+        _handleReconnection();
+        return;
+      }
+
       developer.log(
           '[OnlineGameNotifier] Error sending cell selection to server: $e');
 
@@ -354,6 +471,7 @@ class OnlineGameNotifier extends GameNotifier {
       board: board,
       player1Score: p1Score,
       player2Score: p2Score,
+      gameStatus: GameStatus.completed,
     );
 
     _calculatePointsForDialog();
@@ -379,11 +497,15 @@ class OnlineGameNotifier extends GameNotifier {
     final correctMoves =
         await _gameService.getCorrectMoves(gameSessionId, currentUserId!);
     int pointsPerGame = correctMoves;
-    if (state.winningPlayer?.userId == currentUserId) {
-      pointsPerGame += 3;
-    } else if (state.winningPlayer == null) {
-      pointsPerGame += 1;
+
+    if (state.gameStatus == GameStatus.completed) {
+      if (state.winningPlayer?.userId == currentUserId) {
+        pointsPerGame += 3;
+      } else if (state.winningPlayer == null) {
+        pointsPerGame += 1;
+      }
     }
+
     if (mounted) {
       state = state.copyWith(pointsEarnedPerGame: pointsPerGame);
     }
@@ -497,6 +619,8 @@ class OnlineGameNotifier extends GameNotifier {
     }
 
     bool serverIsGameOver = gameData['is_game_over'] ?? false;
+    GameStatus serverGameStatus =
+        GameStatusExtension.fromString(gameData['status'] ?? 'in_progress');
 
     // handle rematch logic
     OnlineRematchStatus newOnlineRematchStatus = OnlineRematchStatus.none;
@@ -551,8 +675,19 @@ class OnlineGameNotifier extends GameNotifier {
           _isLocalPlayerTurn && (serverPhase == OnlineGamePhase.cellSelected),
       onlineGamePhase: serverPhase,
       lastStarterId: gameData['last_starter_id'] ?? state.lastStarterId,
+      gameStatus: serverGameStatus,
       onlineRematchStatus: newOnlineRematchStatus,
     );
+
+    if (serverIsGameOver &&
+        serverGameStatus == GameStatus.forfeited &&
+        !previousState.isGameOver) {
+      state = state.copyWith(
+        opponentConnectionStatus: OpponentConnectionStatus.forfeited,
+      );
+
+      _calculatePointsForDialog();
+    }
 
     if (state.isGameOver && !previousState.isGameOver) {
       _handleRemoteWinOrDraw();
@@ -655,10 +790,30 @@ class OnlineGameNotifier extends GameNotifier {
         body: {'gameSessionId': gameSessionId},
       );
 
+      if (!mounted) return;
+
       // navigate home after successful forfeit
       ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
     } catch (e) {
       developer.log('Error forfeiting game:$e');
+    }
+  }
+
+  Future<void> _forfeitOpponentDueToTimeout() async {
+    if (state.isGameOver) return;
+    try {
+      await supabase.functions.invoke(
+        'request-forfeit',
+        body: {'gameSessionId': gameSessionId},
+      );
+    } catch (e) {
+      if (e is FunctionException && e.status == 400) {
+        developer.log(
+            '[OnlineGameNotifier] Game already over when trying to forfeit opponent: ${e.details}');
+        _handleReconnection();
+      } else {
+        developer.log('Error forfeiting opponent due to timeout:$e');
+      }
     }
   }
 
@@ -706,6 +861,8 @@ class OnlineGameNotifier extends GameNotifier {
     _turnTimer?.cancel();
     _inactivityTimer?.cancel();
     _rematchOfferTimer?.cancel();
+    _localDisconnectionTimer?.cancel();
+    _connectivitySubscription?.cancel();
     _gameStateSubscription?.cancel();
     _gameStateSubscription = null;
     if (_gameChannel != null) {

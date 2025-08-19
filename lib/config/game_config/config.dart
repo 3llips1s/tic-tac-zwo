@@ -28,10 +28,23 @@ enum TimerDisplayState {
   countdown,
 }
 
+enum LocalConnectionStatus {
+  connected,
+  reconnecting,
+  disconnected,
+}
+
 enum OpponentConnectionStatus {
   connected,
   reconnecting,
   forfeited,
+}
+
+enum GameStatus {
+  inProgress,
+  completed,
+  forfeited,
+  abandoned,
 }
 
 extension GameModeExtension on GameMode {
@@ -89,6 +102,37 @@ extension OnlineGamePhaseExtension on OnlineGamePhase {
             '[OnlineGameNotifier] Unknown or null online_game_phase string: "$phaseString", defaulting to waiting.',
             name: 'config');
         return OnlineGamePhase.waiting;
+    }
+  }
+}
+
+extension GameStatusExtension on GameStatus {
+  String get string {
+    switch (this) {
+      case GameStatus.inProgress:
+        return 'in_progress';
+      case GameStatus.completed:
+        return 'completed';
+      case GameStatus.forfeited:
+        return 'forfeited';
+      case GameStatus.abandoned:
+        return 'abandoned';
+    }
+  }
+
+  static GameStatus fromString(String value) {
+    switch (value) {
+      case 'in_progress':
+        return GameStatus.inProgress;
+      case 'completed':
+        return GameStatus.completed;
+      case 'forfeited':
+        return GameStatus.forfeited;
+      case 'abandoned':
+        return GameStatus.abandoned;
+
+      default:
+        return GameStatus.inProgress;
     }
   }
 }

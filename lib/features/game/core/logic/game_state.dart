@@ -39,6 +39,8 @@ class GameState {
   final OnlineRematchStatus onlineRematchStatus;
   final bool localPlayerWantsRematch;
   final bool remotePlayerWantsRematch;
+  final GameStatus gameStatus;
+  final LocalConnectionStatus localConnectionStatus;
   final OpponentConnectionStatus opponentConnectionStatus;
 
   static const int turnDurationSeconds = 9;
@@ -75,6 +77,8 @@ class GameState {
     this.onlineRematchStatus = OnlineRematchStatus.none,
     this.localPlayerWantsRematch = false,
     this.remotePlayerWantsRematch = false,
+    this.gameStatus = GameStatus.inProgress,
+    this.localConnectionStatus = LocalConnectionStatus.connected,
     this.opponentConnectionStatus = OpponentConnectionStatus.connected,
   }) : _cellPressed = cellPressed;
 
@@ -115,6 +119,8 @@ class GameState {
     OnlineRematchStatus? onlineRematchStatus,
     bool? localPlayerWantsRematch,
     bool? remotePlayerWantsRematch,
+    GameStatus? gameStatus,
+    LocalConnectionStatus? localConnectionStatus,
     OpponentConnectionStatus? opponentConnectionStatus,
 
     // catch null values
@@ -172,6 +178,9 @@ class GameState {
           localPlayerWantsRematch ?? this.localPlayerWantsRematch,
       remotePlayerWantsRematch:
           remotePlayerWantsRematch ?? this.remotePlayerWantsRematch,
+      gameStatus: gameStatus ?? this.gameStatus,
+      localConnectionStatus:
+          localConnectionStatus ?? this.localConnectionStatus,
       opponentConnectionStatus:
           opponentConnectionStatus ?? this.opponentConnectionStatus,
     );
@@ -202,6 +211,8 @@ class GameState {
       onlineRematchStatus: OnlineRematchStatus.none,
       localPlayerWantsRematch: false,
       remotePlayerWantsRematch: false,
+      gameStatus: GameStatus.inProgress,
+      localConnectionStatus: LocalConnectionStatus.connected,
     );
   }
 
@@ -228,6 +239,8 @@ class GameState {
       onlineRematchStatus: OnlineRematchStatus.none,
       localPlayerWantsRematch: false,
       remotePlayerWantsRematch: false,
+      gameStatus: GameStatus.inProgress,
+      localConnectionStatus: LocalConnectionStatus.connected,
     );
   }
 

@@ -29,18 +29,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
       children: [
-        // app title
-        AppTitle(),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // app title
+            AppTitle(),
 
-        // mode menu
-        ModeMenu(),
+            // mode menu
+            Padding(
+              padding: const EdgeInsets.only(bottom: kToolbarHeight * 1.5),
+              child: ModeMenu(),
+            ),
+          ],
+        ),
 
         // menu icon
         Align(
-          alignment: Alignment.centerRight,
+          alignment: Alignment.bottomRight,
           child: Padding(
             padding: const EdgeInsets.only(right: 8, bottom: 16),
             child: IconButton(

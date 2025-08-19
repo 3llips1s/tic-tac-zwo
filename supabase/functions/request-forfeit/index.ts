@@ -66,6 +66,8 @@ serve(async (req) => {
         status: 'forfeited',
         winner_id: winnerId,
         is_game_over: true,
+        player1_ready: false,
+        player2_ready: false,
       })
       .eq('id', gameSessionId);
 

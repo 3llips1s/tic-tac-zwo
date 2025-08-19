@@ -6,7 +6,6 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/profile/data/repositories/user_profile_repo.dart';
@@ -510,7 +509,7 @@ class _LoginScreenState extends State<LoginScreen>
         );
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, RouteNames.deviceScan);
+          Navigator.pushReplacementNamed(context, RouteNames.matchmaking);
         }
       } catch (e) {
         _showSnackBar('Fehler bei der Registrierung. Bitte erneut versuchen.');
@@ -635,7 +634,7 @@ class _LoginScreenState extends State<LoginScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          SizedBox(height: 10),
+          SizedBox(height: 32),
 
           // email field
           TextField(
@@ -692,7 +691,7 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          if (!_isExistingUser) SizedBox(height: 30),
+          if (!_isExistingUser) SizedBox(height: 48),
 
           // Terms and conditions if new user
           if (!_isExistingUser)
@@ -711,6 +710,7 @@ class _LoginScreenState extends State<LoginScreen>
                           text: 'Nutzungsbedingungen',
                           style: const TextStyle(
                             decoration: TextDecoration.underline,
+                            decorationColor: colorWhite,
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
@@ -722,6 +722,7 @@ class _LoginScreenState extends State<LoginScreen>
                           text: 'Datenschutzrichtlinien',
                           style: const TextStyle(
                             decoration: TextDecoration.underline,
+                            decorationColor: colorWhite,
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
@@ -747,7 +748,7 @@ class _LoginScreenState extends State<LoginScreen>
               ],
             ),
 
-          SizedBox(height: 30),
+          SizedBox(height: 48),
 
           // submit button
           GestureDetector(
@@ -757,7 +758,7 @@ class _LoginScreenState extends State<LoginScreen>
 
           SizedBox(height: 30),
 
-          Row(
+          /* Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
@@ -773,7 +774,7 @@ class _LoginScreenState extends State<LoginScreen>
               // if (Platform.isIOS)
               _buildAppleLogin(),
             ],
-          ),
+          ), */
         ],
       ),
     );
@@ -982,60 +983,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           SizedBox(height: 5)
         ],
-      ),
-    );
-  }
-
-  Widget _buildGoogleLogin() {
-    return GestureDetector(
-      onTap: () async {
-        try {
-          final authService = AuthService();
-          await authService.signInWithGoogle();
-        } catch (e) {
-          _showSnackBar('Google-Anmeldung fehlgeschlagen');
-        }
-      },
-      child: Container(
-        padding: EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colorWhite.withOpacity(0.4),
-        ),
-        child: SvgPicture.asset(
-          'assets/images/google.svg',
-          height: 25,
-          width: 25,
-          colorFilter: ColorFilter.mode(colorBlack, BlendMode.srcIn),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppleLogin() {
-    return GestureDetector(
-      onTap: () async {
-        try {
-          final authService = AuthService();
-          await authService.signInWithApple();
-        } catch (e) {
-          _showSnackBar('Apple-Anmeldung fehlgeschlagen');
-        }
-      },
-      child: Container(
-        height: 33,
-        width: 33,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colorWhite.withOpacity(0.4),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.apple_rounded,
-            size: 25,
-            color: colorBlack,
-          ),
-        ),
       ),
     );
   }

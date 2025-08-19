@@ -101,25 +101,23 @@ class _ModeMenuState extends State<ModeMenu> {
           right: 40,
         ),
         content: Container(
-            padding: EdgeInsets.all(12),
-            height: kToolbarHeight,
-            decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.all(Radius.circular(9)),
+          padding: EdgeInsets.all(12),
+          height: kToolbarHeight,
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.all(Radius.circular(9)),
+          ),
+          child: Center(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colorWhite,
+                  ),
             ),
-            child: Center(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colorWhite,
-                    ),
-              ),
-            )
-            // message
-
-            ),
+          ),
+        ),
       ),
     );
   }

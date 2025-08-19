@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -203,7 +205,10 @@ class _GameScreenState extends ConsumerState<GameScreen>
             (_) {
               if (context.mounted) {
                 if (widget.gameConfig.gameMode == GameMode.online) {
-                  showOnlineGameOverDialog(context, ref, widget.gameConfig);
+                  // only show dialog for naturally completed games
+                  if (next.gameStatus == GameStatus.completed) {
+                    showOnlineGameOverDialog(context, ref, widget.gameConfig);
+                  }
                 } else {
                   final gameNotifier = ref.read(
                       GameProviders.getStateProvider(ref, widget.gameConfig)
@@ -235,6 +240,29 @@ class _GameScreenState extends ConsumerState<GameScreen>
               : '${nextStartingPlayer.username} beginnt.';
 
           _showSnackBar(context, message);
+        }
+
+        if (previous?.localConnectionStatus ==
+                LocalConnectionStatus.disconnected &&
+            next.localConnectionStatus == LocalConnectionStatus.connected &&
+            next.isGameOver &&
+            next.gameStatus == GameStatus.forfeited) {
+          _showSnackBar(
+            context,
+            'Leider ist das Spiel schon vorbei.',
+            backgroundColor: colorRed,
+            textColor: colorWhite,
+          );
+
+          Timer(
+            Duration(seconds: 2),
+            () {
+              if (mounted) {
+                ref.read(navigationTargetProvider.notifier).state =
+                    NavigationTarget.home;
+              }
+            },
+          );
         }
       },
       fireImmediately: false,
@@ -279,6 +307,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
         ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
 
     final opponentStatus = gameState.opponentConnectionStatus;
+    final localStatus = gameState.localConnectionStatus;
 
     final isOnlineMode = widget.gameConfig.gameMode == GameMode.online;
     final onlineNotifier = isOnlineMode
@@ -499,6 +528,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
                 ],
               ),
             ),
+
+            // opponent status overlay
             if (isOnlineMode &&
                 opponentStatus != OpponentConnectionStatus.connected)
               Container(
@@ -511,6 +542,15 @@ class _GameScreenState extends ConsumerState<GameScreen>
                   ),
                 ),
               ),
+
+            // local disconnection overlay
+            if (isOnlineMode &&
+                localStatus == LocalConnectionStatus.disconnected)
+              _buildLocalDisconnectionOverlay(
+                context,
+                localStatus,
+                onlineNotifier?.localDisconnectionRemainingSeconds ?? 0,
+              )
           ],
         ),
       ),
@@ -604,22 +644,65 @@ class _GameScreenState extends ConsumerState<GameScreen>
 
     switch (status) {
       case OpponentConnectionStatus.reconnecting:
-        title = 'Gegner*in verbinder sich neu...';
+        title = 'Gegner*in verbindet sich neu...';
         content = const Padding(
-          padding: EdgeInsets.symmetric(vertical: 32.0),
+          padding: EdgeInsets.symmetric(vertical: 64.0),
           child: Center(
             child: DualProgressIndicator(),
           ),
         );
         break;
       case OpponentConnectionStatus.forfeited:
-        title = 'Gegner*in hat aufgegeben';
+        final gameState =
+            ref.watch(GameProviders.getStateProvider(ref, widget.gameConfig));
+        final pointsEarned = gameState.pointsEarnedPerGame != null
+            ? gameState.pointsEarnedPerGame.toString()
+            : '0';
+
+        title = 'Gegner*in hat aufgegeben :(';
         content = Padding(
           padding: EdgeInsets.symmetric(vertical: 16.0),
-          child: Text(
-            'Du hast durch Aufgabe gewonnen!',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'kassierte Artikelpunkte:',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 16,
+                      color: colorBlack,
+                    ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '+ $pointsEarned',
+                style: TextStyle(
+                  fontSize: 24,
+                  color: colorDarkGreen,
+                  shadows: [
+                    Shadow(
+                      color: Colors.lightGreenAccent,
+                      blurRadius: 10.0,
+                    ),
+                    Shadow(
+                      color: colorBlack.withOpacity(0.5),
+                      blurRadius: 1.0,
+                      offset: Offset(1, 1),
+                    )
+                  ],
+                ),
+              )
+                  .animate(delay: 300.ms)
+                  .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+                  .scale(
+                      duration: 900.ms,
+                      curve: Curves.elasticOut,
+                      begin: const Offset(0.1, 0.1))
+                  .then(delay: 200.ms)
+                  .shimmer(duration: 600.ms, color: colorWhite, angle: 45)
+                  .shake(hz: 5, duration: 600.ms, curve: Curves.easeInOut)
+            ],
           ),
         );
         actions = [
@@ -655,24 +738,108 @@ class _GameScreenState extends ConsumerState<GameScreen>
     }
 
     return GlassmorphicDialog(
-        height: 300,
-        width: 300,
-        actions: actions,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 32),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                    color: colorBlack,
+      height: 300,
+      width: 300,
+      actions: actions,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: colorRed,
+                ),
+          ),
+          const SizedBox(height: 32),
+          content,
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocalDisconnectionOverlay(
+    BuildContext context,
+    LocalConnectionStatus status,
+    int remainingSeconds,
+  ) {
+    if (status != LocalConnectionStatus.disconnected) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      color: colorBlack.withOpacity(0.1),
+      child: Center(
+        child: GlassmorphicDialog(
+          height: 350,
+          width: 300,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 32),
+              Text(
+                'Verbindung verloren!',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: colorRed,
+                    ),
+              ),
+              const SizedBox(height: 32),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 48),
+                child: Text(
+                  'Prüfe deine Internetverbindung.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Sekunden bis Aufgabe:',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
+                        ),
                   ),
-            ),
-            const SizedBox(height: 64),
-            content,
-          ],
-        ));
+                  SizedBox(width: 16),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colorRed.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: colorRed.withOpacity(0.3), width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        remainingSeconds.toString(),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colorBlack,
+                            ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

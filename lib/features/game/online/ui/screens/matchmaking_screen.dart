@@ -4,7 +4,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/online/ui/widgets/display_ripple_icon.dart';
@@ -13,10 +12,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../data/services/matchmaking_service.dart';
+import '../widgets/online_instructions_dialog.dart';
 
 // preference constants
-const String preferencesBoxName = 'user_preferences';
-const String hasSeenMatchmakingSelectionKey = 'has_seen_matchmaking_selection';
+const String preferencesBox = 'user_preferences';
 
 // define UI states
 enum MatchmakingUIState {
@@ -42,7 +41,6 @@ class MatchmakingScreen extends ConsumerStatefulWidget {
 class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     with SingleTickerProviderStateMixin {
   MatchmakingUIState _uiState = MatchmakingUIState.loading;
-  bool _hasSeenModeSelection = false;
 
   List<Map<String, dynamic>> _cachedNearbyPlayers = [];
 
@@ -55,10 +53,12 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
     _matchmakingService = ref.read(matchmakingServiceProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _hasSeenModeSelection = await _checkIfSeenModeSelection();
+      final hasSeenOnlineInstructions =
+          await OnlineInstructionsManager.hasSeenInstructions();
 
-      if (!_hasSeenModeSelection) {
-        await _markModeSelectionAsSeen();
+      if (!hasSeenOnlineInstructions && mounted) {
+        await OnlineInstructionsManager.showInstructionsDialog(context);
+
         setState(() {
           _uiState = MatchmakingUIState.modeSelection;
         });
@@ -88,27 +88,6 @@ class _MatchmakingScreenState extends ConsumerState<MatchmakingScreen>
       if (mounted) {
         Navigator.pushReplacementNamed(context, RouteNames.home);
       }
-    }
-  }
-
-  Future<bool> _checkIfSeenModeSelection() async {
-    try {
-      final box = await Hive.openBox(preferencesBoxName);
-      return box.get(hasSeenMatchmakingSelectionKey, defaultValue: false);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<void> _markModeSelectionAsSeen() async {
-    try {
-      final box = await Hive.openBox(preferencesBoxName);
-      await box.put(hasSeenMatchmakingSelectionKey, true);
-      setState(() {
-        _hasSeenModeSelection = true;
-      });
-    } catch (e) {
-      // continue without setting the flag if there's an error
     }
   }
 
