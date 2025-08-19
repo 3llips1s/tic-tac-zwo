@@ -202,10 +202,10 @@ class OfflineNotifier extends GameNotifier {
 
     int bestScore = isMaximizing ? -1000 : 1000;
 
-    final Moves =
+    final moves =
         List.generate(9, (i) => i).where((i) => board[i] == null).toList();
 
-    for (final move in Moves) {
+    for (final move in moves) {
       board[move] = isMaximizing ? aiSymbol : opponentSymbol;
       int score =
           _miniMax(board, depth + 1, !isMaximizing, aiSymbol, opponentSymbol);

@@ -15,7 +15,7 @@ import '../widgets/wordle_instructions_dialog.dart';
 import '../widgets/wordle_keyboard.dart';
 
 class WordleGameScreen extends ConsumerStatefulWidget {
-  const WordleGameScreen({Key? key}) : super(key: key);
+  const WordleGameScreen({super.key});
 
   @override
   ConsumerState<WordleGameScreen> createState() => _WordleGameScreenState();

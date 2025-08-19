@@ -55,20 +55,18 @@ class WordleWordRepo {
     int fiveLetterNouns = 0;
 
     // convert hive object to wordle word repo
-    _nounsBox.values.forEach(
-      (hiveNoun) {
-        totalNouns++;
-        if (hiveNoun.noun.length == 5) {
-          fiveLetterNouns++;
-          _cachedWords.add({
-            'word': hiveNoun.noun,
-            'article': hiveNoun.article,
-            'english': hiveNoun.english,
-            'plural': hiveNoun.plural
-          });
-        }
-      },
-    );
+    for (final hiveNoun in _nounsBox.values) {
+      totalNouns++;
+      if (hiveNoun.noun.length == 5) {
+        fiveLetterNouns++;
+        _cachedWords.add({
+          'word': hiveNoun.noun,
+          'article': hiveNoun.article,
+          'english': hiveNoun.english,
+          'plural': hiveNoun.plural
+        });
+      }
+    }
 
     developer.log('Total nouns in box: $totalNouns', name: 'wordle_word_repo');
     developer.log('Five letter nouns detected: $fiveLetterNouns',
