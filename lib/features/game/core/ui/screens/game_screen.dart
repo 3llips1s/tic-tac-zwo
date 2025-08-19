@@ -291,7 +291,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     super.dispose();
   }
 
-  // todo: implement this functionality
+  // gonna: implement this fore and background functionality
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {

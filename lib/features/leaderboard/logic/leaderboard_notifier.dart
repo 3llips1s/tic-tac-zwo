@@ -17,7 +17,6 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
 
       final data =
           await _repo.getLeaderboard(userId: userId, showCount: showCount);
-      // todo: add final to data?
       entries = data.map((json) => LeaderboardEntry.fromJson(json)).toList();
 
       final top3 = entries.take(3).toList();

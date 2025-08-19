@@ -7,13 +7,13 @@ import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
-import 'package:tic_tac_zwo/features/profile/ui/widgets/wdl_test.dart';
 
 import '../../../navigation/routes/route_names.dart';
 import '../widgets/edit_username_dialog.dart';
 import '../widgets/games_history_list.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/stats_grid.dart';
+import '../widgets/wdl_bar.dart';
 // import '../widgets/wdl_bar.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -167,19 +167,7 @@ class ProfileScreen extends ConsumerWidget {
                           showEditUsernameDialog(context, ref, userProfile);
                         }),
                     const SizedBox(height: 48),
-                    // todo: remove test bar
-                    WdlBarTest()
-                        .animate(delay: 600.ms)
-                        .slideX(
-                          begin: 0.3,
-                          duration: 900.ms,
-                          curve: Curves.easeInOut,
-                        )
-                        .fadeIn(
-                          duration: 900.ms,
-                          curve: Curves.easeInOut,
-                        ),
-                    // WdlBar(userProfile: userProfile),
+                    WdlBar(userProfile: userProfile),
                     const SizedBox(height: 64),
                     StatsGrid(userProfile: userProfile)
                         .animate(delay: 1200.ms)
@@ -193,11 +181,8 @@ class ProfileScreen extends ConsumerWidget {
                           curve: Curves.easeInOut,
                         ),
                     const SizedBox(height: 16),
-
                     GamesHistoryList(userId: userId),
-
                     const SizedBox(height: 64),
-
                     if (userProfile.id == ref.watch(currentUserIdProvider))
                       Center(
                         child: OutlinedButton(

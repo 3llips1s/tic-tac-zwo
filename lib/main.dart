@@ -3,12 +3,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/app.dart';
-import 'package:tic_tac_zwo/config/auth_config/auth_config.dart';
+import 'package:tic_tac_zwo/config/app_config/app_config.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/wortschatz/data/models/saved_noun_hive.dart';
 import 'package:tic_tac_zwo/hive/hive_registrar.g.dart';
@@ -22,9 +23,16 @@ import 'features/navigation/routes/route_names.dart';
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+
+    await dotenv.load(fileName: '.env');
+
+    if (!AppConfig.isConfigValid) {
+      throw Exception('Missing required environment variables');
+    }
+
     await Supabase.initialize(
-      url: AuthConfig.url,
-      anonKey: AuthConfig.anonKey,
+      url: AppConfig.supabaseUrl,
+      anonKey: AppConfig.supabaseAnonKey,
     );
 
     final Directory appDocumentDir = await getApplicationDocumentsDirectory();
@@ -65,8 +73,8 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Wiredash(
-      projectId: WiredashConfig.projectId,
-      secret: WiredashConfig.secretId,
+      projectId: AppConfig.wiredashProjectId,
+      secret: AppConfig.wiredashSecret,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: appTheme,
