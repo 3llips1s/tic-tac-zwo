@@ -1,14 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/leaderboard/data/leaderboard_entry.dart';
 import 'package:tic_tac_zwo/features/leaderboard/data/leaderboard_repo.dart';
-import 'package:tic_tac_zwo/features/profile/data/mock_data.dart';
 
 class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
   final LeaderboardRepo _repo;
-
-  // todo: remove mock data
-
-  final bool _useMockData = true;
 
   LeaderboardNotifier(this._repo) : super(const LeaderboardState.initial());
 
@@ -20,33 +15,10 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
     try {
       List<LeaderboardEntry> entries;
 
-      if (_useMockData) {
-        await Future.delayed(const Duration(seconds: 1));
-        entries = MockDataService.mockUsers.map((user) {
-          final rank = MockDataService.mockUsers.indexOf(user) + 1;
-          final accuracy = user.totalArticleAttempts == 0
-              ? 0.0
-              : (user.totalCorrectArticles / user.totalArticleAttempts) * 100;
-
-          return LeaderboardEntry(
-            id: user.id,
-            rank: rank,
-            username: user.username,
-            countryCode: user.countryCode ?? '',
-            gamesPlayed: user.gamesPlayed,
-            gamesWon: user.gamesWon,
-            gamesDrawn: user.gamesDrawn,
-            accuracy: accuracy,
-            points: user.points,
-            isCurrentUser: user.id == MockDataService.currentUser.id,
-          );
-        }).toList();
-      } else {
-        final data =
-            await _repo.getLeaderboard(userId: userId, showCount: showCount);
-        // todo: add final to data?
-        entries = data.map((json) => LeaderboardEntry.fromJson(json)).toList();
-      }
+      final data =
+          await _repo.getLeaderboard(userId: userId, showCount: showCount);
+      // todo: add final to data?
+      entries = data.map((json) => LeaderboardEntry.fromJson(json)).toList();
 
       final top3 = entries.take(3).toList();
       final remaining = entries.skip(3).toList();

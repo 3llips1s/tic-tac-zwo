@@ -10,11 +10,7 @@ import 'package:tic_tac_zwo/features/profile/data/models/game_history_entry.dart
 import 'package:tic_tac_zwo/features/profile/data/models/user_profile.dart';
 import 'package:tic_tac_zwo/features/profile/data/repositories/user_profile_repo.dart';
 
-import '../data/mock_data.dart';
 import '../data/models/user_profile_hive.dart';
-
-// todo: remove mock data
-const bool useMockData = true;
 
 final userProfileRepoProvider = Provider<UserProfileRepo>((ref) {
   final supabaseClient = ref.watch(supabaseProvider);
@@ -23,12 +19,6 @@ final userProfileRepoProvider = Provider<UserProfileRepo>((ref) {
 
 final userProfileProvider =
     FutureProvider.family<UserProfile, String>((ref, userId) async {
-  if (useMockData) {
-    final mockUser = MockDataService.mockUsers.firstWhere((u) => u.id == userId,
-        orElse: () => MockDataService.currentUser);
-    return Future.value(mockUser);
-  }
-
   final repo = ref.watch(userProfileRepoProvider);
   final userProfile = await repo.getUserProfile(userId);
 
@@ -42,32 +32,13 @@ final userProfileProvider =
 final gamesHistoryProvider =
     FutureProvider.family<List<GameHistoryEntry>, String>(
   (ref, userId) {
-    if (useMockData) {
-      return Future.value(MockDataService.mockGameHistory);
-    }
-
     final repo = ref.watch(userProfileRepoProvider);
     final history = repo.getGameHistory(userId);
     return history;
   },
 );
 
-final mockCurrentUserIdProvider = Provider<String?>((ref) {
-  if (useMockData) {
-    return MockDataService.currentUser.id;
-  }
-
-  final authService = ref.watch(authServiceProvider);
-  final currentUserId = authService.currentUserId;
-  return currentUserId;
-});
-
 final currentUserProfileProvider = FutureProvider<UserProfile>((ref) {
-  if (useMockData) {
-    final userId = ref.watch(mockCurrentUserIdProvider);
-    return ref.watch(userProfileProvider(userId!).future);
-  }
-
   final authState = ref.watch(authStateChangesProvider);
 
   return authState.when(
