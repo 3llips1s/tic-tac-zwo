@@ -176,7 +176,7 @@ class CreditsScreen extends StatelessWidget {
                   const SizedBox(height: 40),
 
                   // special thanks
-                  _buildHeading(context, 'Morio Anzenza'),
+                  _buildHeading(context, 'Morio Anzenzen'),
                   const SizedBox(height: 8),
 
                   Text(

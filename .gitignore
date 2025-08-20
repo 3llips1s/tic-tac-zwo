@@ -46,4 +46,5 @@ app.*.map.json
 
 # Project related
 .env
+/android/key.properties
 
