@@ -36,6 +36,11 @@ class _LoginScreenState extends State<LoginScreen>
 
   TextEditingController usernameController = TextEditingController();
 
+  // reviewer email
+  TextEditingController _passwordController = TextEditingController();
+  bool _showPasswordField = false;
+  static const String reviewerEmail = 'review@studio10200.dev';
+
   bool _showUsernameOverlay = false;
   bool _otpTabEnabled = false;
   bool _isExistingUser = false;
@@ -61,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _initializeControllers();
+    _passwordController = TextEditingController();
     _isLoading = false;
   }
 
@@ -75,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen>
     _tabController.dispose();
     _fadeController.dispose();
     emailController.dispose();
+    _passwordController.dispose();
 
     usernameController.dispose();
     _resendTimer?.cancel();
@@ -359,6 +366,34 @@ class _LoginScreenState extends State<LoginScreen>
         });
 
         final authService = AuthService();
+        final email = emailController.text.trim();
+
+        // reviewer
+        if (_showPasswordField && email == reviewerEmail) {
+          final password = _passwordController.text.trim();
+
+          if (password.isEmpty) {
+            _showSnackBar('Bitte gib dein Passwort ein!');
+            setState(() {
+              _isLoading = false;
+            });
+            return;
+          }
+
+          bool success = await authService.signInWithPassword(email, password);
+
+          if (success) {
+            Navigator.pushReplacementNamed(context, RouteNames.matchmaking);
+          } else {
+            _showSnackBar('Ungültige Anmeldedaten. Bitte erneut versuchen.');
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+
+        // regular otp
         final userExists =
             await authService.checkUserExists(emailController.text);
 
@@ -642,6 +677,11 @@ class _LoginScreenState extends State<LoginScreen>
             onChanged: (value) {
               _debounceTimer?.cancel();
 
+              // check if reviewer email
+              setState(() {
+                _showPasswordField = (value.trim() == reviewerEmail);
+              });
+
               bool isValid = _validateEmail(value, showError: _showEmailError);
 
               if (isValid) {
@@ -691,10 +731,36 @@ class _LoginScreenState extends State<LoginScreen>
             cursorColor: colorGrey400,
           ),
 
-          if (!_isExistingUser) SizedBox(height: 48),
+          if (_showPasswordField) ...[
+            SizedBox(height: 24),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorWhite,
+                    fontSize: 18,
+                  ),
+              decoration: InputDecoration(
+                hintText: 'Passwort:',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorGrey500,
+                      fontSize: 16,
+                    ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: colorGrey400),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: colorGrey400),
+                ),
+              ),
+              cursorColor: colorGrey400,
+            ),
+          ],
+
+          if (!_isExistingUser && !_showPasswordField) SizedBox(height: 48),
 
           // Terms and conditions if new user
-          if (!_isExistingUser)
+          if (!_isExistingUser && !_showPasswordField)
             Row(
               children: [
                 Expanded(
@@ -757,24 +823,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
 
           SizedBox(height: 30),
-
-          /* Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Text(
-                'Weiter mit:',
-                style: TextStyle(
-                    color: colorBlack,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-              SizedBox(width: 10),
-              _buildGoogleLogin(),
-              SizedBox(width: 20),
-              // if (Platform.isIOS)
-              _buildAppleLogin(),
-            ],
-          ), */
         ],
       ),
     );

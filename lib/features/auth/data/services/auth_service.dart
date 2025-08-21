@@ -130,6 +130,19 @@ class AuthService {
     }
   }
 
+  Future<bool> signInWithPassword(String email, String password) async {
+    try {
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      return response.user != null;
+    } catch (e) {
+      developer.log('Password sign-in error: $e', name: 'auth_service');
+      return false;
+    }
+  }
+
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
   User? get currentUser => _supabase.auth.currentUser;
