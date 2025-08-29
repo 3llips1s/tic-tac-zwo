@@ -11,8 +11,14 @@ import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 class OfflineNotifier extends GameNotifier {
   final Random _random = Random();
   Timer? _aiThinkingTimer;
+  final AIDifficulty difficulty;
 
-  OfflineNotifier(super.ref, super.players, super.startingPlayer) {
+  OfflineNotifier(
+    super.ref,
+    super.players,
+    super.startingPlayer,
+    this.difficulty,
+  ) {
     if (state.currentPlayer.isAI) {
       _scheduleAIMove();
     }
@@ -54,12 +60,13 @@ class OfflineNotifier extends GameNotifier {
     state = GameState.initial(swappedPlayers, newStartingPlayer).copyWith(
       player1Score: player1Score,
       player2Score: player2Score,
+      gamesDrawn: gamesDrawn,
       winningCells: null,
     );
 
     if (state.currentPlayer.isAI) {
       _scheduleAIMove();
-    } else {}
+    }
   }
 
   Future<void> _scheduleAIMove() async {
@@ -113,7 +120,14 @@ class OfflineNotifier extends GameNotifier {
 
   // random move
   bool _shouldMakeRandomMove() {
-    return _random.nextDouble() < 0.1;
+    switch (difficulty) {
+      case AIDifficulty.easy:
+        return _random.nextDouble() < 0.5;
+      case AIDifficulty.medium:
+        return _random.nextDouble() < 0.25;
+      case AIDifficulty.hard:
+        return _random.nextDouble() < 0.05;
+    }
   }
 
   // best move
@@ -128,7 +142,7 @@ class OfflineNotifier extends GameNotifier {
         state.currentPlayer.symbol == PlayerSymbol.X ? 'Ö' : 'X';
     final currentSymbol = state.currentPlayer.symbolString;
 
-    // check if ai can win in one move
+    // 1. check if ai can win in one move
     for (final cell in availableCells) {
       final boardCopy = List<String?>.from(state.board);
       boardCopy[cell] = currentSymbol;
@@ -137,60 +151,99 @@ class OfflineNotifier extends GameNotifier {
       }
     }
 
-    // block opponents winning move
-    for (final cell in availableCells) {
-      final boardCopy = List<String?>.from(state.board);
-      boardCopy[cell] = opponentSymbol;
-      if (_isWinningMove(boardCopy, opponentSymbol)) {
-        return cell;
-      }
-    }
-
-    // use minimax for optimal move
-    if (availableCells.length <= 7) {
-      int? bestMove = -1;
-      int bestScore = -1000;
-
+    // 2. block opponent's winning move
+    if (_shouldBlock()) {
       for (final cell in availableCells) {
         final boardCopy = List<String?>.from(state.board);
-        boardCopy[cell] = currentSymbol;
-
-        final score = _miniMax(
-          boardCopy,
-          0,
-          false,
-          currentSymbol,
-          opponentSymbol,
-        );
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = cell;
+        boardCopy[cell] = opponentSymbol;
+        if (_isWinningMove(boardCopy, opponentSymbol)) {
+          return cell;
         }
       }
-
-      if (bestMove != -1) return bestMove;
     }
 
-    // take centre
-    if (state.board[4] == null) {
-      return 4;
+    // 3. difficulty dependent strategic thinking
+    if (_shouldUseStrategy()) {
+      if (availableCells.length <= 7) {
+        int? bestMove = _getBestStrategicMove(
+            availableCells, currentSymbol, opponentSymbol);
+        if (bestMove != null) return bestMove;
+      }
     }
 
-    // take corners
-    final corners = [0, 2, 6, 8].where((i) => state.board[i] == null).toList();
-    if (corners.isEmpty) {
-      return corners[_random.nextInt(corners.length)];
+    // 4. basic positional play
+    return _getPositionalMove(availableCells);
+  }
+
+  // difficulty-based decision making
+  bool _shouldBlock() {
+    switch (difficulty) {
+      case AIDifficulty.easy:
+        return _random.nextDouble() < 0.7;
+      case AIDifficulty.medium:
+        return _random.nextDouble() < 0.9;
+      case AIDifficulty.hard:
+        return true;
+    }
+  }
+
+  // difficulty-based decision making
+  bool _shouldUseStrategy() {
+    switch (difficulty) {
+      case AIDifficulty.easy:
+        return _random.nextDouble() < 0.5;
+      case AIDifficulty.medium:
+        return _random.nextDouble() < 0.75;
+      case AIDifficulty.hard:
+        return _random.nextDouble() < 0.95;
+    }
+  }
+
+  int? _getBestStrategicMove(
+      List<int> availableCells, String currentSymbol, String opponentSymbol) {
+    int? bestMove = -1;
+    int bestScore = -1000;
+
+    for (final cell in availableCells) {
+      final boardCopy = List<String?>.from(state.board);
+      boardCopy[cell] = currentSymbol;
+
+      int score = _miniMax(boardCopy, 0, false, currentSymbol, opponentSymbol);
+
+      score += _getPositionalBonus(cell);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = cell;
+      }
     }
 
-    // take edges
-    final edges = [1, 3, 5, 7].where((i) => state.board[i] == null).toList();
-    if (edges.isEmpty) {
-      return edges[_random.nextInt(corners.length)];
+    return bestMove != -1 ? bestMove : null;
+  }
+
+  int _getPositionalBonus(int position) {
+    if (position == 4) return 3;
+    if ([0, 2, 6, 8].contains(position)) return 2;
+    return 1;
+  }
+
+  int _getPositionalMove(List<int> availableCells) {
+    final moves = <int>[];
+// prefer centre
+    if (availableCells.contains(4)) {
+      moves.add(4);
     }
 
-    // random move
-    return availableCells[_random.nextInt(availableCells.length)];
+    // then corners
+    final corners = [0, 2, 6, 8].where(availableCells.contains).toList();
+    moves.addAll(corners);
+
+    // then edges
+    final edges = [1, 3, 5, 7].where(availableCells.contains).toList();
+    moves.addAll(edges);
+
+    final finalMoves = moves.isEmpty ? moves : availableCells;
+    return finalMoves[_random.nextInt(finalMoves.length)];
   }
 
   int _miniMax(List<String?> board, int depth, bool isMaximizing,
@@ -237,6 +290,10 @@ class OfflineNotifier extends GameNotifier {
 
   // choose correct/random article
   String _selectCorrectArticle() {
+    if (_random.nextDouble() < difficulty.articleErrorRate) {
+      return _selectRandomArticle();
+    }
+
     return state.currentNoun?.article ?? _selectRandomArticle();
   }
 
@@ -254,5 +311,9 @@ class OfflineNotifier extends GameNotifier {
 
 final offlineStateProvider =
     StateNotifierProvider.family<OfflineNotifier, GameState, GameConfig>(
-        (ref, config) =>
-            OfflineNotifier(ref, config.players, config.startingPlayer));
+        (ref, config) => OfflineNotifier(
+              ref,
+              config.players,
+              config.startingPlayer,
+              config.difficulty ?? AIDifficulty.medium,
+            ));

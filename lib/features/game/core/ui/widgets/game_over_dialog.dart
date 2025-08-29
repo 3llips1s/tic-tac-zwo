@@ -31,10 +31,11 @@ class GameOverDialog extends StatelessWidget {
         xPlayer == player1 ? gameState.player1Score : gameState.player2Score;
     final oPlayerScore =
         oPlayer == player1 ? gameState.player1Score : gameState.player2Score;
+    final gamesDrawn = gameState.gamesDrawn;
 
     return Column(
       children: [
-        SizedBox(height: 16),
+        SizedBox(height: 8),
         // game outcome
         if (gameState.winningPlayer != null) ...[
           Row(
@@ -81,6 +82,30 @@ class GameOverDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+
+        // draws
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.balance_rounded,
+                color: colorBlack.withOpacity(0.5),
+                size: 14,
+              ),
+              Text(
+                '  :  $gamesDrawn',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorBlack.withOpacity(0.5),
+                      fontSize: 14,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -97,7 +122,7 @@ void showGameOverDialog(
   if (context.mounted) {
     await showCustomDialog(
       context: context,
-      height: 250,
+      height: 270,
       width: 250,
       child: GameOverDialog(
         gameConfig: gameConfig,

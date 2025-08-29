@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/player_name_dialog.dart';
 import 'package:tic_tac_zwo/features/navigation/routes/route_names.dart';
 
@@ -25,11 +28,13 @@ class TurnSelectionScreen extends StatefulWidget {
 class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
   late List<Player> players;
   late Player startingPlayer;
+  AIDifficulty _selectedDifficulty = AIDifficulty.medium;
 
   @override
   void initState() {
     super.initState();
     _initializePlayers();
+    _loadSavedDifficulty();
   }
 
   void _initializePlayers() {
@@ -57,6 +62,27 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
         players.firstWhere((player) => player.symbol == PlayerSymbol.X);
   }
 
+  Future<void> _loadSavedDifficulty() async {
+    final preferences = Hive.box('user_preferences');
+    final savedDifficulty = preferences.get('ai_difficulty');
+    if (savedDifficulty != null) {
+      final loadedDifficulty = AIDifficulty.fromHiveKey(savedDifficulty);
+      if (mounted) {
+        setState(() {
+          _selectedDifficulty = loadedDifficulty;
+        });
+      }
+      setState(() {
+        _selectedDifficulty = AIDifficulty.fromHiveKey(savedDifficulty);
+      });
+    }
+  }
+
+  Future<void> _saveDifficulty(AIDifficulty difficulty) async {
+    final preferences = Hive.box('user_preferences');
+    await preferences.put('ai_difficulty', difficulty.hiveKey);
+  }
+
   void _handleNameEdit() {
     showPlayerNameDialog(
       context,
@@ -81,6 +107,8 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
       players: players,
       startingPlayer: startingPlayer,
       gameMode: widget.gameMode,
+      difficulty:
+          widget.gameMode == GameMode.offline ? _selectedDifficulty : null,
     );
 
     Navigator.pushReplacementNamed(
@@ -95,137 +123,142 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
     final xPlayer = players.firstWhere((p) => p.symbol == PlayerSymbol.X);
     final oPlayer = players.firstWhere((p) => p.symbol == PlayerSymbol.O);
 
-    return Container(
-      color: colorGrey300,
-      padding: EdgeInsets.only(top: 32),
-      child: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // game mode title
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: SizedBox(
-                  height: kToolbarHeight * 2,
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      widget.gameMode.string,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: kToolbarHeight * 0.6),
-
-              // Player 1
-              _buildPlayerRow(xPlayer)
-                  .animate(delay: 450.ms)
-                  .fadeIn(curve: Curves.linear, duration: 900.ms)
-                  .slideX(
-                    begin: -0.5,
-                    end: 0.0,
-                    curve: Curves.ease,
-                    duration: 1200.ms,
-                  ),
-
-              SizedBox(height: kToolbarHeight * 1.2),
-
-              // vs
-              Center(
-                child: SvgPicture.asset(
-                  'assets/images/versus.svg',
-                  height: 60,
-                  width: 60,
-                  colorFilter:
-                      ColorFilter.mode(Colors.black45, BlendMode.srcIn),
-                ),
-              ),
-
-              SizedBox(height: kToolbarHeight * 1.2),
-
-              // Player 2
-              _buildPlayerRow(oPlayer, alignRight: true)
-                  .animate(delay: 450.ms)
-                  .fadeIn(curve: Curves.linear, duration: 900.ms)
-                  .slideX(
-                    begin: 0.5,
-                    end: 0.0,
-                    curve: Curves.ease,
-                    duration: 1200.ms,
-                  ),
-
-              SizedBox(
-                height: widget.gameMode == GameMode.pass
-                    ? kToolbarHeight
-                    : kToolbarHeight * 1.3,
-              ),
-
-              if (widget.gameMode == GameMode.pass) ...[
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8, right: 50),
-                    child: GestureDetector(
-                      onTap: _handleNameEdit,
-                      child: Container(
-                        height: 30,
-                        width: 30,
-                        color: Colors.transparent,
-                        child: Center(
-                          child: SvgPicture.asset('assets/images/edit.svg'),
-                        ),
+    return Scaffold(
+      backgroundColor: colorGrey300,
+      body: Padding(
+        padding: const EdgeInsets.only(top: 32.0),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // game mode title
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: SizedBox(
+                    height: kToolbarHeight * 2,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        widget.gameMode.string,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                   ),
                 ),
-              ],
 
-              // start game
-              RippleIcon(
-                includeShadows: false,
-                icon: Icon(
-                  Icons.play_arrow_rounded,
-                  size: 120,
-                ),
-                onTap: _startGame,
-              ).animate(delay: 900.ms).scale(
-                    begin: Offset(0, -1),
-                    duration: const Duration(milliseconds: 1500),
-                    curve: Curves.easeInOut,
+                SizedBox(height: kToolbarHeight * 0.3),
+
+                // Player 1
+                _buildPlayerRow(xPlayer)
+                    .animate(delay: 450.ms)
+                    .fadeIn(curve: Curves.linear, duration: 900.ms)
+                    .slideX(
+                      begin: -0.5,
+                      end: 0.0,
+                      curve: Curves.ease,
+                      duration: 1200.ms,
+                    ),
+
+                SizedBox(height: kToolbarHeight * 1.2),
+
+                // vs
+                Center(
+                  child: SvgPicture.asset(
+                    'assets/images/versus.svg',
+                    height: 60,
+                    width: 60,
+                    colorFilter:
+                        ColorFilter.mode(Colors.black45, BlendMode.srcIn),
                   ),
-
-              SizedBox(height: kToolbarHeight * 2),
-            ],
-          ),
-
-          // back button
-          Positioned(
-            bottom: 32,
-            left: 32,
-            child: SizedBox(
-              height: 52,
-              width: 52,
-              child: FloatingActionButton(
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: colorBlack.withOpacity(0.75),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: colorWhite,
-                  size: 26,
+
+                SizedBox(height: kToolbarHeight * 1.2),
+
+                // Player 2
+                _buildPlayerRow(oPlayer, alignRight: true)
+                    .animate(delay: 450.ms)
+                    .fadeIn(curve: Curves.linear, duration: 900.ms)
+                    .slideX(
+                      begin: 0.5,
+                      end: 0.0,
+                      curve: Curves.ease,
+                      duration: 1200.ms,
+                    ),
+
+                SizedBox(
+                  height: widget.gameMode == GameMode.pass ||
+                          widget.gameMode == GameMode.offline
+                      ? kToolbarHeight
+                      : kToolbarHeight * 1.3,
+                ),
+
+                if (widget.gameMode == GameMode.pass) ...[
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, right: 50),
+                      child: GestureDetector(
+                        onTap: _handleNameEdit,
+                        child: Container(
+                          height: 30,
+                          width: 30,
+                          color: Colors.transparent,
+                          child: Center(
+                            child: SvgPicture.asset('assets/images/edit.svg'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else if (widget.gameMode == GameMode.offline) ...[
+                  _buildDifficultySelector(),
+                ],
+
+                // start game
+                RippleIcon(
+                  includeShadows: false,
+                  icon: Icon(
+                    Icons.play_arrow_rounded,
+                    size: 120,
+                  ),
+                  onTap: _startGame,
+                ).animate(delay: 900.ms).scale(
+                      begin: Offset(0, -1),
+                      duration: const Duration(milliseconds: 1500),
+                      curve: Curves.easeInOut,
+                    ),
+
+                SizedBox(height: kToolbarHeight * 1.5),
+              ],
+            ),
+
+            // back button
+            Positioned(
+              bottom: 32,
+              left: 32,
+              child: SizedBox(
+                height: 52,
+                width: 52,
+                child: FloatingActionButton(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: colorBlack.withOpacity(0.75),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: colorWhite,
+                    size: 26,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -302,5 +335,112 @@ class _TurnSelectionScreenState extends State<TurnSelectionScreen> {
               children: [playerSymbol, space, playerName],
             ),
     );
+  }
+
+  Widget _buildDifficultySelector() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          right: 34,
+        ),
+        child: PopupMenuButton<AIDifficulty>(
+          position: PopupMenuPosition.under,
+          onSelected: (AIDifficulty difficulty) async {
+            setState(() {
+              _selectedDifficulty = difficulty;
+            });
+            await _saveDifficulty(difficulty);
+          },
+          itemBuilder: (BuildContext context) => AIDifficulty.values
+              .map(
+                (difficulty) => PopupMenuItem<AIDifficulty>(
+                  value: difficulty,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Container(
+                        height: 14,
+                        width: 14,
+                        decoration: BoxDecoration(
+                          color: difficulty.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        difficulty.string,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 16,
+                              fontWeight: difficulty == _selectedDifficulty
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: difficulty == _selectedDifficulty
+                                  ? difficulty.color
+                                  : colorBlack.withOpacity(0.3),
+                            ),
+                      ),
+                      if (difficulty == _selectedDifficulty) ...[
+                        const Spacer(),
+                        Icon(
+                          Icons.check_rounded,
+                          color: difficulty.color,
+                          size: 22,
+                        ),
+                      ]
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          color: colorWhite.withOpacity(0.8),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+              side: BorderSide(
+                color: colorWhite.withOpacity(0.1),
+                width: 1,
+              )),
+          elevation: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            color: Colors.transparent,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      _selectedDifficulty.string,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _selectedDifficulty.color,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Container(
+                      height: 1,
+                      width: _selectedDifficulty.string.length * 6.5,
+                      color: _selectedDifficulty.color,
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: _selectedDifficulty.color,
+                  size: 30,
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

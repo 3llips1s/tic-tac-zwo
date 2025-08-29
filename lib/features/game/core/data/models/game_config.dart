@@ -7,11 +7,13 @@ class GameConfig {
   final Player startingPlayer;
   final GameMode gameMode;
   final String? gameSessionId;
+  final AIDifficulty? difficulty;
 
   const GameConfig({
     required this.players,
     required this.startingPlayer,
     required this.gameMode,
     this.gameSessionId,
+    this.difficulty,
   });
 }

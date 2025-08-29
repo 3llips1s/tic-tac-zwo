@@ -23,6 +23,7 @@ class GameState {
   final Player? winningPlayer;
   final int player1Score;
   final int player2Score;
+  final int gamesDrawn;
   final List<int>? winningCells;
   final bool showArticleFeedback;
   final int? pointsEarnedPerGame;
@@ -62,6 +63,7 @@ class GameState {
     this.winningPlayer,
     required this.player1Score,
     required this.player2Score,
+    required this.gamesDrawn,
     this.winningCells,
     this.showArticleFeedback = false,
     this.pointsEarnedPerGame,
@@ -103,6 +105,7 @@ class GameState {
     bool allowNullWinningPlayer = false,
     int? player1Score,
     int? player2Score,
+    int? gamesDrawn,
     List<int>? winningCells,
     bool? showArticleFeedback,
     int? pointsEarnedPerGame,
@@ -153,6 +156,7 @@ class GameState {
           : (winningPlayer ?? this.winningPlayer),
       player1Score: player1Score ?? this.player1Score,
       player2Score: player2Score ?? this.player2Score,
+      gamesDrawn: gamesDrawn ?? this.gamesDrawn,
       winningCells: winningCells ?? this.winningCells,
       showArticleFeedback: showArticleFeedback ?? this.showArticleFeedback,
       isOpponentReady: isOpponentReady ?? this.isOpponentReady,
@@ -204,6 +208,7 @@ class GameState {
       isGameOver: false,
       player1Score: 0,
       player2Score: 0,
+      gamesDrawn: 0,
       showArticleFeedback: false,
       onlineGamePhase: onlineGamePhase,
       currentPlayerId: currentPlayerId ?? startingPlayer.userId,
@@ -231,6 +236,7 @@ class GameState {
       isGameOver: false,
       player1Score: 0,
       player2Score: 0,
+      gamesDrawn: 0,
       showArticleFeedback: false,
       isOpponentReady: false,
       onlineGamePhase: OnlineGamePhase.waiting,

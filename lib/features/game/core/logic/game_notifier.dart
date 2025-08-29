@@ -21,6 +21,7 @@ class GameNotifier extends StateNotifier<GameState> {
   // track scores
   int player1Score = 0;
   int player2Score = 0;
+  int gamesDrawn = 0;
 
   GameNotifier(
     this.ref,
@@ -260,6 +261,8 @@ class GameNotifier extends StateNotifier<GameState> {
         } else {
           player2Score++;
         }
+      } else {
+        gamesDrawn++;
       }
 
       // update game state
@@ -270,6 +273,7 @@ class GameNotifier extends StateNotifier<GameState> {
             : state.players.firstWhere((p) => p.symbolString == winResult),
         player1Score: player1Score,
         player2Score: player2Score,
+        gamesDrawn: gamesDrawn,
       );
     }
   }
@@ -304,6 +308,7 @@ class GameNotifier extends StateNotifier<GameState> {
     state = GameState.initial(newPlayers, newStartingPlayer).copyWith(
       player1Score: player1Score,
       player2Score: player2Score,
+      gamesDrawn: gamesDrawn,
       winningCells: null,
     );
   }
