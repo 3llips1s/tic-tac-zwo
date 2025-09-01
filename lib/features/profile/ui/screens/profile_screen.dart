@@ -180,7 +180,7 @@ class ProfileScreen extends ConsumerWidget {
                           duration: 1500.ms,
                           curve: Curves.easeInOut,
                         ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
                     GamesHistoryList(userId: userId),
                     const SizedBox(height: 64),
                     if (userProfile.id == ref.watch(currentUserIdProvider))
