@@ -13,8 +13,7 @@ class OnlineInstructionsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.85,
+    return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -29,7 +28,7 @@ class OnlineInstructionsDialog extends StatelessWidget {
                   color: colorBlack,
                 ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // points
           _buildSectionTitle(context, 'Punkesystem:'),
@@ -54,7 +53,7 @@ class OnlineInstructionsDialog extends StatelessWidget {
             iconColor: colorGrey600,
             text: '1 Bonuspunkt für ein Unentschieden',
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 36),
 
           // time limits
           _buildSectionTitle(context, 'Zeitlimits:'),
@@ -72,7 +71,7 @@ class OnlineInstructionsDialog extends StatelessWidget {
             iconColor: colorRed,
             text: '9 Sekunden um den Artikel zu wählen',
           ),
-          const SizedBox(height: 35),
+          const SizedBox(height: 40),
 
           // close
           GlassMorphicButton(
@@ -157,11 +156,10 @@ class OnlineInstructionsManager {
         context: context,
         barrierDismissible: false,
         width: 320,
-        height: 480,
+        height: 500,
         child: OnlineInstructionsDialog(
           onClose: () {
             Navigator.of(context).pop();
-
             markInstructionsAsSeen();
           },
         ),

@@ -823,6 +823,18 @@ class _LoginScreenState extends State<LoginScreen>
           ),
 
           SizedBox(height: 30),
+
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: colorGrey400,
+                size: 20,
+              ),
+            ),
+          )
         ],
       ),
     );
