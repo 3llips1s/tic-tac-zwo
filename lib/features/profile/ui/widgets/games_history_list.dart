@@ -33,12 +33,13 @@ class GamesHistoryList extends ConsumerWidget {
         if (history.isEmpty) {
           return Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 32.0),
+              padding: EdgeInsets.symmetric(vertical: 48.0),
               child: Text(
-                'Noch keine online Spiele.',
+                'Noch keine Online-Spielhistorie.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorGrey600,
+                      color: colorGrey500,
                       fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
                       fontSize: 16,
                     ),
               ),
