@@ -41,7 +41,7 @@ class GameBoardCell extends StatelessWidget {
         border: Border.all(
             color: isGameOver
                 ? (isWinningCell ? cellColor : Colors.black12)
-                : (isPressed ? colorGrey200 : cellColor),
+                : (isPressed ? colorGrey400 : cellColor),
             width: isWinningCell ? 2 : 1),
         boxShadow:
             (!isPressed && (!isGameOver || (isGameOver && isWinningCell)))

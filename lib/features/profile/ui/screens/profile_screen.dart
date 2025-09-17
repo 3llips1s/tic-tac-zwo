@@ -26,31 +26,33 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       height: 300,
       width: 300,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 24),
-          Text(
-            'Konto löschen?',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: colorBlack,
-                ),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              'Bist du sicher? Alle deine Daten gehen für immer verloren.\n \nDiese Aktion kann nicht rückgängig gemacht werden.',
-              textAlign: TextAlign.center,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 24),
+            Text(
+              'Konto löschen?',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black87,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: colorBlack,
                   ),
             ),
-          ),
-          const SizedBox(height: 12)
-        ],
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Bist du sicher? Alle deine Daten gehen für immer verloren.\n \nDiese Aktion kann nicht rückgängig gemacht werden.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black87,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 12)
+          ],
+        ),
       ),
       actions: [
         // cancel Button
