@@ -77,7 +77,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   void _handleGuess() async {
     final guess = _currentGuess.trim();
     if (guess.length != 5) {
-      _showSnackBar('Das Wort muss 5 Buchstaben haben. 🫤');
+      _showSnackBar('Muss 5 Buchstaben haben. 🫤');
       return;
     }
 
@@ -89,7 +89,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     final isValid = await repository.isValidWord(guess);
 
     if (!isValid) {
-      _showSnackBar('Dieses Wort ist nicht in meiner Liste. 😔');
+      _showSnackBar('Nicht in meiner Liste. 😔');
       return;
     }
 
@@ -137,9 +137,9 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
         margin: EdgeInsets.only(
-          bottom: kToolbarHeight * 3.6,
-          left: 20,
-          right: 20,
+          bottom: kToolbarHeight * 3.5,
+          left: 30,
+          right: 30,
         ),
         content: Container(
           padding: EdgeInsets.all(12),
@@ -152,7 +152,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: colorBlack,
                   ),
