@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/game/core/data/services/data_initialization_service.dart';
@@ -93,15 +94,22 @@ class _AppState extends ConsumerState<App> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Material(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            HiddenDrawer(onCloseDrawer: _closeDrawer),
-            _buildHomeScreenWithDrawer(),
-          ],
+    return PopScope(
+      canPop: !_isDrawerOpen,
+      onPopInvokedWithResult: (didPop, result) {
+        // if route did not pop because drawer was open, close drawer
+        if (!didPop && _isDrawerOpen) _closeDrawer();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              HiddenDrawer(onCloseDrawer: _closeDrawer),
+              _buildHomeScreenWithDrawer(),
+            ],
+          ),
         ),
       ),
     );
