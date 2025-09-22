@@ -17,6 +17,12 @@ class WordleGameState {
   final DateTime? endTime;
   final int maxAttempts;
 
+  // hints
+  final int hintsUsed;
+  final List<int> revealedPositions;
+  final int coinsEarnedThisGame;
+  final int coinsSpentThisGame;
+
   WordleGameState({
     required this.targetWord,
     required this.guesses,
@@ -24,6 +30,10 @@ class WordleGameState {
     required this.startTime,
     this.endTime,
     this.maxAttempts = 6,
+    this.hintsUsed = 0,
+    this.revealedPositions = const [],
+    this.coinsEarnedThisGame = 0,
+    this.coinsSpentThisGame = 0,
   });
 
   WordleGameState copyWith({
@@ -33,6 +43,10 @@ class WordleGameState {
     DateTime? startTime,
     DateTime? endTime,
     int? maxAttempts,
+    int? hintsUsed,
+    List<int>? revealedPositions,
+    int? coinsEarnedThisGame,
+    int? coinsSpentThisGame,
   }) {
     return WordleGameState(
       targetWord: targetWord ?? this.targetWord,
@@ -41,6 +55,10 @@ class WordleGameState {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       maxAttempts: maxAttempts ?? this.maxAttempts,
+      hintsUsed: hintsUsed ?? this.hintsUsed,
+      revealedPositions: revealedPositions ?? this.revealedPositions,
+      coinsEarnedThisGame: coinsEarnedThisGame ?? this.coinsEarnedThisGame,
+      coinsSpentThisGame: coinsSpentThisGame ?? this.coinsSpentThisGame,
     );
   }
 
@@ -52,6 +70,11 @@ class WordleGameState {
   bool get isGameOver => status == GameStatus.won || status == GameStatus.lost;
   bool get canGuess => !isGameOver && guesses.length < maxAttempts;
   int get remainingAttempts => maxAttempts - guesses.length;
+
+  bool get usedPerfectBonus => hintsUsed == 0;
+  bool get canUseHint1 => hintsUsed < 1 && canGuess;
+  bool get canUseHint2 => hintsUsed < 2 && canGuess;
+  int get maxHints => 2;
 }
 
 // loading game state
