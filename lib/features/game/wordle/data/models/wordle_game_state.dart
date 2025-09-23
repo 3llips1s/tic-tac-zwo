@@ -104,6 +104,18 @@ class WordleGameNotifier extends StateNotifier<WordleGameState?> {
     state = await _gameLogic.makeGuess(state!, guess);
   }
 
+  Future<bool> useHint(int hintNumber) async {
+    if (state == null) return false;
+
+    final newState = await _gameLogic.useHint(state!, hintNumber);
+
+    if (newState != null) {
+      state = newState;
+      return true;
+    }
+    return false;
+  }
+
   Future<bool> checkArticle(String article) async {
     if (state == null) return false;
     return await _gameLogic.checkArticle(state!, article);
@@ -112,6 +124,14 @@ class WordleGameNotifier extends StateNotifier<WordleGameState?> {
   String getWinFeedback() {
     if (state == null) return 'Sehr gut!';
     return _gameLogic.winFeedback(state!);
+  }
+
+  int getCurrentCoins() {
+    return _gameLogic.getCurrentCoins();
+  }
+
+  bool canAffordHint(int hintNumber) {
+    return _gameLogic.canAffordHint(hintNumber);
   }
 }
 

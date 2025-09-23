@@ -104,10 +104,10 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     if (newState == null) return;
 
     if (newState.status == GameStatus.won) {
-      _showSnackBar('Geschafft! 🎉');
+      _showSnackBar('Bravo! 🥳');
       _showGameResultDialog(newState);
     } else if (newState.status == GameStatus.lost) {
-      _showSnackBar('Schade! ❤️‍🩹');
+      _showSnackBar('Beim nächsten Mal! 🙃');
       _showGameResultDialog(newState);
     }
   }

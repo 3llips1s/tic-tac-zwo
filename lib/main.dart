@@ -45,6 +45,7 @@ void main() async {
     await Hive.openBox<String>('seen_nouns');
     await Hive.openBox('sync_info');
     await Hive.openBox('user_preferences');
+    await Hive.openBox('wordle_coins');
 
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,

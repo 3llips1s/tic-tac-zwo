@@ -9,7 +9,6 @@ class WordleHintsService {
   // return random unrevealed correct position,
   int getRandomHintPosition(WordleGameState gameState) {
     final targetWord = gameState.targetWord;
-    final currentGuess = gameState.guesses.length;
 
     // get available positions (not revealed in previous hints)
     final availablePositions = <int>[];

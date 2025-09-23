@@ -161,6 +161,12 @@ class CreditsScreen extends StatelessWidget {
                       'Favorites von ',
                       'Dmitry Podluzny (Noun Project)',
                       'https://thenounproject.com/icon/favorites-7219360/'),
+                  _buildCreditLink(
+                    context,
+                    'Game Coin von ',
+                    'HRF07 (Noun Project)',
+                    'https://thenounproject.com/icon/game-coin-7576266/',
+                  ),
                   const SizedBox(height: 40),
 
                   // images
