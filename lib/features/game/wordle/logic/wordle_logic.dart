@@ -67,8 +67,8 @@ class WordleLogic {
 
       // calculate and give coins
       final coinsEarned = calculateCoinsEarned(newGuesses.length);
-      final perfektBonus = state.hintsUsed == 0 ? 5 : 0;
-      final totalCoinsEarned = coinsEarned + perfektBonus;
+      final noHintsBonus = state.hintsUsed == 0 ? 5 : 0;
+      final totalCoinsEarned = coinsEarned + noHintsBonus;
 
       await coinsService.earnCoins(totalCoinsEarned);
       coinsEarnedThisGame = totalCoinsEarned;

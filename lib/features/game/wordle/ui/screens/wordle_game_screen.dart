@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
+import 'package:tic_tac_zwo/features/game/wordle/data/services/wordle_coins_service.dart';
+import 'package:tic_tac_zwo/features/game/wordle/logic/wordle_logic.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/game_result_dialog.dart';
+import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/hint_confirmation_dialog.dart';
 import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../data/models/wordle_game_state.dart';
 import '../../data/repositories/wordle_word_repo.dart';
+import '../widgets/coin_display.dart';
+import '../widgets/hint_button.dart';
 import '../widgets/wordle_instructions_dialog.dart';
 import '../widgets/wordle_keyboard.dart';
 
@@ -74,6 +80,47 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     );
   }
 
+  void _showHintConfirmationDialog() async {
+    final gameState = ref.read(wordleGameStateProvider);
+    if (gameState == null) return;
+
+    final coinsService = ref.read(wordleCoinsServiceProvider);
+    final currentCoins = coinsService.getCoinsData().totalCoins;
+
+    final nextHintNumber = gameState.hintsUsed + 1;
+
+    if (nextHintNumber > gameState.maxHints || !gameState.canGuess) {
+      _showSnackBar('Keine weiteren Hinweise verfügbar 🚫');
+      return;
+    }
+
+    final hintCost = nextHintNumber == 1 ? 30 : 50;
+
+    if (currentCoins < hintCost) {
+      _showInsufficientCoinsSnackbar();
+      return;
+    }
+
+    if (!mounted) return;
+
+    showCustomDialog(
+      context: context,
+      barrierDismissible: true,
+      width: 200,
+      height: 250,
+      child: HintConfirmationDialog(
+        hintNumber: nextHintNumber,
+        hintCost: hintCost,
+        currentCoins: currentCoins,
+        onConfirm: () {
+          Navigator.of(context).pop();
+          _useHint(nextHintNumber);
+        },
+        onCancel: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
   void _handleGuess() async {
     final guess = _currentGuess.trim();
     if (guess.length != 5) {
@@ -127,6 +174,35 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
       });
     }
     HapticFeedback.lightImpact();
+  }
+
+  void _useHint(int hintNumber) async {
+    final gameState = ref.read(wordleGameStateProvider);
+    if (gameState == null) {
+      _showSnackBar('Spielfehler 😕');
+      return;
+    }
+
+    if (hintNumber > gameState.maxHints) {
+      _showSnackBar('Maximale Anzahl Hinweise erreicht 🚫');
+      return;
+    }
+
+    if (!gameState.canGuess) {
+      _showSnackBar('Spiel ist vorbei');
+      return;
+    }
+
+    final success =
+        await ref.read(wordleGameStateProvider.notifier).useHint(hintNumber);
+
+    if (!success) {
+      _showSnackBar('Fehler beim Verwenden des Hinweises 😕');
+    }
+  }
+
+  void _showInsufficientCoinsSnackbar() {
+    _showSnackBar('Nicht genung Münzen 💰');
   }
 
   void _showSnackBar(String message) {
@@ -283,23 +359,76 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
             ),
           ),
 
-          // back home
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 55),
-              child: IconButton(
-                onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  RouteNames.home,
-                  (route) => false,
+          // controls
+          Padding(
+            padding: const EdgeInsets.only(left: 55, right: 60, bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // home
+                IconButton(
+                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    RouteNames.home,
+                    (route) => false,
+                  ),
+                  icon: Icon(
+                    Icons.home_rounded,
+                    color: colorGrey500,
+                    size: 36,
+                  ),
                 ),
-                icon: Icon(
-                  Icons.home_rounded,
-                  color: colorGrey600,
-                  size: 40,
-                ),
-              ),
+
+                // coins + hint
+                Row(
+                  children: [
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final coinsService =
+                            ref.watch(wordleCoinsServiceProvider);
+                        final currentCoins =
+                            coinsService.getCoinsData().totalCoins;
+
+                        return CoinDisplay(
+                          coinCount: currentCoins,
+                          useContainer: false,
+                          svgAssetPath: 'assets/images/coins_dark.svg',
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 24),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final gameState = ref.watch(wordleGameStateProvider);
+                        if (gameState == null) return const SizedBox.shrink();
+
+                        final gameLogic = ref.read(wordleLogicProvider);
+                        final nextHintNumber = gameState.hintsUsed + 1;
+
+                        // all hint conditions
+                        final hasRemainingHints =
+                            nextHintNumber <= gameState.maxHints;
+                        final canUseHint = gameState.canGuess;
+                        final canAfford = hasRemainingHints
+                            ? gameLogic.canAffordHint(nextHintNumber)
+                            : false;
+
+                        final isActive =
+                            hasRemainingHints && canAfford && canUseHint;
+
+                        return HintButton(
+                          isActive: isActive,
+                          useContainer: true,
+                          onPressed:
+                              isActive ? _showHintConfirmationDialog : null,
+                          onInsufficientCoins:
+                              !isActive ? _showInsufficientCoinsSnackbar : null,
+                        );
+                      },
+                    )
+                  ],
+                )
+              ],
             ),
           ),
 

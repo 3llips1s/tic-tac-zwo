@@ -1,6 +1,7 @@
 import 'dart:math' show pi;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../data/models/guess_model.dart';
@@ -11,6 +12,7 @@ class LetterTile extends StatefulWidget {
   final Duration animationDelay;
   final bool isCurrentGuess;
   final bool isEmpty;
+  final bool isRevealed;
 
   const LetterTile({
     super.key,
@@ -19,6 +21,7 @@ class LetterTile extends StatefulWidget {
     this.animationDelay = Duration.zero,
     this.isCurrentGuess = false,
     this.isEmpty = false,
+    this.isRevealed = false,
   });
 
   @override
@@ -110,6 +113,10 @@ class _LetterTileState extends State<LetterTile>
       return _buildAnimatedTile();
     }
 
+    if (widget.isRevealed) {
+      return _buildRevealedTile();
+    }
+
     return _buildEmptyTile();
   }
 
@@ -188,5 +195,34 @@ class _LetterTileState extends State<LetterTile>
         );
       },
     );
+  }
+
+  Widget _buildRevealedTile() {
+    return Container(
+      width: 50,
+      height: 50,
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Center(
+        child: Text(
+          widget.letter,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: colorWhite,
+          ),
+        ),
+      ),
+    )
+        .animate(delay: 100.ms)
+        .scale(begin: const Offset(0.8, 0.8), duration: 300.ms)
+        .then()
+        .shimmer(
+          duration: 600.ms,
+          color: colorWhite.withOpacity(0.5),
+        );
   }
 }

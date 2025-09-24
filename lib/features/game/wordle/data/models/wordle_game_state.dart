@@ -71,7 +71,7 @@ class WordleGameState {
   bool get canGuess => !isGameOver && guesses.length < maxAttempts;
   int get remainingAttempts => maxAttempts - guesses.length;
 
-  bool get usedPerfectBonus => hintsUsed == 0;
+  bool get usedNoHintsBonus => hintsUsed == 0;
   bool get canUseHint1 => hintsUsed < 1 && canGuess;
   bool get canUseHint2 => hintsUsed < 2 && canGuess;
   int get maxHints => 2;

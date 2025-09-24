@@ -71,139 +71,195 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
     final isWon = widget.gameState.status == GameStatus.won;
     final targetWord = widget.gameState.targetWord;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // game result message
-        Padding(
-          padding: const EdgeInsets.only(top: 45),
-          child: AnimatedBuilder(
-            animation: widget.hoverAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, widget.hoverAnimation.value),
-                child: isWon
-                    ? Text(
-                        ref
-                            .read(wordleGameStateProvider.notifier)
-                            .getWinFeedback(),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: colorBlack,
-                            ),
-                        textAlign: TextAlign.center,
-                      )
-                    : RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // coins earned
+          if (isWon && widget.gameState.coinsEarnedThisGame > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: AnimatedBuilder(
+                animation: widget.hoverAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, widget.hoverAnimation.value),
+                    child: _buildCoinsEarnedDisplay(),
+                  );
+                },
+              ),
+            ),
+
+          // game result message
+          Padding(
+            padding: EdgeInsets.only(top: isWon ? 15 : 45),
+            child: AnimatedBuilder(
+              animation: widget.hoverAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, widget.hoverAnimation.value),
+                  child: isWon
+                      ? Text(
+                          ref
+                              .read(wordleGameStateProvider.notifier)
+                              .getWinFeedback(),
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 16,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
                                     color: colorBlack,
                                   ),
-                          children: [
-                            TextSpan(text: 'Das Wort war: '),
-                            TextSpan(
-                              text: '$targetWord  😔',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    fontSize: 24,
-                                    color: colorBlack,
-                                  ),
-                            ),
-                          ],
+                          textAlign: TextAlign.center,
+                        )
+                      : RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontSize: 16,
+                                  color: colorBlack,
+                                ),
+                            children: [
+                              TextSpan(text: 'Das Wort war: '),
+                              TextSpan(
+                                text: '$targetWord  😔',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      fontSize: 24,
+                                      color: colorBlack,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: kToolbarHeight * 1.1),
-
-        // target word display
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: Text(
-                'Artikel für?',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorBlack,
-                      fontSize: 18,
-                    ),
-                textAlign: TextAlign.center,
-              ),
+                );
+              },
             ),
-            Row(
-              children: List.generate(
-                targetWord.length,
-                (index) => Container(
-                  height: 28,
-                  width: 28,
-                  margin: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: Center(
-                    child: Text(
-                      targetWord[index],
-                      style: const TextStyle(
-                        color: colorWhite,
-                        fontWeight: FontWeight.bold,
+          ),
+
+          const SizedBox(height: kToolbarHeight * 1.1),
+
+          // target word display
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Text(
+                  'Artikel für?',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorBlack,
                         fontSize: 18,
                       ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Row(
+                children: List.generate(
+                  targetWord.length,
+                  (index) => Container(
+                    height: 28,
+                    width: 28,
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Center(
+                      child: Text(
+                        targetWord[index],
+                        style: const TextStyle(
+                          color: colorWhite,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
                   ),
                 ),
+              )
+            ],
+          ),
+
+          const SizedBox(height: kToolbarHeight / 1.2),
+
+          // article selection buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GlassMorphicButton(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                onPressed: () => _onArticleSelected('der'),
+                child: const Text(
+                  'der',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: colorBlack,
+                  ),
+                ),
               ),
-            )
-          ],
+              GlassMorphicButton(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                onPressed: () => _onArticleSelected('die'),
+                child: const Text(
+                  'die',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: colorBlack,
+                  ),
+                ),
+              ),
+              GlassMorphicButton(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                onPressed: () => _onArticleSelected('das'),
+                child: const Text(
+                  'das',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: colorBlack,
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoinsEarnedDisplay() {
+    final totalCoins = widget.gameState.coinsEarnedThisGame;
+    final noHintsBonus = widget.gameState.usedNoHintsBonus ? 5 : 0;
+    final mainCoins = totalCoins - noHintsBonus;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '$mainCoins 🪙',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: colorBlack,
+              ),
         ),
-
-        const SizedBox(height: kToolbarHeight / 1.2),
-
-        // article selection buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GlassMorphicButton(
-              onPressed: () => _onArticleSelected('der'),
-              child: const Text(
-                'der',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: colorBlack,
+        if (noHintsBonus > 0) ...[
+          const SizedBox(width: 16),
+          Text(
+            '+$noHintsBonus',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colorDarkGreen,
                 ),
-              ),
-            ),
-            GlassMorphicButton(
-              onPressed: () => _onArticleSelected('die'),
-              child: const Text(
-                'die',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: colorBlack,
-                ),
-              ),
-            ),
-            GlassMorphicButton(
-              onPressed: () => _onArticleSelected('das'),
-              child: const Text(
-                'das',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: colorBlack,
-                ),
-              ),
-            ),
-          ],
-        )
+          )
+        ]
       ],
     );
   }
@@ -215,148 +271,152 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // result
-        Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: AnimatedBuilder(
-            animation: widget.hoverAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, widget.hoverAnimation.value),
-                child: Icon(
-                  _isCorrect ? Icons.check_circle_sharp : Icons.cancel_sharp,
-                  size: 70,
-                  color: _isCorrect ? Color(0xFF32CD32) : colorRed,
-                ),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: kToolbarHeight * 0.75),
-
-        // word with article + translation
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_isCorrect)
-                  Text(
-                    '$_selectedArticle  ${widget.gameState.targetWord} ',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 30,
-                          color: colorBlack,
-                        ),
-                    textAlign: TextAlign.center,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // result
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: AnimatedBuilder(
+              animation: widget.hoverAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, widget.hoverAnimation.value),
+                  child: Icon(
+                    _isCorrect ? Icons.check_circle_sharp : Icons.cancel_sharp,
+                    size: 70,
+                    color: _isCorrect ? Color(0xFF32CD32) : colorRed,
                   ),
-                if (!_isCorrect)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // incorrect article
-                      Text(
-                        _selectedArticle,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 30,
-                              fontStyle: FontStyle.italic,
-                              color: colorRed,
-                              decoration: TextDecoration.lineThrough,
-                              decorationThickness: 1,
-                            ),
-                      ),
-                      const SizedBox(width: 20),
-                      // correct article
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: colorBlack,
-                              width: 2,
-                            ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: kToolbarHeight * 0.75),
+
+          // word with article + translation
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_isCorrect)
+                    Text(
+                      '$_selectedArticle  ${widget.gameState.targetWord} ',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontSize: 30,
+                            color: colorBlack,
                           ),
-                        ),
-                        child: Text(
-                          _correctArticle,
+                      textAlign: TextAlign.center,
+                    ),
+                  if (!_isCorrect)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // incorrect article
+                        Text(
+                          _selectedArticle,
                           style:
                               Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontSize: 30,
-                                    color: Color.fromARGB(255, 0, 97, 0),
+                                    fontStyle: FontStyle.italic,
+                                    color: colorRed,
+                                    decoration: TextDecoration.lineThrough,
+                                    decorationThickness: 1,
                                   ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // word itself
-                      Text(
-                        ' ${widget.gameState.targetWord}',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 30,
-                              color: colorBlack,
+                        const SizedBox(width: 20),
+                        // correct article
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: colorBlack,
+                                width: 2,
+                              ),
                             ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+                          ),
+                          child: Text(
+                            _correctArticle,
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      fontSize: 30,
+                                      color: Color.fromARGB(255, 0, 97, 0),
+                                    ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
 
-            SizedBox(height: _isCorrect ? 5 : 10),
-
-            // translation
-            Text(
-              ' - $_englishTranslation',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 18,
-                    color: colorBlack,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-
-        const SizedBox(height: kToolbarHeight * 0.5),
-
-        // action buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GlassMorphicButton(
-              onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  RouteNames.home,
-                  (route) => false,
-                );
-                ref.read(wordleGameStateProvider.notifier).newGame();
-              },
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Icon(
-                Icons.home_rounded,
-                color: colorBlack,
-                size: 30,
+                        // word itself
+                        Text(
+                          ' ${widget.gameState.targetWord}',
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    fontSize: 30,
+                                    color: colorBlack,
+                                  ),
+                        ),
+                      ],
+                    ),
+                ],
               ),
-            ),
-            SizedBox(),
-            GlassMorphicButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                ref.read(wordleGameStateProvider.notifier).newGame();
-              },
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Icon(
-                Icons.refresh_rounded,
-                color: colorYellow,
-                size: 30,
+
+              SizedBox(height: _isCorrect ? 5 : 10),
+
+              // translation
+              Text(
+                ' - $_englishTranslation',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontSize: 18,
+                      color: colorBlack,
+                    ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
-        )
-      ],
+            ],
+          ),
+
+          const SizedBox(height: kToolbarHeight * 0.5),
+
+          // action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              GlassMorphicButton(
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    RouteNames.home,
+                    (route) => false,
+                  );
+                  ref.read(wordleGameStateProvider.notifier).newGame();
+                },
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                child: Icon(
+                  Icons.home_rounded,
+                  color: colorBlack,
+                  size: 30,
+                ),
+              ),
+              SizedBox(),
+              GlassMorphicButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  ref.read(wordleGameStateProvider.notifier).newGame();
+                },
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                child: Icon(
+                  Icons.refresh_rounded,
+                  color: colorYellow,
+                  size: 30,
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
     );
   }
 

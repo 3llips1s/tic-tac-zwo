@@ -64,14 +64,17 @@ class WordleGameGrid extends StatelessWidget {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        5,
-        (index) => LetterTile(
-          letter: letters[index],
-          isCurrentGuess: true,
-          isEmpty: letters[index] == ' ',
-        ),
-      ),
+      children: List.generate(5, (index) {
+        final letter = letters[index];
+        final isRevealed = gameState.revealedPositions.contains(index);
+
+        return LetterTile(
+          letter: isRevealed ? gameState.targetWord[index] : letter,
+          isCurrentGuess: !isRevealed,
+          isEmpty: letter == ' ' && !isRevealed,
+          isRevealed: isRevealed,
+        );
+      }),
     );
   }
 
