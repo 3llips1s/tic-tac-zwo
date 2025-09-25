@@ -71,13 +71,6 @@ class WordleGameGrid extends StatelessWidget {
 
         // Debug logging (remove after testing)
         if (isRevealed) {
-          print('Target word: "${gameState.targetWord}"');
-          print('Target word length: ${gameState.targetWord.length}');
-          print('Revealing position $index');
-          print(
-              'Character at position $index: "${gameState.targetWord[index]}"');
-          print('Character code: ${gameState.targetWord.codeUnitAt(index)}');
-
           displayLetter = gameState.targetWord[index];
         } else {
           // use next available typed letter

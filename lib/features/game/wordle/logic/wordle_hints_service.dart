@@ -27,12 +27,6 @@ class WordleHintsService {
     final selectedPosition =
         availablePositions[random.nextInt(availablePositions.length)];
 
-    // todo: remove after testing)
-    print('Target word: $targetWord');
-    print('Available positions: $availablePositions');
-    print('Selected position: $selectedPosition');
-    print('Letter to reveal: ${targetWord[selectedPosition]}');
-
     return selectedPosition;
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce/hive.dart';
 
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
@@ -221,12 +220,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     _showSnackBar('Nicht genug Münzen 💰');
   }
 
-  void _resetCoinsForTesting() async {
-    final box = await Hive.openBox('wordle_coins');
-    await box.clear();
-    setState(() {});
-  }
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -415,15 +408,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                   ),
                   icon: Icon(
                     Icons.home_rounded,
-                    color: colorGrey500,
-                    size: 36,
-                  ),
-                ),
-
-                IconButton(
-                  onPressed: () => _resetCoinsForTesting(),
-                  icon: Icon(
-                    Icons.refresh_rounded,
                     color: colorGrey500,
                     size: 36,
                   ),
