@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/dual_progress_indicator.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/glassmorphic_dialog.dart';
@@ -61,21 +63,24 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
       barrierDismissible: false,
       width: 300,
       height: 330,
-      child: GameResultDialog(
-        gameState: state,
-        hoverAnimation: _hoverAnimation,
-        onHomePressed: () {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            RouteNames.home,
-            (route) => false,
-          );
-          ref.read(wordleGameStateProvider.notifier).newGame();
-        },
-        onPlayAgainPressed: () {
-          Navigator.of(context).pop();
-          ref.read(wordleGameStateProvider.notifier).newGame();
-        },
+      child: PopScope(
+        canPop: false,
+        child: GameResultDialog(
+          gameState: state,
+          hoverAnimation: _hoverAnimation,
+          onHomePressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              RouteNames.home,
+              (route) => false,
+            );
+            ref.read(wordleGameStateProvider.notifier).newGame();
+          },
+          onPlayAgainPressed: () {
+            Navigator.of(context).pop();
+            ref.read(wordleGameStateProvider.notifier).newGame();
+          },
+        ),
       ),
     );
   }
@@ -122,14 +127,33 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   }
 
   void _handleGuess() async {
-    final guess = _currentGuess.trim();
+    final gameState = ref.read(wordleGameStateProvider);
+    if (gameState == null) return;
+
+    // build complete word including revealed letters
+    String completeGuess = '';
+    final currentGuessLetters = _currentGuess.split('');
+    int typedLetterIndex = 0;
+
+    for (int i = 0; i < 5; i++) {
+      if (gameState.revealedPositions.contains(i)) {
+        // use revealed letter
+        completeGuess += gameState.targetWord[i];
+      } else if (typedLetterIndex < currentGuessLetters.length) {
+        // use next typed letter
+        completeGuess += currentGuessLetters[typedLetterIndex];
+        typedLetterIndex++;
+      } else {
+        // position not filled
+        completeGuess += ' ';
+      }
+    }
+
+    final guess = completeGuess.trim();
     if (guess.length != 5) {
       _showSnackBar('Muss 5 Buchstaben haben. 🫤');
       return;
     }
-
-    final gameState = ref.read(wordleGameStateProvider);
-    if (gameState == null) return;
 
     // check if word is valid
     final repository = ref.read(wordleWordRepoProvider);
@@ -160,6 +184,9 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   }
 
   void _handleKeyPress(String letter) {
+    final gameState = ref.read(wordleGameStateProvider);
+    if (gameState == null) return;
+
     if (letter == '←') {
       if (_currentGuess.isNotEmpty) {
         setState(() {
@@ -168,31 +195,20 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
       }
     } else if (letter == '✓') {
       _handleGuess();
-    } else if (_currentGuess.length < 5) {
-      setState(() {
-        _currentGuess += letter;
-      });
+    } else {
+      // calculate non-revealed positions to fill
+      final maxTypeableLength = 5 - gameState.revealedPositions.length;
+
+      if (_currentGuess.length < maxTypeableLength) {
+        setState(() {
+          _currentGuess += letter;
+        });
+      }
     }
     HapticFeedback.lightImpact();
   }
 
   void _useHint(int hintNumber) async {
-    final gameState = ref.read(wordleGameStateProvider);
-    if (gameState == null) {
-      _showSnackBar('Spielfehler 😕');
-      return;
-    }
-
-    if (hintNumber > gameState.maxHints) {
-      _showSnackBar('Maximale Anzahl Hinweise erreicht 🚫');
-      return;
-    }
-
-    if (!gameState.canGuess) {
-      _showSnackBar('Spiel ist vorbei');
-      return;
-    }
-
     final success =
         await ref.read(wordleGameStateProvider.notifier).useHint(hintNumber);
 
@@ -202,7 +218,13 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   }
 
   void _showInsufficientCoinsSnackbar() {
-    _showSnackBar('Nicht genung Münzen 💰');
+    _showSnackBar('Nicht genug Münzen 💰');
+  }
+
+  void _resetCoinsForTesting() async {
+    final box = await Hive.openBox('wordle_coins');
+    await box.clear();
+    setState(() {});
   }
 
   void _showSnackBar(String message) {
@@ -290,6 +312,12 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
       }
     }
 
+    // add revealed letters
+    for (final position in gameState.revealedPositions) {
+      final revealedLetter = gameState.targetWord[position];
+      letterStates[revealedLetter] = Colors.green;
+    }
+
     return letterStates;
   }
 
@@ -357,7 +385,20 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                 ],
               ),
             ),
-          ),
+          )
+              .animate(
+                delay: 300.ms,
+              )
+              .scale(
+                begin: Offset(0.5, 0.5),
+                duration: 1200.ms,
+                curve: Curves.easeInOut,
+              )
+              .fadeIn(
+                begin: 0.5,
+                duration: 1200.ms,
+                curve: Curves.easeInOut,
+              ),
 
           // controls
           Padding(
@@ -379,6 +420,15 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                   ),
                 ),
 
+                IconButton(
+                  onPressed: () => _resetCoinsForTesting(),
+                  icon: Icon(
+                    Icons.refresh_rounded,
+                    color: colorGrey500,
+                    size: 36,
+                  ),
+                ),
+
                 // coins + hint
                 Row(
                   children: [
@@ -392,7 +442,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                         return CoinDisplay(
                           coinCount: currentCoins,
                           useContainer: false,
-                          svgAssetPath: 'assets/images/coins_dark.svg',
+                          svgAssetPath: 'assets/images/coins.svg',
                         );
                       },
                     ),
@@ -416,16 +466,26 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
                         final isActive =
                             hasRemainingHints && canAfford && canUseHint;
 
+                        VoidCallback? inactiveCallback;
+                        if (!hasRemainingHints) {
+                          inactiveCallback = () => _showSnackBar(
+                              'Keine weiteren Hinweise verfügbar 🚫');
+                        } else if (!canUseHint) {
+                          inactiveCallback =
+                              () => _showSnackBar('Spiel ist vorbei 🏁');
+                        } else if (!canAfford) {
+                          inactiveCallback = _showInsufficientCoinsSnackbar;
+                        }
+
                         return HintButton(
                           isActive: isActive,
                           useContainer: true,
                           onPressed:
                               isActive ? _showHintConfirmationDialog : null,
-                          onInsufficientCoins:
-                              !isActive ? _showInsufficientCoinsSnackbar : null,
+                          onInsufficientCoins: inactiveCallback,
                         );
                       },
-                    )
+                    ),
                   ],
                 )
               ],
@@ -438,7 +498,18 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
           WordleKeyboard(
             onKeyTap: gameState.canGuess ? _handleKeyPress : null,
             letterStates: _getKeyboardLetterStates(gameState),
-          ),
+          )
+              .animate(delay: 1200.ms)
+              .slideY(
+                begin: 0.3,
+                end: 0.0,
+                duration: 900.ms,
+                curve: Curves.easeInOut,
+              )
+              .fadeIn(
+                duration: 900.ms,
+                curve: Curves.easeInOut,
+              ),
         ],
       ),
     );

@@ -92,7 +92,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
 
           // game result message
           Padding(
-            padding: EdgeInsets.only(top: isWon ? 15 : 45),
+            padding: EdgeInsets.only(top: isWon ? 24 : 48),
             child: AnimatedBuilder(
               animation: widget.hoverAnimation,
               builder: (context, child) {
@@ -105,7 +105,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                               .getWinFeedback(),
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontSize: 22,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: colorBlack,
                                   ),
@@ -141,7 +141,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
             ),
           ),
 
-          const SizedBox(height: kToolbarHeight * 1.1),
+          const SizedBox(height: 64),
 
           // target word display
           Row(
@@ -150,10 +150,10 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
               Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: Text(
-                  'Artikel für?',
+                  'Artikel zu:',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorBlack,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                   textAlign: TextAlign.center,
                 ),
@@ -185,7 +185,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
             ],
           ),
 
-          const SizedBox(height: kToolbarHeight / 1.2),
+          const SizedBox(height: 32),
 
           // article selection buttons
           Row(
@@ -244,7 +244,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
         Text(
           '$mainCoins 🪙',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: colorBlack,
               ),
@@ -254,9 +254,9 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
           Text(
             '+$noHintsBonus',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: colorDarkGreen,
+                  color: Colors.lightGreenAccent,
                 ),
           )
         ]

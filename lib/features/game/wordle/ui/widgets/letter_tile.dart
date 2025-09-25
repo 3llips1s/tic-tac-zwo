@@ -217,7 +217,7 @@ class _LetterTileState extends State<LetterTile>
         ),
       ),
     )
-        .animate(delay: 100.ms)
+        .animate(delay: 150.ms)
         .scale(begin: const Offset(0.8, 0.8), duration: 300.ms)
         .then()
         .shimmer(

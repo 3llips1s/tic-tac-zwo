@@ -22,8 +22,14 @@ class WordleLogic {
     await repository.ready;
 
     final targetWordData = await repository.getRandomWord();
+    final targetWord = targetWordData['word']!.toUpperCase();
+
+    print('New game created with target word: "$targetWord"');
+    print('Target word length: ${targetWord.length}');
+    print('Target word data: $targetWordData');
+
     return WordleGameState(
-      targetWord: targetWordData['word']!.toUpperCase(),
+      targetWord: targetWord,
       guesses: [],
       status: GameStatus.playing,
       startTime: DateTime.now(),

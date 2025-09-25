@@ -112,9 +112,9 @@ class WordleInstructionsDialog extends StatelessWidget {
               _buildCoinExplanationRow(
                   context: context,
                   icon: Icons.emoji_events_rounded,
-                  iconColor: Colors.grey,
+                  iconColor: Colors.green,
                   explanation:
-                      'Verdiene 50 bis 5 Münzen - je nach deinen Versuchen'),
+                      'Verdiene 50 bis 5 🪙 - je nach deinen Versuchen'),
               const SizedBox(height: 20),
 
               _buildCoinExplanationRow(
@@ -127,8 +127,8 @@ class WordleInstructionsDialog extends StatelessWidget {
               _buildCoinExplanationRow(
                 context: context,
                 icon: Icons.lightbulb_rounded,
-                iconColor: Colors.green,
-                explanation: 'Hinweise: 1. kostet 30 🪙 und 2. kostet 50 🪙',
+                iconColor: Colors.grey,
+                explanation: 'Hinweise: 1. kostet 30 🪙  und 2. kostet 50 🪙',
               ),
 
               const SizedBox(height: 45),

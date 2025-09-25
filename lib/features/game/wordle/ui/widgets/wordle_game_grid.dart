@@ -60,18 +60,39 @@ class WordleGameGrid extends StatelessWidget {
   }
 
   Widget _buildCurrentGuessRow() {
-    final letters = currentGuess.padRight(5, ' ').split('');
+    final currentGuessLetters = currentGuess.split('');
+    int typedLetterIndex = 0;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(5, (index) {
-        final letter = letters[index];
         final isRevealed = gameState.revealedPositions.contains(index);
+        String displayLetter = '';
+
+        // Debug logging (remove after testing)
+        if (isRevealed) {
+          print('Target word: "${gameState.targetWord}"');
+          print('Target word length: ${gameState.targetWord.length}');
+          print('Revealing position $index');
+          print(
+              'Character at position $index: "${gameState.targetWord[index]}"');
+          print('Character code: ${gameState.targetWord.codeUnitAt(index)}');
+
+          displayLetter = gameState.targetWord[index];
+        } else {
+          // use next available typed letter
+          if (typedLetterIndex < currentGuessLetters.length) {
+            displayLetter = currentGuessLetters[typedLetterIndex];
+            typedLetterIndex++;
+          } else {
+            displayLetter = ' ';
+          }
+        }
 
         return LetterTile(
-          letter: isRevealed ? gameState.targetWord[index] : letter,
+          letter: displayLetter,
           isCurrentGuess: !isRevealed,
-          isEmpty: letter == ' ' && !isRevealed,
+          isEmpty: displayLetter == ' ' && !isRevealed,
           isRevealed: isRevealed,
         );
       }),

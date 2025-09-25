@@ -12,7 +12,7 @@ class CoinDisplay extends StatelessWidget {
     super.key,
     required this.coinCount,
     this.useContainer = false,
-    this.svgAssetPath = 'assets/images/coins_dark.svg',
+    this.svgAssetPath = 'assets/images/coins.svg',
   });
 
   @override

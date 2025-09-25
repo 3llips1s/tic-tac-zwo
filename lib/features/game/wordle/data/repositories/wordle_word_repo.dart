@@ -102,8 +102,26 @@ class WordleWordRepo {
     await initialize();
 
     final uppercaseWord = word.toUpperCase();
-    return _cachedWords
+    print('Checking word validity: "$uppercaseWord"');
+
+    final isValid = _cachedWords
         .any((entry) => entry['word']!.toUpperCase() == uppercaseWord);
+
+    print('Word "$uppercaseWord" is valid: $isValid');
+
+    if (!isValid) {
+      // Debug: show some similar words
+      final similarWords = _cachedWords
+          .where((entry) => entry['word']!
+              .toUpperCase()
+              .contains(uppercaseWord.substring(0, 2)))
+          .take(5)
+          .map((entry) => entry['word'])
+          .toList();
+      print('Similar words found: $similarWords');
+    }
+
+    return isValid;
   }
 
   Future<String?> getWordArticle(String word) async {
