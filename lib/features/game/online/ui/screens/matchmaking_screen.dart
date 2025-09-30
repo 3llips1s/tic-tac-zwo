@@ -14,9 +14,6 @@ import '../../../../../config/game_config/config.dart';
 import '../../data/services/matchmaking_service.dart';
 import '../widgets/online_instructions_dialog.dart';
 
-// preference constants
-const String preferencesBox = 'user_preferences';
-
 // define UI states
 enum MatchmakingUIState {
   loading,

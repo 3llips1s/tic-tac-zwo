@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 
+import '../../../../settings/logic/haptics_manager.dart';
+
 class WordleKeyboard extends StatelessWidget {
   final Function(String)? onKeyTap;
   final Map<String, Color> letterStates;
@@ -57,7 +59,12 @@ class WordleKeyboard extends StatelessWidget {
         color: keyColor,
         borderRadius: BorderRadius.circular(4),
         child: InkWell(
-          onTap: onKeyTap != null ? () => onKeyTap!(letter) : null,
+          onTap: onKeyTap != null
+              ? () {
+                  HapticsManager.light();
+                  onKeyTap!(letter);
+                }
+              : null,
           child: Container(
             width: isSpecialKey ? 50 : 28,
             height: 50,

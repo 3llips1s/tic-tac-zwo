@@ -204,7 +204,6 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
         });
       }
     }
-    HapticFeedback.lightImpact();
   }
 
   void _useHint(int hintNumber) async {

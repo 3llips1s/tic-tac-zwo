@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../config/game_config/constants.dart';
+import '../../../../settings/logic/haptics_manager.dart';
 
 class RippleIcon extends StatefulWidget {
   const RippleIcon({
@@ -50,7 +51,7 @@ class _RippleIconState extends State<RippleIcon>
   // trigger single reverse animation
   Future<void> _triggerShrinkExitAnimation() async {
     // haptic feedback
-    HapticFeedback.heavyImpact();
+    HapticsManager.medium();
 
     final originalDuration = animationController.duration;
 

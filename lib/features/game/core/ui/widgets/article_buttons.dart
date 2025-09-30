@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../../config/game_config/game_providers.dart';
+import '../../../../settings/logic/haptics_manager.dart';
 import '../../data/models/game_config.dart';
 
 class ArticleButtons extends ConsumerStatefulWidget {
@@ -47,7 +47,7 @@ class _ArticleButtonsState extends ConsumerState<ArticleButtons> {
                 ),
                 onPressed: buttonEnabled
                     ? () {
-                        HapticFeedback.mediumImpact();
+                        HapticsManager.medium();
                         gameNotifier.makeMove(article);
                       }
                     : null,

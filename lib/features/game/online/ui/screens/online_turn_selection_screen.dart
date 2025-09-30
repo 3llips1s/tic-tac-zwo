@@ -17,6 +17,7 @@ import 'package:tic_tac_zwo/features/game/online/data/services/online_game_servi
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../navigation/routes/route_names.dart';
+import '../../../../settings/logic/haptics_manager.dart';
 
 class OnlineTurnSelectionScreen extends ConsumerStatefulWidget {
   final GameMode gameMode;
@@ -124,8 +125,7 @@ class _OnlineTurnSelectionScreenState
   }
 
   void _toggleReady() {
-    HapticFeedback.mediumImpact();
-
+    HapticsManager.medium();
     setState(() {
       _isReady = !_isReady;
     });

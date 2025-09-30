@@ -14,6 +14,7 @@ import 'package:tic_tac_zwo/features/game/online/data/services/matchmaking_servi
 import 'package:tic_tac_zwo/features/game/online/data/services/online_game_service.dart';
 import 'package:tic_tac_zwo/features/navigation/logic/navigation_provider.dart';
 
+import '../../../settings/logic/audio_manager.dart';
 import '../../core/data/models/player.dart';
 
 class OnlineGameNotifier extends GameNotifier {
@@ -379,6 +380,12 @@ class OnlineGameNotifier extends GameNotifier {
     final GermanNoun currentNoun = state.currentNoun!;
     final bool isCorrectMove = currentNoun.article == selectedArticle;
     final Player previousPlayer = state.currentPlayer;
+
+    if (isCorrectMove) {
+      AudioManager.instance.playCorrectSound();
+    } else {
+      AudioManager.instance.playIncorrectSound();
+    }
 
     var updatedBoard = List<String?>.from(state.board);
     if (isCorrectMove) {

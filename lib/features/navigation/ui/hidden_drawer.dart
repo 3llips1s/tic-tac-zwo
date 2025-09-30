@@ -8,6 +8,7 @@ import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 
 import '../../../config/game_config/constants.dart';
 import '../../profile/ui/widgets/avatar_flag.dart';
+import '../../settings/ui/widgets/audio_settings_popup.dart';
 import '../routes/route_names.dart';
 
 class HiddenDrawer extends ConsumerStatefulWidget {
@@ -106,29 +107,43 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
           children: [
             // log out
             Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: GestureDetector(
-                onTap: authService.isAuthenticated ? _logout : _navigateToLogin,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // logout
-                    Icon(
-                      Icons.logout_rounded,
-                      color: colorRed,
-                      size: 26,
-                    ),
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // sound
+                  AudioSettingsPopup(),
+                  SizedBox(width: 60),
 
-                    const SizedBox(width: 10),
-                    Text(
-                      authService.isAuthenticated ? 'ausloggen' : 'einloggen',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: colorWhite, fontSize: 18),
+                  // log out
+                  GestureDetector(
+                    onTap: authService.isAuthenticated
+                        ? _logout
+                        : _navigateToLogin,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // logout
+                        Icon(
+                          Icons.logout_rounded,
+                          color: colorRed,
+                          size: 26,
+                        ),
+
+                        const SizedBox(width: 10),
+                        Text(
+                          authService.isAuthenticated
+                              ? 'ausloggen'
+                              : 'einloggen',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: colorWhite, fontSize: 18),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -172,6 +187,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
             ),
 
             // profile
+
             InkWell(
               onTap: _navigateToProfile,
               child: Padding(

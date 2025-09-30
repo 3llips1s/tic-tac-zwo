@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/config.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 
+import '../../../settings/logic/audio_manager.dart';
 import '../data/models/game_config.dart';
 import '../data/models/german_noun.dart';
 import '../data/models/player.dart';
@@ -181,6 +182,13 @@ class GameNotifier extends StateNotifier<GameState> {
 
     _timer?.cancel();
     bool isCorrect = state.currentNoun?.article == selectedArticle;
+
+    // sound feedback
+    if (isCorrect) {
+      AudioManager.instance.playCorrectSound();
+    } else {
+      AudioManager.instance.playIncorrectSound();
+    }
 
     final germanNounsRepository = ref.read(germanNounRepoProvider);
     if (state.currentNoun != null) {

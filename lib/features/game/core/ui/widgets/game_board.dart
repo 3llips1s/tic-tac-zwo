@@ -7,6 +7,8 @@ import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
+import '../../../../settings/logic/audio_manager.dart';
+import '../../../../settings/logic/haptics_manager.dart';
 
 class GameBoard extends ConsumerWidget {
   final GameConfig gameConfig;
@@ -14,6 +16,14 @@ class GameBoard extends ConsumerWidget {
   const GameBoard({super.key, required this.gameConfig});
 
   void onCellTapped(WidgetRef ref, int index) {
+    final gameState = ref.read(GameProviders.getStateProvider(ref, gameConfig));
+
+    // play sound when cell is selected
+    if (gameState.board[index] == null && !gameState.isGameOver) {
+      HapticsManager.light();
+      AudioManager.instance.playClickSound();
+    }
+
     final gameNotifier =
         ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
 

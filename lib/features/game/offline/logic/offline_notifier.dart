@@ -122,9 +122,9 @@ class OfflineNotifier extends GameNotifier {
   bool _shouldMakeRandomMove() {
     switch (difficulty) {
       case AIDifficulty.easy:
-        return _random.nextDouble() < 0.5;
+        return _random.nextDouble() < 0.3;
       case AIDifficulty.medium:
-        return _random.nextDouble() < 0.25;
+        return _random.nextDouble() < 0.15;
       case AIDifficulty.hard:
         return _random.nextDouble() < 0.05;
     }

@@ -19,6 +19,8 @@ import 'config/game_config/theme.dart';
 import 'features/game/online/data/models/german_noun_hive.dart';
 import 'features/navigation/routes/app_router.dart';
 import 'features/navigation/routes/route_names.dart';
+import 'features/settings/logic/audio_manager.dart';
+import 'features/settings/logic/haptics_manager.dart';
 
 void main() async {
   try {
@@ -73,6 +75,18 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // initialize audio and haptics managers
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) {
+        AudioManager.instance.initialize(ref).then(
+          (_) {
+            AudioManager.instance.playBackgroundMusic();
+          },
+        );
+        HapticsManager.initialize(ref);
+      },
+    );
+
     return Wiredash(
       projectId: AppConfig.wiredashProjectId,
       secret: AppConfig.wiredashSecret,

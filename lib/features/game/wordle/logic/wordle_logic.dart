@@ -3,6 +3,7 @@ import 'package:tic_tac_zwo/features/game/wordle/data/models/guess_model.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/models/wordle_game_state.dart';
 import 'package:tic_tac_zwo/features/game/wordle/data/repositories/wordle_word_repo.dart';
 
+import '../../../settings/logic/audio_manager.dart';
 import '../data/services/wordle_coins_service.dart';
 import 'wordle_hints_service.dart';
 
@@ -67,6 +68,9 @@ class WordleLogic {
       newStatus = GameStatus.won;
       newEndTime = DateTime.now();
 
+      // play correct sound
+      AudioManager.instance.playCorrectSound();
+
       // calculate and give coins
       final coinsEarned = calculateCoinsEarned(newGuesses.length);
       final noHintsBonus = state.hintsUsed == 0 ? 5 : 0;
@@ -77,6 +81,9 @@ class WordleLogic {
     } else if (newGuesses.length >= state.maxAttempts) {
       newStatus = GameStatus.lost;
       newEndTime = DateTime.now();
+
+      // play incorrect sound
+      AudioManager.instance.playIncorrectSound();
     }
 
     return state.copyWith(
