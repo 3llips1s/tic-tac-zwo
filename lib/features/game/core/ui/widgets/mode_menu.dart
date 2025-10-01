@@ -5,7 +5,6 @@ import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
-import '../../../../settings/logic/haptics_manager.dart';
 import 'neu_button.dart';
 
 class ModeMenu extends StatefulWidget {
@@ -43,7 +42,6 @@ class _ModeMenuState extends State<ModeMenu> {
     if (!mounted) return;
 
     try {
-      HapticsManager.light();
       final GameMode selectedGameMode = gameModeIcons[index]['gameMode'];
       await _navigateToSelectedGameMode(selectedGameMode);
     } finally {

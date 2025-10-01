@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../settings/logic/haptics_manager.dart';

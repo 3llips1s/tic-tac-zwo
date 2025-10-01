@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../../settings/logic/haptics_manager.dart';
 import '../widgets/app_title.dart';
 import '../widgets/mode_menu.dart';
 
@@ -32,10 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       children: [
         Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // app title
             AppTitle(),
+
+            Spacer(),
 
             // mode menu
             Padding(
@@ -51,7 +53,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.only(right: 8, bottom: 16),
             child: IconButton(
-              onPressed: widget.onToggleDrawer,
+              onPressed: () {
+                HapticsManager.light();
+                widget.onToggleDrawer();
+              },
               icon: widget.isDrawerOpen
                   ? SvgPicture.asset(
                       'assets/images/close_menu.svg',
@@ -63,7 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   : SvgPicture.asset(
                       'assets/images/open_menu.svg',
                       colorFilter: const ColorFilter.mode(
-                          Colors.black54, BlendMode.srcIn),
+                        Colors.black54,
+                        BlendMode.srcIn,
+                      ),
                       height: 40,
                       width: 40,
                     ),

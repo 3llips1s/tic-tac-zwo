@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +13,7 @@ import 'package:tic_tac_zwo/features/game/wordle/ui/widgets/wordle_game_grid.dar
 
 import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
+import '../../../../settings/logic/audio_manager.dart';
 import '../../data/models/wordle_game_state.dart';
 import '../../data/repositories/wordle_word_repo.dart';
 import '../widgets/coin_display.dart';
@@ -42,6 +42,8 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
     _initHoverAnimation();
 
     _checkAndShowInstructions();
+
+    AudioManager.instance.pauseBackgroundMusic();
   }
 
   Future<void> _checkAndShowInstructions() async {
@@ -502,6 +504,7 @@ class _WordleGameScreenState extends ConsumerState<WordleGameScreen>
   void dispose() {
     _guessController.dispose();
     _hoverController.dispose();
+    AudioManager.instance.resumeBackgroundMusic();
     super.dispose();
   }
 }

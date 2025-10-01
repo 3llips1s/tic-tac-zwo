@@ -20,6 +20,7 @@ import 'features/game/online/data/models/german_noun_hive.dart';
 import 'features/navigation/routes/app_router.dart';
 import 'features/navigation/routes/route_names.dart';
 import 'features/settings/logic/audio_manager.dart';
+import 'features/settings/logic/audio_settings_listener.dart';
 import 'features/settings/logic/haptics_manager.dart';
 
 void main() async {
@@ -76,28 +77,26 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // initialize audio and haptics managers
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) {
-        AudioManager.instance.initialize(ref).then(
-          (_) {
-            AudioManager.instance.playBackgroundMusic();
-          },
-        );
-        HapticsManager.initialize(ref);
-      },
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AudioManager.instance.initialize(ref).then((_) {
+        AudioManager.instance.playBackgroundMusic();
+      });
+      HapticsManager.initialize(ref);
+    });
 
-    return Wiredash(
-      projectId: AppConfig.wiredashProjectId,
-      secret: AppConfig.wiredashSecret,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: appTheme,
-        onGenerateRoute: AppRouter.generateRoute,
-        initialRoute: RouteNames.home,
-        scaffoldMessengerKey: scaffoldMessengerKey,
-        home: DataInitializationWrapper(
-          child: const App(),
+    return AudioSettingsListener(
+      child: Wiredash(
+        projectId: AppConfig.wiredashProjectId,
+        secret: AppConfig.wiredashSecret,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: appTheme,
+          onGenerateRoute: AppRouter.generateRoute,
+          initialRoute: RouteNames.home,
+          scaffoldMessengerKey: scaffoldMessengerKey,
+          home: DataInitializationWrapper(
+            child: const App(),
+          ),
         ),
       ),
     );

@@ -164,6 +164,7 @@ class GameNotifier extends StateNotifier<GameState> {
 
     var newCellPressed = List<bool>.from(state.cellPressed);
     if (state.selectedCellIndex != null) {
+      AudioManager.instance.playIncorrectSound();
       newCellPressed[state.selectedCellIndex!] = false;
     }
 

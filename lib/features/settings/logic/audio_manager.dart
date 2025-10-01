@@ -18,6 +18,7 @@ class AudioManager {
   late AudioPlayer _clickPlayer;
   late AudioPlayer _correctPlayer;
   late AudioPlayer _incorrectPlayer;
+  late AudioPlayer _winPlayer;
 
   WidgetRef? _ref;
   bool _isInitialized = false;
@@ -31,6 +32,7 @@ class AudioManager {
     _clickPlayer = AudioPlayer();
     _correctPlayer = AudioPlayer();
     _incorrectPlayer = AudioPlayer();
+    _winPlayer = AudioPlayer();
 
     try {
       // preload music + loop
@@ -41,6 +43,7 @@ class AudioManager {
       await _clickPlayer.setAsset('assets/sounds/click.mp3');
       await _correctPlayer.setAsset('assets/sounds/correct.mp3');
       await _incorrectPlayer.setAsset('assets/sounds/incorrect.mp3');
+      await _winPlayer.setAsset('assets/sounds/win.mp3');
 
       _isInitialized = true;
     } catch (e) {
@@ -125,10 +128,22 @@ class AudioManager {
     }
   }
 
+  Future<void> playWinSound() async {
+    if (!_isInitialized || !_areSoundEffectsEnabled) return;
+
+    try {
+      await _winPlayer.seek(Duration.zero);
+      _winPlayer.play();
+    } catch (e) {
+      developer.log('Error playing win sound: $e', name: 'AudioManager');
+    }
+  }
+
   void dispose() {
     _musicPlayer.dispose();
     _clickPlayer.dispose();
     _correctPlayer.dispose();
     _incorrectPlayer.dispose();
+    _winPlayer.dispose();
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../config/game_config/constants.dart';
-import '../../../../settings/logic/haptics_manager.dart';
 
 class HintButton extends StatelessWidget {
   final bool isActive;
@@ -40,12 +39,7 @@ class HintButton extends StatelessWidget {
         : iconWidget;
 
     return GestureDetector(
-      onTap: isActive
-          ? () {
-              HapticsManager.light();
-              onPressed?.call();
-            }
-          : onInsufficientCoins,
+      onTap: isActive ? onPressed : onInsufficientCoins,
       child: content,
     );
   }

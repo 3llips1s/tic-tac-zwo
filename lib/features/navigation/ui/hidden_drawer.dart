@@ -8,7 +8,7 @@ import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 
 import '../../../config/game_config/constants.dart';
 import '../../profile/ui/widgets/avatar_flag.dart';
-import '../../settings/ui/widgets/audio_settings_popup.dart';
+import '../../settings/ui/widgets/audio_settings_menu.dart';
 import '../routes/route_names.dart';
 
 class HiddenDrawer extends ConsumerStatefulWidget {
@@ -112,7 +112,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   // sound
-                  AudioSettingsPopup(),
+                  AudioSettingsMenu(),
                   SizedBox(width: 60),
 
                   // log out
