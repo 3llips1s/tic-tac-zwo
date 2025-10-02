@@ -26,6 +26,7 @@ import '../../../../../config/game_config/constants.dart';
 import '../../../../../config/game_config/game_providers.dart';
 import '../../../../navigation/routes/route_names.dart';
 import '../../../../settings/logic/audio_manager.dart';
+import '../../../../settings/logic/haptics_manager.dart';
 import '../../../online/ui/widgets/online_game_over_dialog.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -292,7 +293,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    AudioManager.instance.resumeBackgroundMusic(fade: true);
+    print('GameScreen disposing - calling resumeBackgroundMusic');
+    AudioManager.instance.resumeBackgroundMusic(fade: false);
     super.dispose();
   }
 
@@ -439,6 +441,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
                           child: GestureDetector(
                             onTap: activateSaveButton
                                 ? () async {
+                                    HapticsManager.light();
+
                                     // save word
                                     if (_isCurrentNounSaved) {
                                       if (context.mounted) {

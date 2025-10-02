@@ -6,23 +6,24 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tic_tac_zwo/config/game_config/constants.dart';
 import 'package:tic_tac_zwo/features/profile/data/repositories/user_profile_repo.dart';
-import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/flag.dart';
 import 'package:tic_tac_zwo/features/auth/ui/widgets/otp_input_field.dart';
 
 import '../../../navigation/routes/route_names.dart';
+import '../../logic/auth_providers.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _fadeController;
@@ -365,7 +366,7 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = true;
         });
 
-        final authService = AuthService();
+        final authService = ref.read(authServiceProvider);
         final email = emailController.text.trim();
 
         // reviewer
@@ -466,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = true;
         });
 
-        final authService = AuthService();
+        final authService = ref.read(authServiceProvider);
         final otpCode = _getOtpCode();
 
         // Verify OTP
@@ -530,7 +531,7 @@ class _LoginScreenState extends State<LoginScreen>
         }
 
         // Get the current user from already verified OTP
-        final authService = AuthService();
+        final authService = ref.read(authServiceProvider);
         final userId = authService.currentUserId;
 
         if (userId == null) {
@@ -688,7 +689,7 @@ class _LoginScreenState extends State<LoginScreen>
                 _debounceTimer = Timer(
                   Duration(milliseconds: 500),
                   () async {
-                    final authService = AuthService();
+                    final authService = ref.read(authServiceProvider);
                     final userExists = await authService.checkUserExists(value);
                     setState(() {
                       _isExistingUser = userExists;
@@ -914,7 +915,7 @@ class _LoginScreenState extends State<LoginScreen>
                 onTap: _canResendOTP
                     ? () async {
                         try {
-                          final authService = AuthService();
+                          final authService = ref.read(authServiceProvider);
                           await authService.signInWithOTP(emailController.text);
                           _showSnackBar('Code erneut gesendet.');
                           setState(() {

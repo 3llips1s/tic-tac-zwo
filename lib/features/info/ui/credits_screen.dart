@@ -202,6 +202,7 @@ class CreditsScreen extends StatelessWidget {
                   _buildCreditText(context, 'Mwaki'),
                   _buildCreditText(context, 'Mwangizzle'),
                   _buildCreditText(context, 'Betty'),
+                  _buildCreditText(context, 'Munj'),
                   _buildCreditText(context, 'Irene'),
                   const SizedBox(height: 80),
                 ],

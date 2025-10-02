@@ -37,7 +37,7 @@ class _AudioSettingsMenuState extends ConsumerState<AudioSettingsMenu> {
                 followerAnchor: Alignment.topRight,
                 offset: Offset(175, 7),
                 child: Material(
-                  color: colorWhite.withOpacity(0.9),
+                  color: colorWhite.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(9),
                   elevation: 24,
                   child: _MenuContent(onClose: _hideMenu),
@@ -77,6 +77,7 @@ class _AudioSettingsMenuState extends ConsumerState<AudioSettingsMenu> {
       link: _layerLink,
       child: GestureDetector(
         onTap: () {
+          HapticsManager.light();
           if (_overlayEntry == null) {
             _showMenu();
           } else {
@@ -134,6 +135,8 @@ class _MenuContent extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const SizedBox(height: 12),
+
           // Töne
           _MenuItem(
             icon: Icons.volume_mute_rounded,
@@ -145,7 +148,7 @@ class _MenuContent extends ConsumerWidget {
               notifier.toggleSoundEffects();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Musik
           _MenuItem(
@@ -158,7 +161,7 @@ class _MenuContent extends ConsumerWidget {
               notifier.toggleMusic();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Haptik
           _MenuItem(
@@ -171,7 +174,7 @@ class _MenuContent extends ConsumerWidget {
               notifier.toggleHaptics();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Help text
           Row(
@@ -180,7 +183,7 @@ class _MenuContent extends ConsumerWidget {
               Text(
                 'Keine Haptik?',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: Colors.black54,
                     ),
               ),
@@ -192,12 +195,13 @@ class _MenuContent extends ConsumerWidget {
                 },
                 child: const Icon(
                   Icons.settings_rounded,
-                  size: 20,
-                  color: Colors.black54,
+                  size: 28,
+                  color: colorBlack,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );

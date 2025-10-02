@@ -1,7 +1,9 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 
 import '../routes/route_names.dart';
 
@@ -67,3 +69,12 @@ class NavigationService {
     }
   }
 }
+
+// create navigation service instance
+// inject auth service automatically
+final navigationSErviceProvider = Provider<NavigationService>(
+  (ref) {
+    final authService = ref.watch(authServiceProvider);
+    return NavigationService(authService);
+  },
+);

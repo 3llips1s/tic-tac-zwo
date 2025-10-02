@@ -24,7 +24,7 @@ class HapticsManager {
     if (!_isEnabled) return;
     if (_hasVibrator == null) await _checkVibrator();
     if (_hasVibrator == true) {
-      await Vibration.vibrate(duration: 8, amplitude: 64);
+      await Vibration.vibrate(duration: 15, amplitude: 128);
     }
   }
 
@@ -32,7 +32,7 @@ class HapticsManager {
     if (!_isEnabled) return;
     if (_hasVibrator == null) await _checkVibrator();
     if (_hasVibrator == true) {
-      await Vibration.vibrate(duration: 15, amplitude: 128);
+      await Vibration.vibrate(duration: 30, amplitude: 128);
     }
   }
 }

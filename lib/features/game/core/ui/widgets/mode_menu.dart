@@ -1,20 +1,21 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 
 import '../../../../../config/game_config/config.dart';
 import '../../../../../config/game_config/constants.dart';
 import '../../../../navigation/routes/route_names.dart';
 import 'neu_button.dart';
 
-class ModeMenu extends StatefulWidget {
+class ModeMenu extends ConsumerStatefulWidget {
   const ModeMenu({super.key});
 
   @override
-  State<ModeMenu> createState() => _ModeMenuState();
+  ConsumerState<ModeMenu> createState() => _ModeMenuState();
 }
 
-class _ModeMenuState extends State<ModeMenu> {
+class _ModeMenuState extends ConsumerState<ModeMenu> {
   bool _isMenuVisible = false;
 
   @override
@@ -72,7 +73,7 @@ class _ModeMenuState extends State<ModeMenu> {
         }
 
         // determine route based on auth
-        final authService = AuthService();
+        final authService = ref.read(authServiceProvider);
         final route = authService.isAuthenticated
             ? RouteNames.matchmaking
             : RouteNames.login;

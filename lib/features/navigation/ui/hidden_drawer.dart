@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tic_tac_zwo/features/auth/data/services/auth_service.dart';
+import 'package:tic_tac_zwo/features/auth/logic/auth_providers.dart';
 import 'package:tic_tac_zwo/features/navigation/logic/navigation_service.dart';
 import 'package:tic_tac_zwo/features/profile/logic/user_profile_providers.dart';
 
@@ -21,23 +21,18 @@ class HiddenDrawer extends ConsumerStatefulWidget {
 }
 
 class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
-  final authService = AuthService();
-  late final NavigationService _navigationService;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _navigationService = NavigationService(authService);
-  }
-
   void _logout() async {
-    if (mounted) {
-      Navigator.pushNamed(context, RouteNames.home);
-      _showSnackBar('Du wurdest ausgeloggt.');
-    }
-    if (authService.isAuthenticated) {
+    final authService = ref.read(authServiceProvider);
+    try {
       await authService.signOut();
+      if (mounted) {
+        Navigator.pushNamed(context, RouteNames.home);
+        _showSnackBar('Du wurdest ausgeloggt.');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Fehler beim ausloggen.');
+      }
     }
   }
 
@@ -45,15 +40,6 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(
           context, RouteNames.login, (route) => false);
-    }
-  }
-
-  void _navigateToProfile() {
-    if (mounted) {
-      _navigationService.navigateFromDrawer(
-        context: context,
-        routeName: RouteNames.profile,
-      );
     }
   }
 
@@ -92,6 +78,13 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final navigationService = ref.watch(navigationSErviceProvider);
+    final authStateAsync = ref.watch(authStateChangesProvider);
+    final isAuthenticated = authStateAsync.maybeWhen(
+      data: (authState) => authState.session?.user != null,
+      orElse: () => false,
+    );
+
     final userProfileAsync = ref.watch(cachedCurrentUserProfileProvider);
 
     return Container(
@@ -105,7 +98,6 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // log out
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Row(
@@ -117,9 +109,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
 
                   // log out
                   GestureDetector(
-                    onTap: authService.isAuthenticated
-                        ? _logout
-                        : _navigateToLogin,
+                    onTap: isAuthenticated ? _logout : _navigateToLogin,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -132,9 +122,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
 
                         const SizedBox(width: 10),
                         Text(
-                          authService.isAuthenticated
-                              ? 'ausloggen'
-                              : 'einloggen',
+                          isAuthenticated ? 'ausloggen' : 'einloggen',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -154,7 +142,7 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
                     (drawerItem) => InkWell(
                       onTap: () {
                         final routeName = drawerItem['route'] as String;
-                        _navigationService.navigateFromDrawer(
+                        navigationService.navigateFromDrawer(
                           context: context,
                           routeName: routeName,
                         );
@@ -187,9 +175,9 @@ class _HiddenDrawerState extends ConsumerState<HiddenDrawer> {
             ),
 
             // profile
-
             InkWell(
-              onTap: _navigateToProfile,
+              onTap: () => navigationService.navigateFromDrawer(
+                  context: context, routeName: RouteNames.profile),
               child: Padding(
                 padding: EdgeInsets.only(bottom: kToolbarHeight * 0.5),
                 child: userProfileAsync.when(

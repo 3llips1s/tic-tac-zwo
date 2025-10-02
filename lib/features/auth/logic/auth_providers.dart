@@ -14,6 +14,9 @@ final authStateChangesProvider = StreamProvider<AuthState>((ref) {
 });
 
 final currentUserIdProvider = Provider<String?>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  return authService.currentUserId;
+  final authStateAsync = ref.watch(authStateChangesProvider);
+  return authStateAsync.maybeWhen(
+    data: (authState) => authState.session?.user.id,
+    orElse: () => null,
+  );
 });
