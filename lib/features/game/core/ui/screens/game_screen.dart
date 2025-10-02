@@ -173,7 +173,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
     WidgetsBinding.instance.addObserver(this);
 
     // pause background music
-    AudioManager.instance.pauseBackgroundMusic();
+    AudioManager.instance.pauseBackgroundMusic(fade: true);
 
     // navigation listener
     ref.listenManual<NavigationTarget?>(
@@ -292,7 +292,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    AudioManager.instance.resumeBackgroundMusic();
+    AudioManager.instance.resumeBackgroundMusic(fade: true);
     super.dispose();
   }
 

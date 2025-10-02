@@ -470,6 +470,12 @@ class OnlineGameNotifier extends GameNotifier {
       }
     }
 
+    if (gameResult != 'Draw' &&
+        winner != null &&
+        winner.userId == currentUserId) {
+      AudioManager.instance.playWinSound();
+    }
+
     state = state.copyWith(
       isGameOver: true,
       winningPlayer: winner,

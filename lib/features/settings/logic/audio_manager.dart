@@ -24,6 +24,8 @@ class AudioManager {
   bool _isInitialized = false;
   Duration _lastMusicPosition = Duration.zero;
 
+  bool _musicShouldBePlaying = true;
+
   Future<void> initialize(WidgetRef ref) async {
     if (_isInitialized) return;
 
@@ -61,37 +63,81 @@ class AudioManager {
     return _ref!.read(settingsProvider).soundEffectsEnabled;
   }
 
-  Future<void> playBackgroundMusic() async {
+  Future<void> playBackgroundMusic({bool fade = false}) async {
     if (!_isInitialized || !_isMusicEnabled) return;
+
+    _musicShouldBePlaying = true;
+
     try {
       if (_lastMusicPosition != Duration.zero) {
         await _musicPlayer.seek(_lastMusicPosition);
       }
-      await _musicPlayer.play();
+
+      if (fade) {
+        await _musicPlayer.setVolume(0.0);
+        await _musicPlayer.play();
+
+        // fade in
+        _fadeVolume(0.0, 1.0, Duration(milliseconds: 900));
+      } else {
+        await _musicPlayer.setVolume(1.0);
+        await _musicPlayer.play();
+      }
     } catch (e) {
       developer.log('Error playing background music: $e', name: 'AudioManager');
     }
   }
 
-  Future<void> pauseBackgroundMusic() async {
+  Future<void> pauseBackgroundMusic({bool fade = false}) async {
     if (!_isInitialized) return;
+
+    _musicShouldBePlaying = true;
 
     try {
       _lastMusicPosition = _musicPlayer.position;
-      await _musicPlayer.pause();
+
+      if (fade) {
+        // fade out
+        await _fadeVolume(1.0, 0.0, Duration(milliseconds: 900));
+        await _musicPlayer.pause();
+        // reset for next play
+        await _musicPlayer.setVolume(1.0);
+      } else {
+        await _musicPlayer.pause();
+      }
     } catch (e) {
       developer.log('Error pausing background music: $e', name: 'AudioManager');
     }
   }
 
-  Future<void> resumeBackgroundMusic() async {
+  Future<void> resumeBackgroundMusic({bool fade = false}) async {
     if (!_isInitialized || !_isMusicEnabled) return;
 
+    _musicShouldBePlaying = true;
+
     try {
-      await _musicPlayer.play();
+      if (fade) {
+        await _musicPlayer.setVolume(0.0);
+        await _musicPlayer.play();
+        _fadeVolume(0.0, 1.0, Duration(milliseconds: 900));
+      } else {
+        await _musicPlayer.setVolume(1.0);
+        await _musicPlayer.play();
+      }
     } catch (e) {
       developer.log('Error resuming background music: $e',
           name: 'AudioManager');
+    }
+  }
+
+  Future<void> _fadeVolume(double from, double to, Duration duration) async {
+    const steps = 20;
+    final stepDuration = duration.inMilliseconds ~/ steps;
+    final volumeStep = (to - from) / steps;
+
+    for (int i = 0; i <= steps; i++) {
+      await _musicPlayer.setVolume(from + (volumeStep * i));
+      await Future.delayed(Duration(milliseconds: stepDuration));
     }
   }
 
@@ -138,6 +184,8 @@ class AudioManager {
       developer.log('Error playing win sound: $e', name: 'AudioManager');
     }
   }
+
+  bool get musicShouldBePlaying => _musicShouldBePlaying;
 
   void dispose() {
     _musicPlayer.dispose();
