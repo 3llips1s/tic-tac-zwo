@@ -161,8 +161,9 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
+      await _clickPlayer.stop();
       await _clickPlayer.seek(Duration.zero);
-      _clickPlayer.play();
+      await _clickPlayer.play();
     } catch (e) {
       developer.log('Error playing click sound: $e', name: 'AudioManager');
     }
@@ -172,20 +173,32 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
+      await _correctPlayer.stop();
       await _correctPlayer.seek(Duration.zero);
-      _correctPlayer.play();
+      await _correctPlayer.play();
     } catch (e) {
       developer.log('Error playing correct sound: $e', name: 'AudioManager');
     }
   }
 
   Future<void> playIncorrectSound() async {
-    if (!_isInitialized || !_areSoundEffectsEnabled) return;
+    print(
+        '[AudioManager] playIncorrectSound called - initialized: $_isInitialized, sfx enabled: $_areSoundEffectsEnabled');
+
+    if (!_isInitialized || !_areSoundEffectsEnabled) {
+      print('[AudioManager] Early return from playIncorrectSound');
+      return;
+    }
 
     try {
+      print('[AudioManager] About to seek and play incorrect sound');
+      await _incorrectPlayer.stop();
       await _incorrectPlayer.seek(Duration.zero);
-      _incorrectPlayer.play();
+      await _incorrectPlayer.play();
+      print(
+          '[AudioManager] Incorrect sound play() called, player state: ${_incorrectPlayer.playerState}');
     } catch (e) {
+      print('[AudioManager] ERROR in playIncorrectSound: $e');
       developer.log('Error playing incorrect sound: $e', name: 'AudioManager');
     }
   }
@@ -194,8 +207,9 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
+      await _winPlayer.stop();
       await _winPlayer.seek(Duration.zero);
-      _winPlayer.play();
+      await _winPlayer.play();
     } catch (e) {
       developer.log('Error playing win sound: $e', name: 'AudioManager');
     }

@@ -164,7 +164,6 @@ class GameNotifier extends StateNotifier<GameState> {
 
     var newCellPressed = List<bool>.from(state.cellPressed);
     if (state.selectedCellIndex != null) {
-      AudioManager.instance.playIncorrectSound();
       newCellPressed[state.selectedCellIndex!] = false;
     }
 
@@ -184,12 +183,16 @@ class GameNotifier extends StateNotifier<GameState> {
     _timer?.cancel();
     bool isCorrect = state.currentNoun?.article == selectedArticle;
 
+    print('[makeMove] isCorrect: $isCorrect, about to play sound');
+
     // sound feedback
     if (isCorrect) {
       AudioManager.instance.playCorrectSound();
     } else {
       AudioManager.instance.playIncorrectSound();
     }
+
+    print('[makeMove] Sound method called, continuing...');
 
     final germanNounsRepository = ref.read(germanNounRepoProvider);
     if (state.currentNoun != null) {

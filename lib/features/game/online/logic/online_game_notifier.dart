@@ -529,8 +529,6 @@ class OnlineGameNotifier extends GameNotifier {
     _turnTimer?.cancel();
     _cancelInactivityTimer();
 
-    AudioManager.instance.playIncorrectSound();
-
     if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
       developer.log(
           '[OnlineGameNotifier] Cannot forfeit turn: Invalid state for forfeiture.');
