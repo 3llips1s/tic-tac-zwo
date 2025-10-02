@@ -111,36 +111,22 @@ class AudioManager {
   }
 
   Future<void> resumeBackgroundMusic({bool fade = false}) async {
-    print(
-        'resumeBackgroundMusic called - isInitialized: $_isInitialized, isMusicEnabled: $_isMusicEnabled');
-
     if (!_isInitialized || !_isMusicEnabled) {
-      print('Early return - not initialized or music disabled');
       return;
     }
 
     _musicShouldBePlaying = true;
 
-    print(
-        'About to resume - fade: $fade, player state: ${_musicPlayer.playerState}');
-
     try {
-      print(
-          'resumeBackgroundMusic called - isInitialized: $_isInitialized, isMusicEnabled: $_isMusicEnabled');
       if (fade) {
         await _musicPlayer.setVolume(0.0);
-        print('Volume set to 0, about to play');
         await _musicPlayer.play();
-        print('play called, starting fade');
         await _fadeVolume(0.0, 1.0, Duration(milliseconds: 900));
-        print('fade complete');
       } else {
         await _musicPlayer.setVolume(1.0);
         await _musicPlayer.play();
-        print('Music resumed without fade');
       }
     } catch (e) {
-      print('ERROR in resumeBackgroundMusic: $e');
       developer.log('Error resuming background music: $e',
           name: 'AudioManager');
     }
@@ -182,23 +168,15 @@ class AudioManager {
   }
 
   Future<void> playIncorrectSound() async {
-    print(
-        '[AudioManager] playIncorrectSound called - initialized: $_isInitialized, sfx enabled: $_areSoundEffectsEnabled');
-
     if (!_isInitialized || !_areSoundEffectsEnabled) {
-      print('[AudioManager] Early return from playIncorrectSound');
       return;
     }
 
     try {
-      print('[AudioManager] About to seek and play incorrect sound');
       await _incorrectPlayer.stop();
       await _incorrectPlayer.seek(Duration.zero);
       await _incorrectPlayer.play();
-      print(
-          '[AudioManager] Incorrect sound play() called, player state: ${_incorrectPlayer.playerState}');
     } catch (e) {
-      print('[AudioManager] ERROR in playIncorrectSound: $e');
       developer.log('Error playing incorrect sound: $e', name: 'AudioManager');
     }
   }

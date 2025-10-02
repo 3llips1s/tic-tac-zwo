@@ -16,8 +16,6 @@ class SettingsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('Toggle rebuilding - value: $value, activeColor: $activeColor');
-
     const double toggleWidth = 72;
     const double toggleHeight = 32;
     const double thumbSize = 20;

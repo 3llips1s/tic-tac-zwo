@@ -293,7 +293,6 @@ class _GameScreenState extends ConsumerState<GameScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    print('GameScreen disposing - calling resumeBackgroundMusic');
     AudioManager.instance.resumeBackgroundMusic(fade: false);
     super.dispose();
   }

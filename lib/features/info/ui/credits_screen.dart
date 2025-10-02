@@ -169,8 +169,8 @@ class CreditsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
 
-                  // images
-                  _buildHeading(context, 'Bild'),
+                  // music
+                  _buildHeading(context, 'Sound'),
                   const SizedBox(height: 8),
 
                   _buildCreditLink(
@@ -178,6 +178,42 @@ class CreditsScreen extends StatelessWidget {
                     'Tic Tac Toe von ',
                     'Marcela Artola - Pexels',
                     'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
+                  ),
+                  const SizedBox(height: 40),
+
+                  // images
+                  _buildHeading(context, 'Bild'),
+                  const SizedBox(height: 8),
+
+                  _buildCreditLink(
+                    context,
+                    'Padsound von ',
+                    'Samuel F. Johanns - Pixabay',
+                    'https://pixabay.com/sound-effects/padsound-meditation-21384/',
+                  ),
+                  _buildCreditLink(
+                    context,
+                    'Water Drip von ',
+                    'Spanrucker - Pixabay',
+                    'https://pixabay.com/sound-effects/water-drip-45622/',
+                  ),
+                  _buildCreditLink(
+                    context,
+                    'Marimba Bloop von ',
+                    'Floraphonic - Pixabay',
+                    'https://pixabay.com/sound-effects/marimba-bloop-2-188149/',
+                  ),
+                  _buildCreditLink(
+                    context,
+                    'Bubblepop von ',
+                    'Linhmitto - Pixabay',
+                    'https://pixabay.com/sound-effects/bubblepop-254773/',
+                  ),
+                  _buildCreditLink(
+                    context,
+                    'Applause von ',
+                    'Nick Rave - Pixabay',
+                    'https://pixabay.com/sound-effects/moreclaps-104533/',
                   ),
                   const SizedBox(height: 40),
 
