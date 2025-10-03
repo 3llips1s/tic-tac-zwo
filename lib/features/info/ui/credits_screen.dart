@@ -175,18 +175,6 @@ class CreditsScreen extends StatelessWidget {
 
                   _buildCreditLink(
                     context,
-                    'Tic Tac Toe von ',
-                    'Marcela Artola - Pexels',
-                    'https://www.pexels.com/photo/tic-tac-toe-game-on-black-surface-28454507/',
-                  ),
-                  const SizedBox(height: 40),
-
-                  // images
-                  _buildHeading(context, 'Bild'),
-                  const SizedBox(height: 8),
-
-                  _buildCreditLink(
-                    context,
                     'Padsound von ',
                     'Samuel F. Johanns - Pixabay',
                     'https://pixabay.com/sound-effects/padsound-meditation-21384/',
@@ -239,7 +227,6 @@ class CreditsScreen extends StatelessWidget {
                   _buildCreditText(context, 'Mwangizzle'),
                   _buildCreditText(context, 'Betty'),
                   _buildCreditText(context, 'Munj'),
-                  _buildCreditText(context, 'Irene'),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -302,7 +289,6 @@ class CreditsScreen extends StatelessWidget {
         Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorGrey600);
     final linkStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Colors.blue,
-          decoration: TextDecoration.underline,
         );
 
     return Padding(

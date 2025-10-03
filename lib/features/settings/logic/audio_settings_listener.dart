@@ -24,8 +24,8 @@ class _AudioSettingsListenerState extends ConsumerState<AudioSettingsListener> {
     if (_previousMusicEnabled != null &&
         _previousMusicEnabled != settings.musicEnabled) {
       // only resume if music should be playing
-      if (settings.musicEnabled && AudioManager.instance.musicShouldBePlaying) {
-        AudioManager.instance.playBackgroundMusic();
+      if (settings.musicEnabled) {
+        AudioManager.instance.resumeBackgroundMusic();
       } else if (!settings.musicEnabled) {
         AudioManager.instance.pauseBackgroundMusic();
       }

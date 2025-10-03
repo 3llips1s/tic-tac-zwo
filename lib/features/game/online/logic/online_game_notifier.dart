@@ -496,6 +496,7 @@ class OnlineGameNotifier extends GameNotifier {
       board: board,
       player1Score: p1Score,
       player2Score: p2Score,
+      gameStatus: 'completed',
     );
   }
 
@@ -528,12 +529,25 @@ class OnlineGameNotifier extends GameNotifier {
   Future<void> forfeitTurn() async {
     _turnTimer?.cancel();
     _cancelInactivityTimer();
+    AudioManager.instance.playIncorrectSound();
 
     if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
       developer.log(
           '[OnlineGameNotifier] Cannot forfeit turn: Invalid state for forfeiture.');
       return;
     }
+
+    state = state.copyWith(
+      selectedCellIndex: null,
+      allowNullSelectedCellIndex: true,
+      currentNoun: null,
+      allowNullCurrentNoun: true,
+      isTimerActive: false,
+      onlineGamePhase: OnlineGamePhase.waiting,
+    );
+
+    developer.log(
+        '[DEBUG FORFEIT] Phase: ${state.onlineGamePhase}, SelectedIndex: ${state.selectedCellIndex}');
 
     final Player previousPlayer = state.currentPlayer;
     final Player nextPlayer = state.players
@@ -618,6 +632,11 @@ class OnlineGameNotifier extends GameNotifier {
     OnlineGamePhase serverPhase =
         OnlineGamePhaseExtension.fromString(gameData['online_game_phase']);
 
+    final int? incomingSelectedCellIndex = gameData['selected_cell_index'];
+    final int? selectedCellToApply = (serverPhase == OnlineGamePhase.waiting)
+        ? null
+        : incomingSelectedCellIndex;
+
     GermanNoun? noun;
     final String? currentNounId = gameData['current_noun_id'];
 
@@ -661,7 +680,7 @@ class OnlineGameNotifier extends GameNotifier {
     // update state with incoming data
     state = state.copyWith(
       board: List<String?>.from(gameData['board'] ?? List.filled(9, null)),
-      selectedCellIndex: gameData['selected_cell_index'],
+      selectedCellIndex: selectedCellToApply,
       allowNullSelectedCellIndex: true,
       currentNoun: noun,
       allowNullCurrentNoun: true,
@@ -691,6 +710,28 @@ class OnlineGameNotifier extends GameNotifier {
       gameStatus: serverGameStatus,
       onlineRematchStatus: newOnlineRematchStatus,
     );
+
+    // audio feedback
+    if (!_isLocalPlayerTurn &&
+        !_isInitialGameLoad &&
+        !previousState.isGameOver) {
+      // opponent selected a cell
+      if (serverPhase == OnlineGamePhase.cellSelected &&
+          previousState.onlineGamePhase != OnlineGamePhase.cellSelected &&
+          state.selectedCellIndex != null) {
+        AudioManager.instance.playClickSound();
+      }
+
+      // opponent made a move
+      if (serverPhase == OnlineGamePhase.articleRevealed &&
+          previousState.onlineGamePhase != OnlineGamePhase.articleRevealed) {
+        if (state.revealedArticleIsCorrect ?? false) {
+          AudioManager.instance.playCorrectSound();
+        } else {
+          AudioManager.instance.playIncorrectSound();
+        }
+      }
+    }
 
     if (serverIsGameOver &&
         serverGameStatus == GameStatus.forfeited &&

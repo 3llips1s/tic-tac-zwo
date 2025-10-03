@@ -162,6 +162,8 @@ class GameNotifier extends StateNotifier<GameState> {
   void forfeitTurn() {
     _timer?.cancel();
 
+    AudioManager.instance.playIncorrectSound();
+
     var newCellPressed = List<bool>.from(state.cellPressed);
     if (state.selectedCellIndex != null) {
       newCellPressed[state.selectedCellIndex!] = false;
@@ -186,8 +188,6 @@ class GameNotifier extends StateNotifier<GameState> {
     // sound feedback
     if (isCorrect) {
       AudioManager.instance.playCorrectSound();
-    } else {
-      AudioManager.instance.playIncorrectSound();
     }
 
     final germanNounsRepository = ref.read(germanNounRepoProvider);

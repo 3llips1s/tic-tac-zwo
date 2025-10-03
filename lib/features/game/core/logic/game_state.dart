@@ -251,17 +251,17 @@ class GameState {
   }
 
   List<bool> get cellPressed {
-    if (onlineGamePhase != null && onlineGamePhase != OnlineGamePhase.waiting) {
+    // online mode
+    if (onlineGamePhase != null) {
       var pressed = List<bool>.filled(9, false);
-
-      if (selectedCellIndex != null &&
-          onlineGamePhase == OnlineGamePhase.cellSelected) {
+      if (onlineGamePhase == OnlineGamePhase.cellSelected &&
+          selectedCellIndex != null) {
         pressed[selectedCellIndex!] = true;
       }
-
       return pressed;
     }
 
+    // local mode
     return _cellPressed;
   }
 

@@ -184,6 +184,7 @@ class OnlineGameService {
     bool? player2Ready,
     int? player1Score,
     int? player2Score,
+    String? gameStatus,
   }) async {
     const debounceDuration = Duration(milliseconds: 100);
 
@@ -213,6 +214,10 @@ class OnlineGameService {
 
         if (lastStarterId != null) {
           updatePayload['last_starter_id'] = lastStarterId;
+        }
+
+        if (gameStatus != null) {
+          updatePayload['status'] = gameStatus;
         }
 
         if (isGameOver != null) {
