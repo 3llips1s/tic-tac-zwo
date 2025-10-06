@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'settings_notifier.dart';
 
@@ -22,7 +22,6 @@ class AudioManager {
 
   WidgetRef? _ref;
   bool _isInitialized = false;
-  Duration _lastMusicPosition = Duration.zero;
 
   bool _musicShouldBePlaying = true;
 
@@ -37,21 +36,28 @@ class AudioManager {
     _winPlayer = AudioPlayer();
 
     try {
-      // preload music + loop
-      await _musicPlayer.setAsset('assets/sounds/background.mp3');
-      await _musicPlayer.setLoopMode(LoopMode.one);
+      // set release modes
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _clickPlayer.setReleaseMode(ReleaseMode.stop);
+      await _correctPlayer.setReleaseMode(ReleaseMode.stop);
+      await _incorrectPlayer.setReleaseMode(ReleaseMode.stop);
+      await _winPlayer.setReleaseMode(ReleaseMode.stop);
 
       // preload sound effects
-      await _clickPlayer.setAsset('assets/sounds/click.mp3');
-      await _correctPlayer.setAsset('assets/sounds/correct.mp3');
-      await _incorrectPlayer.setAsset('assets/sounds/incorrect.mp3');
-      await _winPlayer.setAsset('assets/sounds/win.mp3');
+      await _clickPlayer.setSource(AssetSource('sounds/click.mp3'));
+      await _correctPlayer.setSource(AssetSource('sounds/correct.mp3'));
+      await _incorrectPlayer.setSource(AssetSource('sounds/incorrect.mp3'));
+      await _winPlayer.setSource(AssetSource('sounds/win.mp3'));
 
       _isInitialized = true;
+      developer.log('Audio initialized successfully', name: 'AudioManager');
     } catch (e) {
       developer.log('Error initializing audio: $e', name: 'AudioManager');
+      _isInitialized = false;
     }
   }
+
+  bool get musicShouldBePlaying => _musicShouldBePlaying;
 
   bool get _isMusicEnabled {
     if (_ref == null) return false;
@@ -69,19 +75,15 @@ class AudioManager {
     _musicShouldBePlaying = true;
 
     try {
-      if (_lastMusicPosition != Duration.zero) {
-        await _musicPlayer.seek(_lastMusicPosition);
-      }
+      await _musicPlayer.setSource(AssetSource('sounds/background.mp3'));
 
       if (fade) {
         await _musicPlayer.setVolume(0.0);
-        await _musicPlayer.play();
-
-        // fade in
-        await _fadeVolume(0.0, 1.0, Duration(milliseconds: 900));
+        await _musicPlayer.resume();
+        _fadeVolume(_musicPlayer, 0.0, 1.0, Duration(milliseconds: 900));
       } else {
         await _musicPlayer.setVolume(1.0);
-        await _musicPlayer.play();
+        await _musicPlayer.resume();
       }
     } catch (e) {
       developer.log('Error playing background music: $e', name: 'AudioManager');
@@ -94,11 +96,9 @@ class AudioManager {
     _musicShouldBePlaying = false;
 
     try {
-      _lastMusicPosition = _musicPlayer.position;
-
       if (fade) {
         // fade out
-        await _fadeVolume(1.0, 0.0, Duration(milliseconds: 900));
+        await _fadeVolume(_musicPlayer, 1.0, 0.0, Duration(milliseconds: 900));
         await _musicPlayer.pause();
         // reset for next play
         await _musicPlayer.setVolume(1.0);
@@ -120,11 +120,11 @@ class AudioManager {
     try {
       if (fade) {
         await _musicPlayer.setVolume(0.0);
-        await _musicPlayer.play();
-        await _fadeVolume(0.0, 1.0, Duration(milliseconds: 900));
+        await _musicPlayer.resume();
+        _fadeVolume(_musicPlayer, 0.0, 1.0, Duration(milliseconds: 900));
       } else {
         await _musicPlayer.setVolume(1.0);
-        await _musicPlayer.play();
+        await _musicPlayer.resume();
       }
     } catch (e) {
       developer.log('Error resuming background music: $e',
@@ -132,8 +132,9 @@ class AudioManager {
     }
   }
 
-  Future<void> _fadeVolume(double from, double to, Duration duration) async {
-    const steps = 30;
+  Future<void> _fadeVolume(
+      AudioPlayer player, double from, double to, Duration duration) async {
+    const steps = 90;
     final stepDuration = duration.inMilliseconds ~/ steps;
     final volumeStep = (to - from) / steps;
 
@@ -147,9 +148,8 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
-      await _clickPlayer.stop();
       await _clickPlayer.seek(Duration.zero);
-      await _clickPlayer.play();
+      _clickPlayer.resume();
     } catch (e) {
       developer.log('Error playing click sound: $e', name: 'AudioManager');
     }
@@ -159,9 +159,9 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
-      await _correctPlayer.stop();
       await _correctPlayer.seek(Duration.zero);
-      await _correctPlayer.play();
+      _correctPlayer.setVolume(0.5);
+      _correctPlayer.resume();
     } catch (e) {
       developer.log('Error playing correct sound: $e', name: 'AudioManager');
     }
@@ -173,9 +173,8 @@ class AudioManager {
     }
 
     try {
-      await _incorrectPlayer.stop();
       await _incorrectPlayer.seek(Duration.zero);
-      await _incorrectPlayer.play();
+      _incorrectPlayer.resume();
     } catch (e) {
       developer.log('Error playing incorrect sound: $e', name: 'AudioManager');
     }
@@ -185,15 +184,13 @@ class AudioManager {
     if (!_isInitialized || !_areSoundEffectsEnabled) return;
 
     try {
-      await _winPlayer.stop();
       await _winPlayer.seek(Duration.zero);
-      await _winPlayer.play();
+      _winPlayer.resume();
+      _fadeVolume(_winPlayer, 1.0, 0.0, Duration(milliseconds: 900));
     } catch (e) {
       developer.log('Error playing win sound: $e', name: 'AudioManager');
     }
   }
-
-  bool get musicShouldBePlaying => _musicShouldBePlaying;
 
   void dispose() {
     _musicPlayer.dispose();
