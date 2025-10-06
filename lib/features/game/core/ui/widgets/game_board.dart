@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tic_tac_zwo/config/game_config/game_providers.dart';
 import 'package:tic_tac_zwo/features/game/core/data/models/game_config.dart';
+import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/ui/widgets/game_board_cell.dart';
 import 'package:tic_tac_zwo/features/game/online/logic/online_game_notifier.dart';
 
@@ -17,22 +18,22 @@ class GameBoard extends ConsumerWidget {
   void onCellTapped(WidgetRef ref, int index) {
     final gameState = ref.read(GameProviders.getStateProvider(ref, gameConfig));
 
-    // play sound when cell is selected
-    if (gameState.board[index] == null && !gameState.isGameOver) {
+    if (gameConfig.gameMode != GameMode.online &&
+        gameState.board[index] == null &&
+        !gameState.isGameOver) {
       AudioManager.instance.playClickSound();
     }
-
-    final gameNotifier =
-        ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier);
 
     if (gameConfig.gameMode == GameMode.online) {
       final notifier =
           ref.read(onlineGameStateNotifierProvider(gameConfig).notifier);
-
       if (notifier.canLocalPlayerMakeMove) {
         notifier.selectCellOnline(index);
       }
     } else {
+      final gameNotifier =
+          ref.read(GameProviders.getStateProvider(ref, gameConfig).notifier)
+              as GameNotifier;
       gameNotifier.selectCell(index);
     }
   }

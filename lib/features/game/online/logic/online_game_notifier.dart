@@ -316,6 +316,8 @@ class OnlineGameNotifier extends GameNotifier {
 
     _cancelInactivityTimer();
 
+    AudioManager.instance.playClickSound();
+
     final noun = await ref.read(germanNounRepoProvider).loadRandomNoun();
 
     // mark noun as seen
@@ -381,15 +383,12 @@ class OnlineGameNotifier extends GameNotifier {
     final bool isCorrectMove = currentNoun.article == selectedArticle;
     final Player previousPlayer = state.currentPlayer;
 
-    if (isCorrectMove) {
-      AudioManager.instance.playCorrectSound();
-    } else {
-      AudioManager.instance.playIncorrectSound();
-    }
-
     var updatedBoard = List<String?>.from(state.board);
     if (isCorrectMove) {
       updatedBoard[cellIndex] = previousPlayer.symbolString;
+      AudioManager.instance.playCorrectSound();
+    } else {
+      AudioManager.instance.playIncorrectSound();
     }
 
     state = state.copyWith(
@@ -529,7 +528,6 @@ class OnlineGameNotifier extends GameNotifier {
   Future<void> forfeitTurn() async {
     _turnTimer?.cancel();
     _cancelInactivityTimer();
-    AudioManager.instance.playIncorrectSound();
 
     if (!_isLocalPlayerTurn || _processingRemoteUpdate || state.isGameOver) {
       developer.log(
@@ -606,6 +604,26 @@ class OnlineGameNotifier extends GameNotifier {
 
     final GameState previousState = state;
 
+    final int? newSelectedCell = gameData['selected_cell_index'];
+    if (newSelectedCell != null &&
+        previousState.selectedCellIndex != newSelectedCell) {
+      AudioManager.instance.playClickSound();
+    }
+
+    // detect article reveal
+    final String? newRevealedArticle = gameData['revealed_article'];
+    final bool? isCorrect = gameData['revealed_article_is_correct'];
+
+    if (newRevealedArticle != null &&
+        previousState.revealedArticle == null &&
+        isCorrect != null) {
+      if (isCorrect) {
+        AudioManager.instance.playCorrectSound();
+      } else {
+        AudioManager.instance.playIncorrectSound();
+      }
+    }
+
     final String? serverCurrentPlayerId = gameData['current_player_id'];
     final bool wasLocalPlayerTurn = _isLocalPlayerTurn;
     _isLocalPlayerTurn = serverCurrentPlayerId == currentUserId;
@@ -653,6 +671,10 @@ class OnlineGameNotifier extends GameNotifier {
     bool serverIsGameOver = gameData['is_game_over'] ?? false;
     GameStatus serverGameStatus =
         GameStatusExtension.fromString(gameData['status'] ?? 'in_progress');
+
+    if (serverIsGameOver && serverGameStatus == GameStatus.inProgress) {
+      serverGameStatus = GameStatus.completed;
+    }
 
     // handle rematch logic
     OnlineRematchStatus newOnlineRematchStatus = OnlineRematchStatus.none;
@@ -710,28 +732,6 @@ class OnlineGameNotifier extends GameNotifier {
       gameStatus: serverGameStatus,
       onlineRematchStatus: newOnlineRematchStatus,
     );
-
-    // audio feedback
-    if (!_isLocalPlayerTurn &&
-        !_isInitialGameLoad &&
-        !previousState.isGameOver) {
-      // opponent selected a cell
-      if (serverPhase == OnlineGamePhase.cellSelected &&
-          previousState.onlineGamePhase != OnlineGamePhase.cellSelected &&
-          state.selectedCellIndex != null) {
-        AudioManager.instance.playClickSound();
-      }
-
-      // opponent made a move
-      if (serverPhase == OnlineGamePhase.articleRevealed &&
-          previousState.onlineGamePhase != OnlineGamePhase.articleRevealed) {
-        if (state.revealedArticleIsCorrect ?? false) {
-          AudioManager.instance.playCorrectSound();
-        } else {
-          AudioManager.instance.playIncorrectSound();
-        }
-      }
-    }
 
     if (serverIsGameOver &&
         serverGameStatus == GameStatus.forfeited &&

@@ -1,5 +1,5 @@
 name: tic_tac_zwo
-description: "A thrilling tic-tac-toe game for learning German articles (der-die-das), with an additional German Wördle mode."
+description: "A tic-tac-toe game for learning German articles (der-die-das), with an additional German Wördle mode."
 publish_to: 'none'
 version: 1.0.2+4
 

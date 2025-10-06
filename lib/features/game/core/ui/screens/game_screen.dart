@@ -104,12 +104,9 @@ class _GameScreenState extends ConsumerState<GameScreen>
     final gameState =
         ref.read(GameProviders.getStateProvider(ref, widget.gameConfig));
 
-    String title = 'Spiel verlassen?';
-    String content = 'Dein Spielfortschritt ist dann futsch.';
-    VoidCallback onConfirm = () {
-      Navigator.of(context).pop();
-      ref.read(navigationTargetProvider.notifier).state = NavigationTarget.home;
-    };
+    String title;
+    String content;
+    VoidCallback onConfirm;
 
     if (isOnlineMode && !gameState.isGameOver) {
       final notifier =
@@ -117,6 +114,16 @@ class _GameScreenState extends ConsumerState<GameScreen>
       title = 'Aufgeben?';
       content = 'Das Spiel wird als Niederlage gewertet.';
       onConfirm = () => notifier.requestForfeit();
+    } else {
+      title = 'Spiel verlassen?';
+      content = gameState.isGameOver
+          ? 'Zurück zum Home?'
+          : 'Dein Spielfortschritt ist dann futsch.';
+      onConfirm = () {
+        Navigator.of(context).pop();
+        ref.read(navigationTargetProvider.notifier).state =
+            NavigationTarget.home;
+      };
     }
 
     showCustomDialog(
@@ -206,6 +213,8 @@ class _GameScreenState extends ConsumerState<GameScreen>
         final wasGameOver = previous?.isGameOver ?? false;
 
         if (next.isGameOver && !wasGameOver) {
+          print(
+              'Game over detected - status: ${next.gameStatus}, isLocalPlayer winner: ${next.winningPlayer?.userId == Supabase.instance.client.auth.currentUser?.id}');
           WidgetsBinding.instance.addPostFrameCallback(
             (_) {
               if (context.mounted) {
@@ -654,7 +663,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
       case OpponentConnectionStatus.reconnecting:
         title = 'Gegner*in verbindet sich neu...';
         content = const Padding(
-          padding: EdgeInsets.symmetric(vertical: 64.0),
+          padding: EdgeInsets.symmetric(vertical: 56.0),
           child: Center(
             child: DualProgressIndicator(),
           ),
@@ -843,7 +852,7 @@ class _GameScreenState extends ConsumerState<GameScreen>
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),

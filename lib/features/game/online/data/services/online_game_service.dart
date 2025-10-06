@@ -223,9 +223,14 @@ class OnlineGameService {
         if (isGameOver != null) {
           updatePayload['is_game_over'] = isGameOver;
           if (isGameOver == true) {
+            updatePayload['status'] = 'completed';
             updatePayload['player1_ready'] = false;
             updatePayload['player2_ready'] = false;
           }
+        }
+
+        if (winnerId != null) {
+          updatePayload['winner_id'] = winnerId;
         }
 
         if (player1Score != null) updatePayload['player1_score'] = player1Score;

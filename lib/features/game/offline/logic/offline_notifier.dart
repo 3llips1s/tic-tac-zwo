@@ -8,6 +8,8 @@ import 'package:tic_tac_zwo/features/game/core/data/models/player.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_notifier.dart';
 import 'package:tic_tac_zwo/features/game/core/logic/game_state.dart';
 
+import '../../../settings/logic/audio_manager.dart';
+
 class OfflineNotifier extends GameNotifier {
   final Random _random = Random();
   Timer? _aiThinkingTimer;
@@ -29,6 +31,8 @@ class OfflineNotifier extends GameNotifier {
     bool isAIMove = StackTrace.current.toString().contains('_scheduleAIMove');
 
     if (state.currentPlayer.isAI && !isAIMove) return;
+
+    AudioManager.instance.playClickSound();
 
     super.selectCell(index);
   }
