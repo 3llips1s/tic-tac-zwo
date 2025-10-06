@@ -38,13 +38,16 @@ class WdlBar extends StatelessWidget {
           height: 40,
           color: color,
           child: Center(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorBlack,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorBlack,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+              ),
             ),
           ),
         ),
@@ -58,11 +61,13 @@ class WdlBar extends StatelessWidget {
         child: Row(
           children: [
             buildBarSegment(
-                userProfile.gamesWon, winColor, '${userProfile.gamesWon}S'),
+                userProfile.gamesWon, winColor, '${userProfile.gamesWon}-S'),
+            const SizedBox(width: 4),
             buildBarSegment(userProfile.gamesDrawn, drawColor,
-                '${userProfile.gamesDrawn}U'),
+                '${userProfile.gamesDrawn}-U'),
+            const SizedBox(width: 4),
             buildBarSegment(
-                userProfile.gamesLost, lossColor, '${userProfile.gamesLost}N')
+                userProfile.gamesLost, lossColor, '${userProfile.gamesLost}-N')
           ],
         ),
       ),
