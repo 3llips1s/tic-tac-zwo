@@ -35,9 +35,9 @@ extension SymbolExtension on PlayerSymbol {
 }
 
 enum AIDifficulty {
-  easy('leicht', 0.25, Color(0xFFFFCC00)),
+  easy('leicht', 0.3, Color(0xFFFFCC00)),
   medium('mittel', 0.125, colorBlack),
-  hard('schwer', 0.025, colorRed);
+  hard('schwer', 0.03, colorRed);
 
   final String string;
   final double articleErrorRate;

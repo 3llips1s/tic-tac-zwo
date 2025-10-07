@@ -67,7 +67,7 @@ void main() async {
   }
 }
 
-class MainApp extends ConsumerWidget {
+class MainApp extends ConsumerStatefulWidget {
   // global key for scaffold messenger
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
@@ -75,15 +75,43 @@ class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // initialize audio and haptics managers
+  ConsumerState<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends ConsumerState<MainApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // init audio and haptics
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AudioManager.instance.initialize(ref).then((_) {
-        AudioManager.instance.playBackgroundMusic();
+        AudioManager.instance.playBackgroundMusic(fade: true);
       });
       HapticsManager.initialize(ref);
     });
+  }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      AudioManager.instance.pauseBackgroundMusic(fade: true, userPaused: false);
+    } else if (state == AppLifecycleState.resumed) {
+      if (AudioManager.instance.musicShouldBePlaying) {
+        AudioManager.instance.playBackgroundMusic(fade: true);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AudioSettingsListener(
       child: Wiredash(
         projectId: AppConfig.wiredashProjectId,
@@ -93,7 +121,7 @@ class MainApp extends ConsumerWidget {
           theme: appTheme,
           onGenerateRoute: AppRouter.generateRoute,
           initialRoute: RouteNames.home,
-          scaffoldMessengerKey: scaffoldMessengerKey,
+          scaffoldMessengerKey: MainApp.scaffoldMessengerKey,
           home: DataInitializationWrapper(
             child: const App(),
           ),

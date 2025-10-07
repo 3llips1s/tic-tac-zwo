@@ -90,10 +90,13 @@ class AudioManager {
     }
   }
 
-  Future<void> pauseBackgroundMusic({bool fade = false}) async {
+  Future<void> pauseBackgroundMusic(
+      {bool fade = false, bool userPaused = true}) async {
     if (!_isInitialized) return;
 
-    _musicShouldBePlaying = false;
+    if (userPaused) {
+      _musicShouldBePlaying = false;
+    }
 
     try {
       if (fade) {

@@ -265,6 +265,8 @@ class GameNotifier extends StateNotifier<GameState> {
         final winningPlayer =
             state.players.firstWhere((p) => p.symbolString == winResult);
 
+        print('Winner: ${winningPlayer.username}, isAI: ${winningPlayer.isAI}');
+
         if (!winningPlayer.isAI) {
           AudioManager.instance.playWinSound();
         }

@@ -130,7 +130,7 @@ class OfflineNotifier extends GameNotifier {
       case AIDifficulty.medium:
         return _random.nextDouble() < 0.15;
       case AIDifficulty.hard:
-        return _random.nextDouble() < 0.05;
+        return false;
     }
   }
 
@@ -183,7 +183,7 @@ class OfflineNotifier extends GameNotifier {
   bool _shouldBlock() {
     switch (difficulty) {
       case AIDifficulty.easy:
-        return _random.nextDouble() < 0.7;
+        return _random.nextDouble() < 0.6;
       case AIDifficulty.medium:
         return _random.nextDouble() < 0.9;
       case AIDifficulty.hard:
@@ -199,7 +199,7 @@ class OfflineNotifier extends GameNotifier {
       case AIDifficulty.medium:
         return _random.nextDouble() < 0.75;
       case AIDifficulty.hard:
-        return _random.nextDouble() < 0.95;
+        return true;
     }
   }
 
