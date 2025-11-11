@@ -4,6 +4,9 @@ This is a full-stack Flutter application (Android & iOS) designed to help German
 
 This project was built from scratch and managed from initial concept to a 14-day closed test with live users.
 
+![game_screen](https://github.com/user-attachments/assets/0d01abc6-5342-43e2-994f-3e430fb102fe) ![home_screen](https://github.com/user-attachments/assets/dcda6cab-a8a0-4a66-98fc-d612d5d3d325) ![wordle](https://github.com/user-attachments/assets/bf154212-62be-47b5-916a-689c0a18f59e)
+
+
 
 
 ---
