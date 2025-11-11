@@ -4,7 +4,7 @@ This is a full-stack Flutter application (Android & iOS) designed to help German
 
 This project was built from scratch and managed from initial concept to a 14-day closed test with live users.
 
-<table border="0" align="center">
+<table border="9" align="center">
   <tr>
     <td align="center">
       <img src="https://github.com/user-attachments/assets/0d01abc6-5342-43e2-994f-3e430fb102fe" width="250">
