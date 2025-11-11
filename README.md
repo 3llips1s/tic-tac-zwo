@@ -7,7 +7,7 @@ This project was built from scratch and managed from initial concept to a 14-day
 <table border="0" align="center">
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/dcda6cab-a8a0-4a66-98fc-d612d5d3d325" width="250">
+      <img src="https://github.com/user-attachments/assets/0d01abc6-5342-43e2-994f-3e430fb102fe" width="250">
       <br />
       <em>Game Screen</em>
     </td>
