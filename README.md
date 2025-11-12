@@ -32,7 +32,7 @@ This project was built from scratch and managed from initial concept to a 14-day
 * **Multiplayer & Solo Modes:** Play online against friends (realtime), pass-and-play, or challenge a solo AI.
 * **AI Difficulty Levels:** The solo AI features Easy, Medium, and Hard modes.
 * **Bonus Word Game:** Includes "Wördle," a German-themed Wordle clone to build vocabulary.
-* **Backend Integration:** Full user authentication, realtime database for online matches, and user stats.
+* **Backend Integration:** Full user authentication, realtime database for online matches, user stats, and online leaderboard.
 * **In-App Feedback:** Integrated a user feedback tool (Wiredash) to collect bug reports and suggestions.
 
 ## Tech Stack
