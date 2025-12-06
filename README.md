@@ -2,8 +2,6 @@
 
 This is a full-stack Flutter application (Android & iOS) designed to help German learners master noun articles (Der, Die, Das) by embedding the learning mechanic into a classic game of Tic Tac Toe.
 
-This project was built from scratch and managed from initial concept to a 14-day closed test with live users.
-
 <table border="0" align="center">
   <tr>
     <td align="center">
